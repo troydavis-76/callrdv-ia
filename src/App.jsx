@@ -345,6 +345,102 @@ function CalendarModal({ rdv, onClose }) {
 }
 
 // ── RDV Form (opens right after hanging up) ──────────────────
+// ── Export PDF ───────────────────────────────────────────────
+function exportPDF(appointments, viewMode) {
+  const today = new Date();
+  const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+  // Filter by current month for month view, all for list
+  let rdvs = [...appointments].sort((a,b) => a.date > b.date ? 1 : -1);
+  if (viewMode === "semaine") {
+    const start = new Date(today);
+    const day = start.getDay();
+    start.setDate(start.getDate() - day + (day===0?-6:1));
+    const end = new Date(start); end.setDate(start.getDate() + 6);
+    rdvs = rdvs.filter(r => r.date >= start.toISOString().split("T")[0] && r.date <= end.toISOString().split("T")[0]);
+  } else if (viewMode === "mois") {
+    const month = String(today.getMonth()+1).padStart(2,"0");
+    rdvs = rdvs.filter(r => r.date?.startsWith(`${today.getFullYear()}-${month}`));
+  }
+
+  const catColors = {
+    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
+    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
+    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+  };
+
+  const title = viewMode === "semaine" ? "Planning de la semaine" : viewMode === "mois" ? `Planning de ${moisNoms[today.getMonth()]} ${today.getFullYear()}` : "Tous les rendez-vous";
+
+  const rows = rdvs.map(r => `
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+        <span style="background:${catColors[r.categorie]||"#94a3b8"};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;">${r.categorie||"autre"}</span>
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#1e293b;">${r.titre||"Rendez-vous"}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#475569;">${r.personne||"—"}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#475569;">${r.date||"—"}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#475569;">${r.heure||"—"}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#64748b;">${r.lieu||"—"}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="utf-8"/>
+      <title>CallRDV IA — ${title}</title>
+      <style>
+        body { font-family: Arial, sans-serif; color: #1e293b; margin: 0; padding: 32px; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #1e3a5f; }
+        .logo { font-size: 22px; font-weight: 800; color: #1e3a5f; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+        .title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .date { font-size: 12px; color: #94a3b8; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1e3a5f; color: #fff; padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+        tr:hover td { background: #f8faff; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+        .badge { display: inline-block; background: #f0f4ff; color: #1e3a5f; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="logo">📞 CallRDV IA</div>
+          <div class="subtitle">Prise de rendez-vous automatique</div>
+        </div>
+        <div style="text-align:right">
+          <div class="badge">${rdvs.length} RDV</div>
+          <div class="date" style="margin-top:6px">Généré le ${today.toLocaleDateString("fr-FR")} à ${today.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</div>
+        </div>
+      </div>
+      <div class="title">${title}</div>
+      ${rdvs.length === 0 ? '<p style="color:#94a3b8;text-align:center;padding:40px">Aucun rendez-vous pour cette période</p>' : `
+      <table>
+        <thead>
+          <tr>
+            <th>Catégorie</th>
+            <th>Titre</th>
+            <th>Contact</th>
+            <th>Date</th>
+            <th>Heure</th>
+            <th>Lieu</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`}
+      <div class="footer">CallRDV IA — Conforme RGPD · callrdv-ia.vercel.app</div>
+    </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+}
+
 // ── Vue Agenda Calendrier ────────────────────────────────────
 function CalendarView({ appointments, onNewCall, onCalRdv }) {
   const [viewMode, setViewMode] = React.useState("semaine"); // semaine | mois | liste
@@ -436,6 +532,9 @@ function CalendarView({ appointments, onNewCall, onCalRdv }) {
           ))}
           <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>
             📞 Nouvel appel
+          </button>
+          <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
+            📄 PDF
           </button>
         </div>
       </div>
