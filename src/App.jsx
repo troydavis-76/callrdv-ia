@@ -500,6 +500,73 @@ function CalendarView({ appointments, onNewCall, onCalRdv }) {
   );
 }
 
+// ── Paramètres Modal ─────────────────────────────────────────
+function SettingsModal({ user, onSave, onClose, sb, token }) {
+  const [rappels, setRappels] = React.useState(user.rappels || ["j-1","j-3"]);
+  const [email, setEmail] = React.useState(user.email || user.email_auth || "");
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  const toggleRappel = (val) => {
+    setRappels(prev => prev.includes(val) ? prev.filter(r=>r!==val) : [...prev, val]);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    await sb.updateProfile(token, user.id, { rappels, email });
+    onSave({ rappels, email });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => { setSaved(false); onClose(); }, 1500);
+  };
+
+  const options = [
+    { value:"j-3", label:"3 jours avant", icon:"📅" },
+    { value:"j-1", label:"La veille", icon:"🔔" },
+    { value:"j-0", label:"Le matin même", icon:"☀️" },
+  ];
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div className="card fade-up" style={{ width:"100%", maxWidth:420, padding:32 }}>
+        <div style={{ fontWeight:800, fontSize:20, marginBottom:4, color:"#1e293b" }}>⚙️ Paramètres</div>
+        <div style={{ fontSize:13, color:"#94a3b8", marginBottom:24 }}>Configurez vos rappels de rendez-vous</div>
+
+        <div style={{ marginBottom:20 }}>
+          <div className="field-label">EMAIL POUR LES RAPPELS</div>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" />
+          <div style={{ fontSize:11, color:"#94a3b8", marginTop:6 }}>Les rappels seront envoyés à cette adresse</div>
+        </div>
+
+        <div style={{ marginBottom:24 }}>
+          <div className="field-label">QUAND RECEVOIR LES RAPPELS</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:8 }}>
+            {options.map(opt => (
+              <div key={opt.value} onClick={()=>toggleRappel(opt.value)}
+                style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 16px", borderRadius:10, border:`1.5px solid ${rappels.includes(opt.value)?"#1e3a5f":"#e2e8f0"}`, background:rappels.includes(opt.value)?"#f0f4ff":"#fff", cursor:"pointer", transition:"all .2s" }}>
+                <span style={{ fontSize:20 }}>{opt.icon}</span>
+                <span style={{ fontWeight:600, fontSize:14, color:rappels.includes(opt.value)?"#1e3a5f":"#475569" }}>{opt.label}</span>
+                <div style={{ marginLeft:"auto", width:20, height:20, borderRadius:"50%", border:`2px solid ${rappels.includes(opt.value)?"#1e3a5f":"#cbd5e1"}`, background:rappels.includes(opt.value)?"#1e3a5f":"transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  {rappels.includes(opt.value) && <span style={{ color:"#fff", fontSize:12 }}>✓</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {saved && <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#16a34a", fontWeight:600 }}>✅ Paramètres sauvegardés !</div>}
+
+        <div style={{ display:"flex", gap:10 }}>
+          <button className="btn btn-outline" onClick={onClose} style={{ flex:1 }}>Annuler</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex:2, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            {saving ? <span className="spinner"></span> : "💾 Sauvegarder"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Hook reconnaissance vocale
 function useSpeech(onResult) {
   const [listening, setListening] = React.useState(false);
@@ -693,6 +760,7 @@ export default function App() {
   const [appointments, setAppts]  = useState([]);
   const [calRdv, setCalRdv]       = useState(null);
   const [showAgenda, setShowAgenda] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -765,6 +833,7 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
+      {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} />}
       {showPricing && <PricingModal currentPlan={user.plan} onUpgrade={handleUpgrade} onClose={()=>setPrice(false)} />}
       {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} />}
 
@@ -783,6 +852,7 @@ export default function App() {
             <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
               {plan.name.toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
             </div>
+            <button onClick={()=>setShowSettings(true)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title="Paramètres">⚙️</button>
             <div onClick={signOut} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:28, height:28, background:"#e2e8f0", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
               <span style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono" }}>Quitter</span>
