@@ -911,8 +911,6 @@ export default function App() {
                 onCancel={()=>setPhase("idle")}
               />
             )}
-          </div>
-
           </div>}
 
           {/* SIDEBAR AGENDA */}
