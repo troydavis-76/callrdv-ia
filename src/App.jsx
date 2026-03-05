@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
-  STRIPE_LINKS: { pro: "https://buy.stripe.com/VOTRE_LIEN_PRO", business: "https://buy.stripe.com/VOTRE_LIEN_BUSINESS" },
+  STRIPE_LINKS: { pro: "https://buy.stripe.com/test_bJeeVf1Uk32N14P3ffejK01", business: "https://buy.stripe.com/test_cNi00l0Qg7j3aFpaHHejK00" },
 };
 
 // Supabase client leger (sans SDK)
