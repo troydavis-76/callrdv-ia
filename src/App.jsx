@@ -276,6 +276,38 @@ function CalendarModal({ rdv, onClose }) {
 }
 
 // ── RDV Form (opens right after hanging up) ──────────────────
+// Hook reconnaissance vocale
+function useSpeech(onResult) {
+  const [listening, setListening] = React.useState(false);
+  const recRef = React.useRef(null);
+
+  const start = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert("Reconnaissance vocale non supportée sur ce navigateur. Utilisez Chrome."); return; }
+    const rec = new SR();
+    rec.lang = "fr-FR";
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      onResult(text);
+      setListening(false);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+
+  const stop = () => {
+    recRef.current?.stop();
+    setListening(false);
+  };
+
+  return { listening, start, stop };
+}
+
 function RdvForm({ onSave, onCancel }) {
   const [form, setForm] = useState({
     titre: "",
@@ -289,6 +321,11 @@ function RdvForm({ onSave, onCancel }) {
   });
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // Reconnaissance vocale par champ
+  const speechPersonne = useSpeech((t) => set("personne", t));
+  const speechLieu     = useSpeech((t) => set("lieu", t));
+  const speechNotes    = useSpeech((t) => set("notes", prev => prev ? prev + " " + t : t));
 
   const categories = [
     { value:"medical",   label:"🏥 Medical" },
@@ -352,7 +389,13 @@ function RdvForm({ onSave, onCancel }) {
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
         <div>
           <div className="field-label">PERSONNE / CONTACT *</div>
-          <input placeholder="Dr. Martin, Garage Renault..." value={form.personne} onChange={e=>set("personne",e.target.value)} />
+          <div style={{ position:"relative" }}>
+            <input placeholder="Dr. Martin, Garage Renault..." value={form.personne} onChange={e=>set("personne",e.target.value)} style={{ paddingRight:42 }} />
+            <button onClick={speechPersonne.listening ? speechPersonne.stop : speechPersonne.start}
+              style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color: speechPersonne.listening ? "#ff4444" : "#c8f542" }}>
+              {speechPersonne.listening ? "⏹" : "🎤"}
+            </button>
+          </div>
         </div>
         <div>
           <div className="field-label">DATE *</div>
@@ -371,7 +414,13 @@ function RdvForm({ onSave, onCancel }) {
       {/* Lieu + Adresse */}
       <div style={{ marginBottom:16 }}>
         <div className="field-label">LIEU</div>
-        <input placeholder="Ex: Cabinet medical, Garage Renault, Domicile..." value={form.lieu} onChange={e=>set("lieu",e.target.value)} />
+        <div style={{ position:"relative" }}>
+          <input placeholder="Ex: Cabinet médical, Garage Renault, Domicile..." value={form.lieu} onChange={e=>set("lieu",e.target.value)} style={{ paddingRight:42 }} />
+          <button onClick={speechLieu.listening ? speechLieu.stop : speechLieu.start}
+            style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color: speechLieu.listening ? "#ff4444" : "#c8f542" }}>
+            {speechLieu.listening ? "⏹" : "🎤"}
+          </button>
+        </div>
       </div>
       <div style={{ marginBottom:16 }}>
         <div className="field-label">ADRESSE COMPLETE</div>
@@ -381,7 +430,18 @@ function RdvForm({ onSave, onCancel }) {
       {/* Notes */}
       <div style={{ marginBottom:24 }}>
         <div className="field-label">NOTES / INFORMATIONS COMPLEMENTAIRES</div>
-        <textarea rows={3} placeholder="Documents a apporter, motif de la visite, informations importantes..." value={form.notes} onChange={e=>set("notes",e.target.value)} />
+        <div style={{ position:"relative" }}>
+          <textarea rows={3} placeholder="Documents à apporter, motif de la visite, informations importantes..." value={form.notes} onChange={e=>set("notes",e.target.value)} style={{ paddingRight:48 }} />
+          <button onClick={speechNotes.listening ? speechNotes.stop : speechNotes.start}
+            style={{ position:"absolute", right:10, top:12, background:"none", border:"none", cursor:"pointer", fontSize:20, color: speechNotes.listening ? "#ff4444" : "#c8f542" }}>
+            {speechNotes.listening ? "⏹" : "🎤"}
+          </button>
+        </div>
+        {speechNotes.listening && (
+          <div style={{ fontSize:11, color:"#ff4444", fontFamily:"DM Mono", marginTop:6, display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ animation:"blink 1s infinite", display:"inline-block" }}>●</span> Parlez maintenant...
+          </div>
+        )}
       </div>
 
       {/* Privacy badge */}
