@@ -325,28 +325,27 @@ function RdvForm({ onSave, onCancel }) {
   // Reconnaissance vocale par champ
   const speechPersonne = useSpeech((t) => set("personne", t));
   const speechLieu     = useSpeech((t) => set("lieu", t));
-  const speechNotes    = useSpeech((t) => set("notes", prev => prev ? prev + " " + t : t));
+  const speechNotes    = useSpeech((t) => set("notes", form.notes ? form.notes + " " + t : t));
 
   const categories = [
-    { value:"medical",   label:"🏥 Medical" },
-    { value:"garage",    label:"🔧 Garage / Voiture" },
-    { value:"travaux",   label:"🏠 Travaux / Artisan" },
-    { value:"pro",       label:"💼 Professionnel" },
-    { value:"perso",     label:"👤 Personnel" },
-    { value:"autre",     label:"📋 Autre" },
+    { value:"medical",   label:"🏥 Médical",              titre:"Consultation médicale" },
+    { value:"dentiste",  label:"🦷 Dentiste",             titre:"Chez le dentiste" },
+    { value:"kine",      label:"💪 Kiné / Ostéo",         titre:"Séance kiné" },
+    { value:"veterinaire",label:"🐾 Vétérinaire",         titre:"Chez le vétérinaire" },
+    { value:"garage",    label:"🔧 Garage / Voiture",     titre:"Révision voiture" },
+    { value:"travaux",   label:"🏠 Travaux / Artisan",    titre:"Intervention artisan" },
+    { value:"juridique", label:"⚖️ Notaire / Avocat",     titre:"RDV juridique" },
+    { value:"banque",    label:"🏦 Banque / Assurance",   titre:"RDV banque" },
+    { value:"beaute",    label:"💈 Coiffeur / Beauté",    titre:"Chez le coiffeur" },
+    { value:"formation", label:"🎓 Formation / Scolaire", titre:"Réunion scolaire" },
+    { value:"pro",       label:"💼 Professionnel",        titre:"Réunion professionnelle" },
+    { value:"perso",     label:"👤 Personnel",            titre:"RDV personnel" },
+    { value:"autre",     label:"📋 Autre",                titre:"Rendez-vous" },
   ];
 
-  const titresAuto = {
-    medical:  "Consultation medicale",
-    garage:   "Revision voiture",
-    travaux:  "Intervention artisan",
-    pro:      "Reunion professionnelle",
-    perso:    "RDV personnel",
-    autre:    "Rendez-vous",
-  };
-
   const handleCategorie = (val) => {
-    setForm(prev => ({ ...prev, categorie: val, titre: prev.titre || titresAuto[val] }));
+    const cat = categories.find(c => c.value === val);
+    setForm(prev => ({ ...prev, categorie: val, titre: prev.titre || (cat ? cat.titre : "Rendez-vous") }));
   };
 
   const isValid = form.personne.trim() && form.date.trim();
@@ -365,18 +364,12 @@ function RdvForm({ onSave, onCancel }) {
       {/* Categorie */}
       <div style={{ marginBottom:20 }}>
         <div className="field-label">TYPE DE RDV</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-          {categories.map(c => (
-            <button key={c.value} onClick={()=>handleCategorie(c.value)}
-              className="btn" style={{
-                padding:"10px 8px", fontSize:12, textAlign:"center",
-                background: form.categorie===c.value ? "#c8f54220" : "#0e0e1a",
-                border: `1px solid ${form.categorie===c.value ? "#c8f542" : "#1e1e2e"}`,
-                color: form.categorie===c.value ? "#c8f542" : "#6a6a7a",
-                borderRadius:10
-              }}>{c.label}</button>
+        <select value={form.categorie} onChange={e=>handleCategorie(e.target.value)}
+          style={{ appearance:"none", WebkitAppearance:"none", backgroundImage:"url('data:image/svg+xml;utf8,<svg fill=\"%23c8f542\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M7 10l5 5 5-5z\"/></svg>')", backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", backgroundSize:20, paddingRight:40 }}>
+          {categories.map(cat => (
+            <option key={cat.value} value={cat.value}>{cat.label}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Titre */}
