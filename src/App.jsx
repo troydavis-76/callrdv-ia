@@ -66,6 +66,33 @@ const sb = {
       body: JSON.stringify({ user_id: userId, rdv_detecte }),
     });
   },
+  async getPatients(token, userId) {
+    const r = await fetch(`${this.url}/rest/v1/patients?user_id=eq.${userId}&order=nom.asc&select=*`, {
+      headers: this.headers(token),
+    });
+    return r.json();
+  },
+  async addPatient(token, userId, patient) {
+    const r = await fetch(`${this.url}/rest/v1/patients`, {
+      method: "POST",
+      headers: { ...this.headers(token), "Prefer": "return=representation" },
+      body: JSON.stringify({ ...patient, user_id: userId }),
+    });
+    return r.json();
+  },
+  async updatePatient(token, patientId, data) {
+    await fetch(`${this.url}/rest/v1/patients?id=eq.${patientId}`, {
+      method: "PATCH",
+      headers: { ...this.headers(token), "Prefer": "return=minimal" },
+      body: JSON.stringify(data),
+    });
+  },
+  async deletePatient(token, patientId) {
+    await fetch(`${this.url}/rest/v1/patients?id=eq.${patientId}`, {
+      method: "DELETE",
+      headers: this.headers(token),
+    });
+  },
   signInWithGoogle() {
     const redirectTo = encodeURIComponent(window.location.origin);
     window.location.href = `${this.url}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}&scopes=email%20profile%20https://www.googleapis.com/auth/calendar`;
@@ -500,6 +527,174 @@ function CalendarView({ appointments, onNewCall, onCalRdv }) {
   );
 }
 
+// ── Patients View ────────────────────────────────────────────
+function PatientsView({ patients, setPatients, user, token, sb, appointments }) {
+  const [search, setSearch] = React.useState("");
+  const [selected, setSelected] = React.useState(null);
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [form, setForm] = React.useState({ nom:"", email:"", telephone:"", notes:"", categorie:"autre" });
+  const [importing, setImporting] = React.useState(false);
+
+  const filtered = patients.filter(p => p.nom.toLowerCase().includes(search.toLowerCase()));
+
+  const catColors = {
+    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
+    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
+    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+  };
+
+  const getPatientRdvs = (nom) => appointments.filter(r => r.personne?.toLowerCase() === nom.toLowerCase());
+
+  const handleAdd = async () => {
+    if (!form.nom.trim()) return;
+    const res = await sb.addPatient(token, user.id, form);
+    if (Array.isArray(res) && res[0]) {
+      setPatients(prev => [...prev, res[0]]);
+      setForm({ nom:"", email:"", telephone:"", notes:"", categorie:"autre" });
+      setShowAdd(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    await sb.deletePatient(token, id);
+    setPatients(prev => prev.filter(p => p.id !== id));
+    setSelected(null);
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const lines = evt.target.result.split("\n").filter(Boolean);
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g,""));
+      let added = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(",").map(v => v.trim().replace(/"/g,""));
+        const row = {};
+        headers.forEach((h, idx) => row[h] = vals[idx] || "");
+        const nom = row.nom || row.name || row.prenom || vals[0];
+        if (!nom) continue;
+        const exists = patients.find(p => p.nom.toLowerCase() === nom.toLowerCase());
+        if (!exists) {
+          const res = await sb.addPatient(token, user.id, { nom, email: row.email||"", telephone: row.telephone||row.tel||row.phone||"", notes: row.notes||"", categorie:"autre" });
+          if (Array.isArray(res) && res[0]) { setPatients(prev => [...prev, res[0]]); added++; }
+        }
+      }
+      setImporting(false);
+      alert(`${added} patient(s) importé(s) avec succès !`);
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+      {/* Liste patients */}
+      <div style={{ width:320, borderRight:"1px solid #e2e8f0", display:"flex", flexDirection:"column" }}>
+        <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
+          <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+            <input placeholder="🔍 Rechercher un patient..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)} style={{ flex:1 }}>+ Ajouter</button>
+            <label style={{ flex:1 }}>
+              <div className="btn btn-outline btn-sm" style={{ textAlign:"center", cursor:"pointer" }}>
+                {importing ? "⏳" : "📥 CSV"}
+              </div>
+              <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display:"none" }} />
+            </label>
+          </div>
+        </div>
+        <div style={{ flex:1, overflowY:"auto" }}>
+          {filtered.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"40px 20px" }}>
+              <div style={{ fontSize:36, marginBottom:8 }}>👥</div>
+              <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun patient trouvé</div>
+              <div style={{ color:"#cbd5e1", fontSize:11, marginTop:4 }}>Ils s'ajoutent automatiquement à chaque RDV</div>
+            </div>
+          ) : filtered.map(p => (
+            <div key={p.id} onClick={()=>setSelected(p)}
+              style={{ padding:"14px 16px", borderBottom:"1px solid #f1f5f9", cursor:"pointer", background:selected?.id===p.id?"#f0f4ff":"#fff", display:"flex", alignItems:"center", gap:12, transition:"background .15s" }}>
+              <div style={{ width:38, height:38, borderRadius:"50%", background:catColors[p.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:15, flexShrink:0 }}>
+                {p.nom[0]?.toUpperCase()}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontWeight:600, fontSize:13, color:"#1e293b", marginBottom:2 }}>{p.nom}</div>
+                <div style={{ fontSize:11, color:"#94a3b8" }}>{getPatientRdvs(p.nom).length} RDV</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding:"12px 16px", borderTop:"1px solid #e2e8f0", background:"#f8fafc" }}>
+          <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{patients.length} patient(s) au total</div>
+        </div>
+      </div>
+
+      {/* Fiche patient */}
+      <div style={{ flex:1, overflowY:"auto", padding:24 }}>
+        {showAdd ? (
+          <div className="card fade-up" style={{ maxWidth:480 }}>
+            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>➕ Nouveau patient</div>
+            <div style={{ marginBottom:14 }}><div className="field-label">NOM *</div><input placeholder="Nom complet" value={form.nom} onChange={e=>setForm(p=>({...p,nom:e.target.value}))} /></div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
+              <div><div className="field-label">EMAIL</div><input type="email" placeholder="email@..." value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} /></div>
+              <div><div className="field-label">TÉLÉPHONE</div><input placeholder="06..." value={form.telephone} onChange={e=>setForm(p=>({...p,telephone:e.target.value}))} /></div>
+            </div>
+            <div style={{ marginBottom:14 }}><div className="field-label">NOTES</div><textarea rows={3} placeholder="Informations importantes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} /></div>
+            <div style={{ display:"flex", gap:10 }}>
+              <button className="btn btn-outline" onClick={()=>setShowAdd(false)} style={{ flex:1 }}>Annuler</button>
+              <button className="btn btn-primary" onClick={handleAdd} style={{ flex:2 }}>Ajouter le patient</button>
+            </div>
+          </div>
+        ) : selected ? (
+          <div className="fade-up">
+            <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
+              <div style={{ width:56, height:56, borderRadius:"50%", background:catColors[selected.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:22 }}>
+                {selected.nom[0]?.toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontWeight:800, fontSize:22, color:"#1e293b" }}>{selected.nom}</div>
+                <div style={{ fontSize:12, color:"#94a3b8" }}>Patient depuis {new Date(selected.created_at).toLocaleDateString("fr-FR")}</div>
+              </div>
+              <button onClick={()=>handleDelete(selected.id)} style={{ marginLeft:"auto", background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#ef4444", fontWeight:600 }}>🗑️ Supprimer</button>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
+              {[{label:"RDV total",value:getPatientRdvs(selected.nom).length},{label:"Email",value:selected.email||"—"},{label:"Téléphone",value:selected.telephone||"—"}].map(({label,value})=>(
+                <div key={label} className="card" style={{ padding:16 }}>
+                  <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:4 }}>{label}</div>
+                  <div style={{ fontWeight:700, color:"#1e293b", fontSize:14 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            {selected.notes && <div className="card" style={{ marginBottom:20 }}><div className="field-label" style={{ marginBottom:8 }}>NOTES</div><div style={{ fontSize:13, color:"#475569", lineHeight:1.7 }}>{selected.notes}</div></div>}
+            <div className="card">
+              <div className="field-label" style={{ marginBottom:12 }}>HISTORIQUE DES RDV</div>
+              {getPatientRdvs(selected.nom).length === 0 ? (
+                <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun RDV enregistré pour ce patient</div>
+              ) : getPatientRdvs(selected.nom).map((rdv,i) => (
+                <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 0", borderBottom:"1px solid #f1f5f9" }}>
+                  <div style={{ width:4, height:40, borderRadius:4, background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
+                  <div>
+                    <div style={{ fontWeight:600, fontSize:13 }}>{rdv.titre||"Rendez-vous"}</div>
+                    <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.date}{rdv.heure?` à ${rdv.heure}`:""} · {rdv.lieu||""}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign:"center", padding:"80px 40px" }}>
+            <div style={{ fontSize:56, marginBottom:16 }}>👥</div>
+            <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Vos patients & contacts</div>
+            <div style={{ color:"#94a3b8", fontSize:14, lineHeight:1.7 }}>Sélectionnez un patient pour voir sa fiche,<br/>ou ajoutez-en un manuellement.<br/><br/>💡 Ils s'ajoutent automatiquement à chaque nouveau RDV !</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Paramètres Modal ─────────────────────────────────────────
 function SettingsModal({ user, onSave, onClose, sb, token }) {
   const [rappels, setRappels] = React.useState(user.rappels || ["j-1","j-3"]);
@@ -761,6 +956,8 @@ export default function App() {
   const [calRdv, setCalRdv]       = useState(null);
   const [showAgenda, setShowAgenda] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [patients, setPatients] = useState([]);
+  const [showPatients, setShowPatients] = useState(false);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -792,6 +989,15 @@ export default function App() {
     });
   }, []);
 
+  // Charger les patients depuis Supabase au login
+  useEffect(() => {
+    if (user?.id && token) {
+      sb.getPatients(token, user.id).then(data => {
+        if (Array.isArray(data)) setPatients(data);
+      });
+    }
+  }, [user?.id]);
+
   // Charger les RDV depuis Supabase au login
   useEffect(() => {
     if (user?.id && token) {
@@ -810,6 +1016,21 @@ export default function App() {
       heure: rdv.heure, lieu: rdv.lieu, notes: rdv.notes || "", statut: rdv.statut
     });
     await sb.addAnalyse(token, user.id, true);
+
+    // Ajout automatique du patient si nouveau
+    if (rdv.personne) {
+      const exists = patients.find(p => p.nom.toLowerCase() === rdv.personne.toLowerCase());
+      if (!exists) {
+        const newPatient = await sb.addPatient(token, user.id, {
+          nom: rdv.personne,
+          categorie: rdv.categorie || "autre",
+          notes: rdv.notes || "",
+        });
+        if (Array.isArray(newPatient) && newPatient[0]) {
+          setPatients(prev => [...prev, newPatient[0]]);
+        }
+      }
+    }
     const newUsage = (user.usage||0) + 1;
     await sb.updateProfile(token, user.id, { usage: newUsage });
     const display = Array.isArray(saved_res) && saved_res[0]
@@ -862,15 +1083,27 @@ export default function App() {
 
         {/* Onglets */}
         <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["📞","Appels",false],["📅","Agenda",true]].map(([icon,label,isAgenda]) => (
-            <button key={label} onClick={()=>setShowAgenda(isAgenda)}
-              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:showAgenda===isAgenda?"3px solid #1e3a5f":"3px solid transparent", color:showAgenda===isAgenda?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
+          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients","patients"]].map(([icon,label,tab]) => (
+            <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); }}
+              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="appels"&&!showAgenda&&!showPatients)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="appels"&&!showAgenda&&!showPatients)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
               {icon} {label}
             </button>
           ))}
         </div>
 
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+
+          {/* PATIENTS VIEW */}
+          {showPatients && (
+            <PatientsView
+              patients={patients}
+              setPatients={setPatients}
+              user={user}
+              token={token}
+              sb={sb}
+              appointments={appointments}
+            />
+          )}
 
           {/* AGENDA VIEW */}
           {showAgenda && (
@@ -882,7 +1115,7 @@ export default function App() {
           )}
 
           {/* MAIN */}
-          {!showAgenda && <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
+          {!showAgenda && !showPatients && <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
 
             {/* IDLE */}
             {phase==="idle" && (
@@ -984,6 +1217,7 @@ export default function App() {
           </div>}
 
           {/* SIDEBAR AGENDA */}
+          {showPatients || showAgenda ? null : (
           <div style={{ width:290, padding:"24px 18px", overflowY:"auto" }}>
             <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:18 }}>
               MON AGENDA ({appointments.length})
@@ -1031,6 +1265,7 @@ export default function App() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </>
