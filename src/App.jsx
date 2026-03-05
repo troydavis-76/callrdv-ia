@@ -345,6 +345,144 @@ function CalendarModal({ rdv, onClose }) {
 }
 
 // ── RDV Form (opens right after hanging up) ──────────────────
+// ── Stats View ───────────────────────────────────────────────
+function StatsView({ appointments, patients, user }) {
+  const today = new Date();
+  const thisMonth = String(today.getMonth()+1).padStart(2,"0");
+  const thisYear = today.getFullYear();
+
+  const rdvCeMois = appointments.filter(r => r.date?.startsWith(`${thisYear}-${thisMonth}`));
+  const rdvSemaine = appointments.filter(r => {
+    const start = new Date(today);
+    start.setDate(today.getDate() - today.getDay() + 1);
+    const end = new Date(start); end.setDate(start.getDate() + 6);
+    return r.date >= start.toISOString().split("T")[0] && r.date <= end.toISOString().split("T")[0];
+  });
+
+  const catCount = appointments.reduce((acc, r) => {
+    const cat = r.categorie || "autre";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+
+  const topCats = Object.entries(catCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  const catLabels = {
+    medical:"🏥 Médical", dentiste:"🦷 Dentiste", kine:"💪 Kiné", veterinaire:"🐾 Vétérinaire",
+    garage:"🔧 Garage", travaux:"🏠 Travaux", juridique:"⚖️ Juridique", banque:"🏦 Banque",
+    beaute:"💈 Beauté", formation:"🎓 Formation", pro:"💼 Pro", perso:"👤 Perso", autre:"📋 Autre"
+  };
+
+  const catColors = {
+    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
+    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
+    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+  };
+
+  // Last 6 months RDV count
+  const last6 = Array.from({length:6}, (_,i) => {
+    const d = new Date(today);
+    d.setMonth(today.getMonth() - (5-i));
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const mois = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+    return { label: mois[d.getMonth()], count: appointments.filter(r => r.date?.startsWith(key)).length };
+  });
+
+  const maxCount = Math.max(...last6.map(m => m.count), 1);
+
+  const planInfo = { free:{name:"Gratuit",color:"#64748b"}, pro:{name:"Pro",color:"#3b82f6"}, business:{name:"Business",color:"#7c3aed"} };
+  const plan = planInfo[user.plan] || planInfo.free;
+
+  return (
+    <div style={{ flex:1, overflowY:"auto", padding:28, background:"#f0f4f8" }}>
+      <div style={{ maxWidth:900, margin:"0 auto" }}>
+        <div style={{ fontWeight:800, fontSize:22, color:"#1e293b", marginBottom:4 }}>📊 Tableau de bord</div>
+        <div style={{ fontSize:13, color:"#94a3b8", marginBottom:24 }}>Vue d'ensemble de votre activité</div>
+
+        {/* KPI Cards */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+          {[
+            { label:"RDV ce mois", value:rdvCeMois.length, icon:"📅", color:"#3b82f6" },
+            { label:"RDV cette semaine", value:rdvSemaine.length, icon:"📆", color:"#8b5cf6" },
+            { label:"Total patients", value:patients.length, icon:"👥", color:"#10b981" },
+            { label:"Total RDV", value:appointments.length, icon:"📋", color:"#f59e0b" },
+          ].map(({label,value,icon,color}) => (
+            <div key={label} className="card" style={{ padding:20 }}>
+              <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
+              <div style={{ fontSize:32, fontWeight:800, color, marginBottom:4 }}>{value}</div>
+              <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono" }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+          {/* Bar chart */}
+          <div className="card" style={{ padding:24 }}>
+            <div style={{ fontWeight:700, fontSize:15, marginBottom:20 }}>📈 RDV sur 6 mois</div>
+            <div style={{ display:"flex", alignItems:"flex-end", gap:10, height:120 }}>
+              {last6.map(({label,count}) => (
+                <div key={label} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                  <div style={{ fontSize:11, color:"#1e3a5f", fontWeight:700 }}>{count||""}</div>
+                  <div style={{ width:"100%", background:"#1e3a5f", borderRadius:"4px 4px 0 0", height: count === 0 ? 4 : `${Math.round((count/maxCount)*100)}px`, transition:"height .3s", opacity: count===0?0.2:1 }}></div>
+                  <div style={{ fontSize:10, color:"#94a3b8", fontFamily:"DM Mono" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top categories */}
+          <div className="card" style={{ padding:24 }}>
+            <div style={{ fontWeight:700, fontSize:15, marginBottom:20 }}>🏆 Top catégories</div>
+            {topCats.length === 0 ? (
+              <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun RDV encore</div>
+            ) : topCats.map(([cat, count]) => (
+              <div key={cat} style={{ marginBottom:14 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                  <span style={{ fontSize:13, fontWeight:600 }}>{catLabels[cat]||cat}</span>
+                  <span style={{ fontSize:13, color:"#94a3b8" }}>{count} RDV</span>
+                </div>
+                <div style={{ height:6, background:"#f1f5f9", borderRadius:3 }}>
+                  <div style={{ height:6, background:catColors[cat]||"#94a3b8", borderRadius:3, width:`${Math.round((count/appointments.length)*100)}%`, transition:"width .3s" }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Plan + Recent */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:16 }}>
+          <div className="card" style={{ padding:24 }}>
+            <div style={{ fontWeight:700, fontSize:15, marginBottom:16 }}>💳 Mon plan</div>
+            <div style={{ background:`${plan.color}15`, border:`1px solid ${plan.color}30`, borderRadius:12, padding:16, textAlign:"center", marginBottom:16 }}>
+              <div style={{ fontSize:24, fontWeight:800, color:plan.color }}>{plan.name}</div>
+              <div style={{ fontSize:12, color:"#94a3b8", marginTop:4 }}>{user.plan==="free"?`${user.usage||0}/10 RDV utilisés`:"RDV illimités"}</div>
+            </div>
+            {user.plan==="free" && (
+              <div style={{ background:"#f0f4ff", borderRadius:10, padding:14, fontSize:12, color:"#1e3a5f", lineHeight:1.6 }}>
+                💡 Passez en <b>Pro à 9€/mois</b> pour des RDV illimités !
+              </div>
+            )}
+          </div>
+
+          <div className="card" style={{ padding:24 }}>
+            <div style={{ fontWeight:700, fontSize:15, marginBottom:16 }}>🕐 Derniers RDV</div>
+            {appointments.slice(0,5).map((rdv,i) => (
+              <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"8px 0", borderBottom:i<4?"1px solid #f1f5f9":"none" }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600 }}>{rdv.titre||"RDV"}</div>
+                  <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.personne} · {rdv.date}</div>
+                </div>
+              </div>
+            ))}
+            {appointments.length === 0 && <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun RDV encore</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Export PDF ───────────────────────────────────────────────
 function exportPDF(appointments, viewMode) {
   const today = new Date();
@@ -1057,6 +1195,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [patients, setPatients] = useState([]);
   const [showPatients, setShowPatients] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -1182,15 +1321,20 @@ export default function App() {
 
         {/* Onglets */}
         <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients","patients"]].map(([icon,label,tab]) => (
-            <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); }}
-              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="appels"&&!showAgenda&&!showPatients)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="appels"&&!showAgenda&&!showPatients)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
+          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients","patients"],["📊","Stats","stats"]].map(([icon,label,tab]) => (
+            <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); setShowStats(tab==="stats"); }}
+              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
               {icon} {label}
             </button>
           ))}
         </div>
 
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+
+          {/* STATS VIEW */}
+          {showStats && (
+            <StatsView appointments={appointments} patients={patients} user={user} />
+          )}
 
           {/* PATIENTS VIEW */}
           {showPatients && (
@@ -1214,7 +1358,7 @@ export default function App() {
           )}
 
           {/* MAIN */}
-          {!showAgenda && !showPatients && <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
+          {!showAgenda && !showPatients && !showStats && <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
 
             {/* IDLE */}
             {phase==="idle" && (
@@ -1316,7 +1460,7 @@ export default function App() {
           </div>}
 
           {/* SIDEBAR AGENDA */}
-          {showPatients || showAgenda ? null : (
+          {showPatients || showAgenda || showStats ? null : (
           <div style={{ width:290, padding:"24px 18px", overflowY:"auto" }}>
             <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:18 }}>
               MON AGENDA ({appointments.length})
