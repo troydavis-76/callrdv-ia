@@ -783,15 +783,22 @@ export default function App() {
             <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
               {plan.name.toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
             </div>
-            <button onClick={()=>setShowAgenda(a=>!a)} className="btn btn-outline btn-sm" style={{ display:"flex", alignItems:"center", gap:6 }}>
-              {showAgenda ? "📋 Appels" : "📅 Agenda"}
-            </button>
             <div onClick={signOut} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:28, height:28, background:"#e2e8f0", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
               <span style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono" }}>Quitter</span>
             </div>
           </div>
         </nav>
+
+        {/* Onglets */}
+        <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
+          {[["📞","Appels",false],["📅","Agenda",true]].map(([icon,label,isAgenda]) => (
+            <button key={label} onClick={()=>setShowAgenda(isAgenda)}
+              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:showAgenda===isAgenda?"3px solid #1e3a5f":"3px solid transparent", color:showAgenda===isAgenda?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
+              {icon} {label}
+            </button>
+          ))}
+        </div>
 
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
