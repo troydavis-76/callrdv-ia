@@ -318,6 +318,188 @@ function CalendarModal({ rdv, onClose }) {
 }
 
 // ── RDV Form (opens right after hanging up) ──────────────────
+// ── Vue Agenda Calendrier ────────────────────────────────────
+function CalendarView({ appointments, onNewCall, onCalRdv }) {
+  const [viewMode, setViewMode] = React.useState("semaine"); // semaine | mois | liste
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+
+  const today = new Date();
+
+  const getWeekDays = (date) => {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+    start.setDate(diff);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  };
+
+  const getMonthDays = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days = [];
+    const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    for (let i = 0; i < startPad; i++) {
+      const d = new Date(firstDay);
+      d.setDate(d.getDate() - (startPad - i));
+      days.push({ date: d, currentMonth: false });
+    }
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      days.push({ date: new Date(year, month, i), currentMonth: true });
+    }
+    while (days.length % 7 !== 0) {
+      const d = new Date(lastDay);
+      d.setDate(lastDay.getDate() + (days.length - lastDay.getDate() - startPad + 1));
+      days.push({ date: d, currentMonth: false });
+    }
+    return days;
+  };
+
+  const getRdvsForDate = (date) => {
+    const dateStr = date.toISOString().split("T")[0];
+    return appointments.filter(r => r.date === dateStr);
+  };
+
+  const isToday = (date) => date.toDateString() === today.toDateString();
+
+  const navigate = (dir) => {
+    const d = new Date(currentDate);
+    if (viewMode === "semaine") d.setDate(d.getDate() + dir * 7);
+    else d.setMonth(d.getMonth() + dir);
+    setCurrentDate(d);
+  };
+
+  const weekDays = getWeekDays(currentDate);
+  const monthDays = getMonthDays(currentDate);
+  const jours = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+  const catColors = {
+    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
+    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
+    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+  };
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", background:"#f0f4f8" }}>
+      {/* Calendar Header */}
+      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <button onClick={()=>navigate(-1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>‹</button>
+          <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", minWidth:200, textAlign:"center" }}>
+            {viewMode==="semaine"
+              ? `${weekDays[0].getDate()} – ${weekDays[6].getDate()} ${moisNoms[weekDays[6].getMonth()]} ${weekDays[6].getFullYear()}`
+              : `${moisNoms[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+            }
+          </div>
+          <button onClick={()=>navigate(1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>›</button>
+          <button onClick={()=>setCurrentDate(new Date())} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>Aujourd'hui</button>
+        </div>
+        <div style={{ display:"flex", gap:6 }}>
+          {["semaine","mois","liste"].map(m => (
+            <button key={m} onClick={()=>setViewMode(m)}
+              style={{ background:viewMode===m?"#1e3a5f":"#f0f4f8", color:viewMode===m?"#fff":"#64748b", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, textTransform:"capitalize" }}>
+              {m.charAt(0).toUpperCase()+m.slice(1)}
+            </button>
+          ))}
+          <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>
+            📞 Nouvel appel
+          </button>
+        </div>
+      </div>
+
+      {/* Week View */}
+      {viewMode==="semaine" && (
+        <div style={{ flex:1, overflowY:"auto", padding:"0" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
+            {weekDays.map((day, i) => (
+              <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid #e2e8f0":"none" }}>
+                <div style={{ fontSize:11, color:"#94a3b8", fontWeight:600, marginBottom:4 }}>{jours[i]}</div>
+                <div style={{ width:32, height:32, borderRadius:"50%", background:isToday(day)?"#1e3a5f":"transparent", color:isToday(day)?"#fff":"#1e293b", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontWeight:700, fontSize:15 }}>
+                  {day.getDate()}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", flex:1, minHeight:500 }}>
+            {weekDays.map((day, i) => {
+              const rdvs = getRdvsForDate(day);
+              return (
+                <div key={i} style={{ borderRight:i<6?"1px solid #e2e8f0":"none", borderBottom:"1px solid #e2e8f0", padding:8, background:isToday(day)?"#f8faff":"#fff", minHeight:120 }}>
+                  {rdvs.map((rdv, j) => (
+                    <div key={j} onClick={()=>onCalRdv(rdv)}
+                      style={{ background:catColors[rdv.categorie]||"#1e3a5f", color:"#fff", borderRadius:6, padding:"4px 8px", marginBottom:4, cursor:"pointer", fontSize:11, fontWeight:600, lineHeight:1.4 }}>
+                      {rdv.heure && <span style={{ opacity:.8 }}>{rdv.heure} </span>}
+                      {rdv.titre||rdv.personne}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Month View */}
+      {viewMode==="mois" && (
+        <div style={{ flex:1, overflowY:"auto", background:"#fff" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", borderBottom:"1px solid #e2e8f0" }}>
+            {jours.map(j => (
+              <div key={j} style={{ padding:"10px 8px", textAlign:"center", fontSize:11, fontWeight:600, color:"#94a3b8" }}>{j}</div>
+            ))}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)" }}>
+            {monthDays.map(({ date, currentMonth }, i) => {
+              const rdvs = getRdvsForDate(date);
+              return (
+                <div key={i} style={{ minHeight:90, borderRight:(i+1)%7!==0?"1px solid #e2e8f0":"none", borderBottom:"1px solid #e2e8f0", padding:6, background:isToday(date)?"#f8faff":currentMonth?"#fff":"#f8f9fa" }}>
+                  <div style={{ width:24, height:24, borderRadius:"50%", background:isToday(date)?"#1e3a5f":"transparent", color:isToday(date)?"#fff":currentMonth?"#1e293b":"#cbd5e1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:isToday(date)?700:400, marginBottom:4 }}>
+                    {date.getDate()}
+                  </div>
+                  {rdvs.slice(0,2).map((rdv, j) => (
+                    <div key={j} onClick={()=>onCalRdv(rdv)}
+                      style={{ background:catColors[rdv.categorie]||"#1e3a5f", color:"#fff", borderRadius:4, padding:"2px 6px", marginBottom:2, cursor:"pointer", fontSize:10, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                      {rdv.titre||rdv.personne}
+                    </div>
+                  ))}
+                  {rdvs.length > 2 && <div style={{ fontSize:10, color:"#94a3b8", paddingLeft:4 }}>+{rdvs.length-2}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* List View */}
+      {viewMode==="liste" && (
+        <div style={{ flex:1, overflowY:"auto", padding:24 }}>
+          {appointments.length===0 ? (
+            <div style={{ textAlign:"center", padding:"60px 0" }}>
+              <div style={{ fontSize:48, marginBottom:12 }}>📅</div>
+              <div style={{ color:"#94a3b8", fontSize:14 }}>Aucun RDV enregistré</div>
+            </div>
+          ) : appointments.sort((a,b) => a.date > b.date ? 1 : -1).map((rdv, i) => (
+            <div key={i} className="card" style={{ marginBottom:12, display:"flex", alignItems:"center", gap:16 }}>
+              <div style={{ width:4, height:50, borderRadius:4, background:catColors[rdv.categorie]||"#1e3a5f", flexShrink:0 }}></div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{rdv.titre||"Rendez-vous"}</div>
+                <div style={{ fontSize:12, color:"#64748b" }}>{rdv.personne} · {rdv.date}{rdv.heure ? ` à ${rdv.heure}` : ""}</div>
+                {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>📍 {rdv.lieu}</div>}
+              </div>
+              <button onClick={()=>onCalRdv(rdv)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Exporter</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Hook reconnaissance vocale
 function useSpeech(onResult) {
   const [listening, setListening] = React.useState(false);
@@ -510,6 +692,7 @@ export default function App() {
   const [phase, setPhase]         = useState("idle");   // idle | calling | form | agenda
   const [appointments, setAppts]  = useState([]);
   const [calRdv, setCalRdv]       = useState(null);
+  const [showAgenda, setShowAgenda] = useState(false);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -600,6 +783,9 @@ export default function App() {
             <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
               {plan.name.toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
             </div>
+            <button onClick={()=>setShowAgenda(a=>!a)} className="btn btn-outline btn-sm" style={{ display:"flex", alignItems:"center", gap:6 }}>
+              {showAgenda ? "📋 Appels" : "📅 Agenda"}
+            </button>
             <div onClick={signOut} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:28, height:28, background:"#e2e8f0", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
               <span style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono" }}>Quitter</span>
@@ -609,8 +795,17 @@ export default function App() {
 
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
+          {/* AGENDA VIEW */}
+          {showAgenda && (
+            <CalendarView
+              appointments={appointments}
+              onNewCall={()=>{ setShowAgenda(false); setPhase("calling"); }}
+              onCalRdv={setCalRdv}
+            />
+          )}
+
           {/* MAIN */}
-          <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
+          {!showAgenda && <div style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
 
             {/* IDLE */}
             {phase==="idle" && (
@@ -710,6 +905,8 @@ export default function App() {
               />
             )}
           </div>
+
+          </div>}
 
           {/* SIDEBAR AGENDA */}
           <div style={{ width:290, padding:"24px 18px", overflowY:"auto" }}>
