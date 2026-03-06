@@ -1032,9 +1032,14 @@ function useSpeech(onResult) {
 }
 
 function RdvForm({ onSave, onCancel }) {
+  const prefillNom = window.__prefillNom || "";
+  const prefillPatient = window.__prefillPatient || null;
+  window.__prefillNom = null;
+  window.__prefillPatient = null;
+
   const [form, setForm] = useState({
     titre: "",
-    personne: "",
+    personne: prefillNom,
     date: "",
     heure: "",
     lieu: "",
@@ -1046,6 +1051,12 @@ function RdvForm({ onSave, onCancel }) {
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   // Reconnaissance vocale par champ
+  // Pré-remplir depuis fiche patient si disponible
+  useEffect(() => {
+    if (prefillPatient?.telephone) set("telephone_contact", prefillPatient.telephone);
+    if (prefillPatient?.notes) set("notes", prefillPatient.notes);
+  }, []);
+
   const speechPersonne = useSpeech((t) => set("personne", t));
   const speechLieu     = useSpeech((t) => set("lieu", t));
   const speechNotes    = useSpeech((t) => set("notes", form.notes ? form.notes + " " + t : t));
@@ -1292,6 +1303,25 @@ export default function App() {
     });
   }, []);
 
+  // Exposer patients et startWithName pour la recherche client
+  useEffect(() => {
+    window.__patients = patients;
+    window.__selectPatient = (id) => {
+      const p = patients.find(x => x.id === id);
+      if (p && canAdd) {
+        document.getElementById("search-suggestions").style.display = "none";
+        document.getElementById("search-client").value = p.nom;
+        window.__startWithName(p.nom, p);
+      }
+    };
+    window.__startWithName = (nom, patient) => {
+      if (!canAdd) return;
+      window.__prefillNom = nom;
+      window.__prefillPatient = patient || null;
+      setPhase("form");
+    };
+  }, [patients, canAdd]);
+
   // Charger les patients depuis Supabase au login
   useEffect(() => {
     if (user?.id && token) {
@@ -1480,9 +1510,50 @@ export default function App() {
                   ))}
                 </div>
 
-                <button className="btn btn-primary" onClick={()=>canAdd&&setPhase("calling")} disabled={!canAdd} style={{ width:"100%", padding:"17px", fontSize:15 }}>
-                  📞 Demarrer un appel
-                </button>
+                {/* Recherche client */}
+                <div style={{ marginTop:8 }}>
+                  <div className="field-label" style={{ marginBottom:8 }}>NOUVEAU RDV — RECHERCHER LE CLIENT</div>
+                  <div style={{ position:"relative" }}>
+                    <input
+                      placeholder="Tapez le nom du client..."
+                      id="search-client"
+                      autoComplete="off"
+                      onChange={e => {
+                        const val = e.target.value;
+                        const box = document.getElementById("search-suggestions");
+                        if (!val.trim()) { box.style.display="none"; return; }
+                        const matches = window.__patients?.filter(p => p.nom.toLowerCase().includes(val.toLowerCase())) || [];
+                        if (matches.length > 0) {
+                          box.innerHTML = matches.map(p => `<div onclick="window.__selectPatient('${p.id}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='#fff'">${p.nom}${p.telephone ? ` · ${p.telephone}` : ""}</div>`).join("");
+                          box.style.display = "block";
+                        } else {
+                          box.innerHTML = `<div style="padding:10px 14px;font-size:13px;color:#94a3b8;">Nouveau client — fiche vierge</div>`;
+                          box.style.display = "block";
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && canAdd) {
+                          const val = e.target.value.trim();
+                          if (val) { window.__startWithName(val); }
+                        }
+                      }}
+                      style={{ paddingRight:50, fontSize:15, padding:"15px 50px 15px 16px" }}
+                    />
+                    <button
+                      onClick={() => {
+                        const val = document.getElementById("search-client").value.trim();
+                        if (val && canAdd) window.__startWithName(val);
+                      }}
+                      disabled={!canAdd}
+                      style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"#1e3a5f", border:"none", borderRadius:8, padding:"8px 14px", cursor:"pointer", color:"#fff", fontSize:13, fontWeight:600 }}>
+                      ➜
+                    </button>
+                    <div id="search-suggestions" style={{ display:"none", position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1px solid #e2e8f0", borderRadius:"0 0 10px 10px", zIndex:100, boxShadow:"0 4px 16px #00000010" }}></div>
+                  </div>
+                  <div style={{ fontSize:11, color:"#94a3b8", marginTop:8, fontFamily:"DM Mono" }}>
+                    Appuyez sur Entrée ou → pour ouvrir la fiche RDV
+                  </div>
+                </div>
               </div>
             )}
 
