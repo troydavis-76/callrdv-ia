@@ -1060,6 +1060,7 @@ function RdvForm({ onSave, onCancel }) {
     { value:"juridique", label:"⚖️ Notaire / Avocat",     titre:"RDV juridique" },
     { value:"banque",    label:"🏦 Banque / Assurance",   titre:"RDV banque" },
     { value:"beaute",    label:"💈 Coiffeur / Beauté",    titre:"Chez le coiffeur" },
+    { value:"restaurant", label:"🍽️ Restaurant / Traiteur",  titre:"Réservation restaurant" },
     { value:"formation", label:"🎓 Formation / Scolaire", titre:"Réunion scolaire" },
     { value:"pro",       label:"💼 Professionnel",        titre:"Réunion professionnelle" },
     { value:"perso",     label:"👤 Personnel",            titre:"RDV personnel" },
@@ -1072,6 +1073,55 @@ function RdvForm({ onSave, onCancel }) {
   };
 
   const isValid = form.personne.trim() && form.date.trim();
+
+  // Champs dynamiques par catégorie
+  const champsSpecifiques = {
+    medical: [
+      { key:"date_naissance", label:"DATE DE NAISSANCE", placeholder:"JJ/MM/AAAA", type:"text" },
+      { key:"telephone", label:"TÉLÉPHONE", placeholder:"06...", type:"text" },
+      { key:"motif", label:"MOTIF DE CONSULTATION", placeholder:"Douleur, contrôle, renouvellement...", type:"text" },
+      { key:"medecin", label:"MÉDECIN / SPÉCIALISTE", placeholder:"Dr. Martin, Cardiologue...", type:"text" },
+      { key:"mutuelle", label:"MUTUELLE", placeholder:"MGEN, Harmonie...", type:"text" },
+    ],
+    restaurant: [
+      { key:"nb_personnes", label:"NOMBRE DE PERSONNES", placeholder:"2", type:"number" },
+      { key:"heure_arrivee", label:"HEURE D'ARRIVÉE", placeholder:"20h00", type:"text" },
+      { key:"allergies", label:"ALLERGIES / RÉGIMES", placeholder:"Sans gluten, végétarien...", type:"text" },
+      { key:"demandes", label:"DEMANDES SPÉCIALES", placeholder:"Table en terrasse, anniversaire...", type:"text" },
+      { key:"acompte", label:"ACOMPTE DEMANDÉ", placeholder:"Oui / Non / Montant", type:"text" },
+    ],
+    garage: [
+      { key:"marque", label:"MARQUE DU VÉHICULE", placeholder:"Renault, Peugeot...", type:"text" },
+      { key:"modele", label:"MODÈLE", placeholder:"Clio, 308...", type:"text" },
+      { key:"immat", label:"IMMATRICULATION", placeholder:"AB-123-CD", type:"text" },
+      { key:"kilometrage", label:"KILOMÉTRAGE", placeholder:"85 000 km", type:"text" },
+      { key:"intervention", label:"TYPE D'INTERVENTION", placeholder:"Révision, freins, courroie...", type:"text" },
+    ],
+    juridique: [
+      { key:"type_dossier", label:"TYPE DE DOSSIER", placeholder:"Succession, divorce, immobilier...", type:"text" },
+      { key:"reference", label:"RÉFÉRENCE DOSSIER", placeholder:"N° dossier", type:"text" },
+      { key:"urgence", label:"NIVEAU D'URGENCE", placeholder:"Normal / Urgent / Très urgent", type:"text" },
+      { key:"documents", label:"DOCUMENTS À APPORTER", placeholder:"CNI, contrat, acte...", type:"text" },
+    ],
+    travaux: [
+      { key:"type_travaux", label:"TYPE DE TRAVAUX", placeholder:"Plomberie, électricité, peinture...", type:"text" },
+      { key:"superficie", label:"SUPERFICIE / ÉTENDUE", placeholder:"30m², 2 pièces...", type:"text" },
+      { key:"devis", label:"DEVIS DEMANDÉ", placeholder:"Oui / Non", type:"text" },
+      { key:"acces", label:"ACCÈS / DIGICODE", placeholder:"Code d'accès, étage...", type:"text" },
+    ],
+    beaute: [
+      { key:"prestation", label:"PRESTATION", placeholder:"Coupe, couleur, brushing...", type:"text" },
+      { key:"coiffeur", label:"COIFFEUR / ESTHÉTICIENNE", placeholder:"Préférence stylist", type:"text" },
+      { key:"longueur", label:"LONGUEUR DES CHEVEUX", placeholder:"Court, mi-long, long", type:"text" },
+    ],
+    banque: [
+      { key:"type_rdv", label:"TYPE DE RDV", placeholder:"Crédit, investissement, compte...", type:"text" },
+      { key:"conseiller", label:"CONSEILLER", placeholder:"Nom du conseiller", type:"text" },
+      { key:"documents", label:"DOCUMENTS À APPORTER", placeholder:"Bulletins de salaire, avis d'imposition...", type:"text" },
+    ],
+  };
+
+  const champs = champsSpecifiques[form.categorie] || [];
 
   return (
     <div className="form-open" style={{ maxWidth:560 }}>
@@ -1142,6 +1192,28 @@ function RdvForm({ onSave, onCancel }) {
         <div className="field-label">ADRESSE COMPLETE</div>
         <input placeholder="Ex: 12 rue de la Paix, 75001 Paris..." value={form.adresse} onChange={e=>set("adresse",e.target.value)} />
       </div>
+
+      {/* Champs dynamiques par catégorie */}
+      {champs.length > 0 && (
+        <div style={{ background:"#f8faff", border:"1px solid #e2e8f0", borderRadius:12, padding:16, marginBottom:20 }}>
+          <div style={{ fontSize:11, color:"#1e3a5f", fontFamily:"DM Mono", fontWeight:700, marginBottom:14 }}>
+            ✨ INFORMATIONS SPÉCIFIQUES
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            {champs.map(champ => (
+              <div key={champ.key}>
+                <div className="field-label">{champ.label}</div>
+                <input
+                  type={champ.type}
+                  placeholder={champ.placeholder}
+                  value={form[champ.key] || ""}
+                  onChange={e => set(champ.key, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <div style={{ marginBottom:24 }}>
