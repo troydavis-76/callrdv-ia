@@ -1077,47 +1077,40 @@ function RdvForm({ onSave, onCancel }) {
   // Champs dynamiques par catégorie
   const champsSpecifiques = {
     medical: [
-      { key:"date_naissance", label:"DATE DE NAISSANCE", placeholder:"JJ/MM/AAAA", type:"text" },
       { key:"telephone", label:"TÉLÉPHONE", placeholder:"06...", type:"text" },
       { key:"motif", label:"MOTIF DE CONSULTATION", placeholder:"Douleur, contrôle, renouvellement...", type:"text" },
       { key:"medecin", label:"MÉDECIN / SPÉCIALISTE", placeholder:"Dr. Martin, Cardiologue...", type:"text" },
-      { key:"mutuelle", label:"MUTUELLE", placeholder:"MGEN, Harmonie...", type:"text" },
     ],
     restaurant: [
       { key:"nb_personnes", label:"NOMBRE DE PERSONNES", placeholder:"2", type:"number" },
       { key:"heure_arrivee", label:"HEURE D'ARRIVÉE", placeholder:"20h00", type:"text" },
-      { key:"allergies", label:"ALLERGIES / RÉGIMES", placeholder:"Sans gluten, végétarien...", type:"text" },
-      { key:"demandes", label:"DEMANDES SPÉCIALES", placeholder:"Table en terrasse, anniversaire...", type:"text" },
-      { key:"acompte", label:"ACOMPTE DEMANDÉ", placeholder:"Oui / Non / Montant", type:"text" },
+      { key:"demandes", label:"DEMANDES SPÉCIALES", placeholder:"Table en terrasse, anniversaire, allergie...", type:"text" },
     ],
     garage: [
-      { key:"marque", label:"MARQUE DU VÉHICULE", placeholder:"Renault, Peugeot...", type:"text" },
-      { key:"modele", label:"MODÈLE", placeholder:"Clio, 308...", type:"text" },
+      { key:"vehicule", label:"MARQUE / MODÈLE", placeholder:"Renault Clio, Peugeot 308...", type:"text" },
       { key:"immat", label:"IMMATRICULATION", placeholder:"AB-123-CD", type:"text" },
-      { key:"kilometrage", label:"KILOMÉTRAGE", placeholder:"85 000 km", type:"text" },
       { key:"intervention", label:"TYPE D'INTERVENTION", placeholder:"Révision, freins, courroie...", type:"text" },
     ],
     juridique: [
       { key:"type_dossier", label:"TYPE DE DOSSIER", placeholder:"Succession, divorce, immobilier...", type:"text" },
-      { key:"reference", label:"RÉFÉRENCE DOSSIER", placeholder:"N° dossier", type:"text" },
-      { key:"urgence", label:"NIVEAU D'URGENCE", placeholder:"Normal / Urgent / Très urgent", type:"text" },
       { key:"documents", label:"DOCUMENTS À APPORTER", placeholder:"CNI, contrat, acte...", type:"text" },
     ],
     travaux: [
       { key:"type_travaux", label:"TYPE DE TRAVAUX", placeholder:"Plomberie, électricité, peinture...", type:"text" },
-      { key:"superficie", label:"SUPERFICIE / ÉTENDUE", placeholder:"30m², 2 pièces...", type:"text" },
-      { key:"devis", label:"DEVIS DEMANDÉ", placeholder:"Oui / Non", type:"text" },
-      { key:"acces", label:"ACCÈS / DIGICODE", placeholder:"Code d'accès, étage...", type:"text" },
+      { key:"acces", label:"ACCÈS / DIGICODE", placeholder:"Code d'accès, étage, interphone...", type:"text" },
     ],
     beaute: [
       { key:"prestation", label:"PRESTATION", placeholder:"Coupe, couleur, brushing...", type:"text" },
-      { key:"coiffeur", label:"COIFFEUR / ESTHÉTICIENNE", placeholder:"Préférence stylist", type:"text" },
-      { key:"longueur", label:"LONGUEUR DES CHEVEUX", placeholder:"Court, mi-long, long", type:"text" },
+      { key:"coiffeur", label:"PRÉFÉRENCE COIFFEUR", placeholder:"Nom du coiffeur souhaité", type:"text" },
     ],
     banque: [
       { key:"type_rdv", label:"TYPE DE RDV", placeholder:"Crédit, investissement, compte...", type:"text" },
-      { key:"conseiller", label:"CONSEILLER", placeholder:"Nom du conseiller", type:"text" },
       { key:"documents", label:"DOCUMENTS À APPORTER", placeholder:"Bulletins de salaire, avis d'imposition...", type:"text" },
+    ],
+    veterinaire: [
+      { key:"animal", label:"NOM DE L'ANIMAL", placeholder:"Rex, Mimi...", type:"text" },
+      { key:"espece", label:"ESPÈCE / RACE", placeholder:"Chien Labrador, Chat Siamois...", type:"text" },
+      { key:"motif_veto", label:"MOTIF", placeholder:"Vaccination, contrôle, urgence...", type:"text" },
     ],
   };
 
