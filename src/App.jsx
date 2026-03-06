@@ -771,6 +771,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({ nom:"", email:"", telephone:"", notes:"", categorie:"autre" });
   const [importing, setImporting] = React.useState(false);
+  const [editingPatient, setEditingPatient] = React.useState(null);
 
   const filtered = patients.filter(p => p.nom.toLowerCase().includes(search.toLowerCase()));
 
@@ -825,8 +826,50 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
     reader.readAsText(file);
   };
 
+  const handleUpdatePatient = async (data) => {
+    await sb.updatePatient(token, editingPatient.id, data);
+    setPatients(prev => prev.map(p => p.id === editingPatient.id ? { ...p, ...data } : p));
+    setSelected(prev => prev?.id === editingPatient.id ? { ...prev, ...data } : prev);
+    setEditingPatient(null);
+  };
+
   return (
-    <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+    <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative" }}>
+      {/* Modal édition patient */}
+      {editingPatient && (
+        <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div className="card fade-up" style={{ width:"100%", maxWidth:480, padding:32, maxHeight:"90vh", overflowY:"auto" }}>
+            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>✏️ Modifier la fiche client</div>
+            {[
+              { key:"nom", label:"NOM COMPLET *", placeholder:"Nom complet", type:"text" },
+              { key:"email", label:"EMAIL", placeholder:"email@...", type:"email" },
+              { key:"telephone", label:"TÉLÉPHONE", placeholder:"06...", type:"text" },
+              { key:"date_naissance", label:"DATE DE NAISSANCE", placeholder:"JJ/MM/AAAA", type:"text" },
+              { key:"adresse", label:"ADRESSE COMPLÈTE", placeholder:"12 rue de la Paix, 75001 Paris", type:"text" },
+            ].map(field => (
+              <div key={field.key} style={{ marginBottom:14 }}>
+                <div className="field-label">{field.label}</div>
+                <input type={field.type} placeholder={field.placeholder} defaultValue={editingPatient[field.key]||""} id={`edit-${field.key}`} />
+              </div>
+            ))}
+            <div style={{ marginBottom:20 }}>
+              <div className="field-label">NOTES</div>
+              <textarea rows={3} placeholder="Informations importantes..." defaultValue={editingPatient.notes||""} id="edit-notes" />
+            </div>
+            <div style={{ display:"flex", gap:10 }}>
+              <button className="btn btn-outline" onClick={()=>setEditingPatient(null)} style={{ flex:1 }}>Annuler</button>
+              <button className="btn btn-primary" onClick={()=>{
+                const data = {};
+                ["nom","email","telephone","date_naissance","adresse"].forEach(k => {
+                  data[k] = document.getElementById(`edit-${k}`).value;
+                });
+                data.notes = document.getElementById("edit-notes").value;
+                handleUpdatePatient(data);
+              }} style={{ flex:2 }}>💾 Sauvegarder</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Liste patients */}
       <div style={{ width:320, borderRight:"1px solid #e2e8f0", display:"flex", flexDirection:"column" }}>
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
@@ -886,35 +929,65 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
           </div>
         ) : selected ? (
           <div className="fade-up">
+            {/* Header fiche */}
             <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
-              <div style={{ width:56, height:56, borderRadius:"50%", background:catColors[selected.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:22 }}>
+              <div style={{ width:56, height:56, borderRadius:"50%", background:catColors[selected.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:22, flexShrink:0 }}>
                 {selected.nom[0]?.toUpperCase()}
               </div>
-              <div>
+              <div style={{ flex:1 }}>
                 <div style={{ fontWeight:800, fontSize:22, color:"#1e293b" }}>{selected.nom}</div>
-                <div style={{ fontSize:12, color:"#94a3b8" }}>Patient depuis {new Date(selected.created_at).toLocaleDateString("fr-FR")}</div>
+                <div style={{ fontSize:12, color:"#94a3b8" }}>Client depuis {new Date(selected.created_at).toLocaleDateString("fr-FR")} · {getPatientRdvs(selected.nom).length} RDV</div>
               </div>
-              <button onClick={()=>handleDelete(selected.id)} style={{ marginLeft:"auto", background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#ef4444", fontWeight:600 }}>🗑️ Supprimer</button>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={()=>setEditingPatient(selected)} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#1e3a5f", fontWeight:600 }}>✏️ Modifier</button>
+                <button onClick={()=>handleDelete(selected.id)} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#ef4444", fontWeight:600 }}>🗑️</button>
+              </div>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
-              {[{label:"RDV total",value:getPatientRdvs(selected.nom).length},{label:"Email",value:selected.email||"—"},{label:"Téléphone",value:selected.telephone||"—"}].map(({label,value})=>(
-                <div key={label} className="card" style={{ padding:16 }}>
-                  <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:4 }}>{label}</div>
-                  <div style={{ fontWeight:700, color:"#1e293b", fontSize:14 }}>{value}</div>
-                </div>
-              ))}
+
+            {/* Coordonnées */}
+            <div className="card" style={{ marginBottom:16 }}>
+              <div className="field-label" style={{ marginBottom:14 }}>COORDONNÉES</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+                {[
+                  { icon:"📧", label:"Email", value:selected.email },
+                  { icon:"📞", label:"Téléphone", value:selected.telephone },
+                  { icon:"🎂", label:"Date de naissance", value:selected.date_naissance },
+                  { icon:"📍", label:"Adresse", value:selected.adresse },
+                ].map(({icon,label,value}) => (
+                  <div key={label} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                    <span style={{ fontSize:18, marginTop:1 }}>{icon}</span>
+                    <div>
+                      <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:2 }}>{label}</div>
+                      <div style={{ fontSize:13, fontWeight:600, color: value ? "#1e293b" : "#cbd5e1" }}>{value || "Non renseigné"}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            {selected.notes && <div className="card" style={{ marginBottom:20 }}><div className="field-label" style={{ marginBottom:8 }}>NOTES</div><div style={{ fontSize:13, color:"#475569", lineHeight:1.7 }}>{selected.notes}</div></div>}
+
+            {/* Notes */}
+            {selected.notes && (
+              <div className="card" style={{ marginBottom:16 }}>
+                <div className="field-label" style={{ marginBottom:8 }}>📝 NOTES</div>
+                <div style={{ fontSize:13, color:"#475569", lineHeight:1.7 }}>{selected.notes}</div>
+              </div>
+            )}
+
+            {/* Historique RDV */}
             <div className="card">
-              <div className="field-label" style={{ marginBottom:12 }}>HISTORIQUE DES RDV</div>
+              <div className="field-label" style={{ marginBottom:12 }}>📅 HISTORIQUE DES RDV</div>
               {getPatientRdvs(selected.nom).length === 0 ? (
-                <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun RDV enregistré pour ce patient</div>
-              ) : getPatientRdvs(selected.nom).map((rdv,i) => (
-                <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 0", borderBottom:"1px solid #f1f5f9" }}>
-                  <div style={{ width:4, height:40, borderRadius:4, background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
-                  <div>
-                    <div style={{ fontWeight:600, fontSize:13 }}>{rdv.titre||"Rendez-vous"}</div>
-                    <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.date}{rdv.heure?` à ${rdv.heure}`:""} · {rdv.lieu||""}</div>
+                <div style={{ color:"#94a3b8", fontSize:13, padding:"20px 0", textAlign:"center" }}>Aucun RDV enregistré pour ce client</div>
+              ) : getPatientRdvs(selected.nom).sort((a,b) => b.date > a.date ? 1 : -1).map((rdv,i) => (
+                <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"12px 0", borderBottom:"1px solid #f1f5f9" }}>
+                  <div style={{ width:4, height:48, borderRadius:4, background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:13, marginBottom:2 }}>{rdv.titre||"Rendez-vous"}</div>
+                    <div style={{ fontSize:11, color:"#94a3b8" }}>📅 {rdv.date}{rdv.heure?` à ${rdv.heure}`:""}</div>
+                    {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8" }}>📍 {rdv.lieu}</div>}
+                  </div>
+                  <div style={{ fontSize:11, background:(catColors[rdv.categorie]||"#94a3b8")+"20", color:catColors[rdv.categorie]||"#94a3b8", padding:"3px 10px", borderRadius:20, fontWeight:600 }}>
+                    {rdv.categorie||"autre"}
                   </div>
                 </div>
               ))}
