@@ -122,6 +122,7 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 
 function useAuth() {
   const [user, setUser] = useState(null);
+  const [showLanding, setShowLanding] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const signUp = async (email, password, name) => {
@@ -1331,6 +1332,186 @@ function RdvForm({ onSave, onCancel }) {
   );
 }
 
+// ── Landing Page ─────────────────────────────────────────────
+function LandingPage({ onLogin }) {
+  return (
+    <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#fafaf8", color:"#0f2340", overflowX:"hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+        .lp-btn-primary { background:#0f2340; color:#fff; padding:13px 26px; border-radius:10px; font-size:15px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 16px rgba(15,35,64,.25); cursor:pointer; border:none; transition:all .2s; font-family:'DM Sans',sans-serif; }
+        .lp-btn-primary:hover { background:#1e3a5f; transform:translateY(-1px); }
+        .lp-btn-outline { background:#fff; color:#0f2340; padding:13px 26px; border-radius:10px; font-size:15px; font-weight:500; text-decoration:none; border:1px solid #e2e8f0; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+        .lp-btn-outline:hover { background:#f0f4f8; }
+        .lp-feature-card { padding:28px; border:1px solid #e2e8f0; border-radius:16px; background:#fff; transition:all .2s; }
+        .lp-feature-card:hover { border-color:#4a90d9; box-shadow:0 8px 32px rgba(74,144,217,.1); transform:translateY(-2px); }
+        .lp-pricing-card { border:1px solid #e2e8f0; border-radius:20px; padding:36px 28px; background:#fff; transition:all .2s; position:relative; }
+        .lp-pricing-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(15,35,64,.1); }
+        .lp-testimonial { background:#fff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; }
+        @media(max-width:900px) { .lp-hero-mock { display:none !important; } }
+        @media(max-width:768px) { .lp-grid { grid-template-columns:1fr !important; } .lp-stats { grid-template-columns:repeat(2,1fr) !important; } }
+      `}</style>
+
+      {/* NAV */}
+      <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 48px", background:"rgba(250,250,248,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:20, color:"#0f2340", display:"flex", alignItems:"center", gap:10 }}>
+          📞 CallRDV IA
+          <span style={{ background:"#0f2340", color:"#fff", borderRadius:8, padding:"3px 9px", fontSize:11, fontFamily:"'DM Mono',monospace" }}>BETA</span>
+        </div>
+        <div style={{ display:"flex", gap:10 }}>
+          <button className="lp-btn-outline" onClick={onLogin} style={{ padding:"9px 18px", fontSize:13 }}>Se connecter</button>
+          <button className="lp-btn-primary" onClick={onLogin} style={{ padding:"9px 18px", fontSize:13 }}>Commencer gratuitement →</button>
+        </div>
+      </div>
+
+      {/* HERO */}
+      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", padding:"120px 48px 80px", background:"linear-gradient(135deg,#f8faff 0%,#eef4fb 50%,#f8faff 100%)", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px)", backgroundSize:"60px 60px", opacity:.35 }}></div>
+        <div style={{ position:"relative", zIndex:1, maxWidth:560 }}>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"#fff", border:"1px solid #e2e8f0", borderRadius:100, padding:"5px 14px", fontSize:12, fontFamily:"'DM Mono',monospace", color:"#1e3a5f", marginBottom:28, boxShadow:"0 2px 8px rgba(0,0,0,.06)" }}>
+            <span style={{ width:6, height:6, background:"#22c55e", borderRadius:"50%", display:"inline-block" }}></span>
+            🎁 Offre de lancement — 1er mois offert
+          </div>
+          <h1 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(40px,5vw,60px)", lineHeight:1.1, marginBottom:22 }}>
+            Vos rendez-vous,<br/><span style={{ fontStyle:"italic", color:"#2d5a8e" }}>organisés en secondes</span>
+          </h1>
+          <p style={{ fontSize:17, color:"#64748b", lineHeight:1.7, marginBottom:36, fontWeight:300 }}>
+            Après chaque appel, retrouvez votre client par son nom et créez son RDV en 2 minutes. Rappels automatiques inclus.
+          </p>
+          <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+            <button className="lp-btn-primary" onClick={onLogin} style={{ fontSize:15, padding:"14px 28px" }}>Commencer gratuitement →</button>
+            <button className="lp-btn-outline" onClick={()=>document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})} style={{ fontSize:15, padding:"14px 28px" }}>Voir les fonctionnalités</button>
+          </div>
+        </div>
+        {/* Mockup */}
+        <div className="lp-hero-mock" style={{ position:"absolute", right:48, top:"50%", transform:"translateY(-50%)", zIndex:1 }}>
+          <div style={{ width:400, background:"#fff", borderRadius:16, boxShadow:"0 24px 64px rgba(15,35,64,.15)", border:"1px solid #e2e8f0", overflow:"hidden" }}>
+            <div style={{ background:"#0f2340", padding:"12px 16px", display:"flex", alignItems:"center", gap:7 }}>
+              {["#ff5f57","#febc2e","#28c840"].map(col => <div key={col} style={{ width:9, height:9, borderRadius:"50%", background:col }}></div>)}
+              <span style={{ color:"#fff", fontSize:11, fontFamily:"'DM Mono',monospace", marginLeft:8 }}>callrdv.com</span>
+            </div>
+            <div style={{ padding:18 }}>
+              <div style={{ background:"#f0f4f8", borderRadius:8, padding:"10px 13px", fontSize:12, color:"#94a3b8", marginBottom:14 }}>🔍 Rechercher un client...</div>
+              {[{color:"#3b82f6",title:"Dr. Martin — Consultation",sub:"Demain à 14h00 · Cabinet",cat:"médical"},{color:"#f59e0b",title:"Garage Dupont — Révision",sub:"15 mars · Renault Clio",cat:"garage"},{color:"#8b5cf6",title:"Maître Leblanc — Dossier",sub:"18 mars à 16h00",cat:"juridique"}].map((r,i) => (
+                <div key={i} style={{ background:"#f8faff", borderRadius:9, padding:"11px 13px", marginBottom:7, display:"flex", alignItems:"center", gap:9 }}>
+                  <div style={{ width:7, height:7, borderRadius:"50%", background:r.color, flexShrink:0 }}></div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:11, fontWeight:600, color:"#0f2340" }}>{r.title}</div>
+                    <div style={{ fontSize:10, color:"#94a3b8" }}>{r.sub}</div>
+                  </div>
+                  <div style={{ fontSize:9, background:r.color+"20", color:r.color, padding:"2px 7px", borderRadius:20, fontFamily:"'DM Mono',monospace" }}>{r.cat}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* STATS */}
+      <div className="lp-stats" style={{ background:"#0f2340", display:"grid", gridTemplateColumns:"repeat(4,1fr)" }}>
+        {[["2min","pour créer un RDV"],["13","catégories disponibles"],["J-3","rappels automatiques"],["100%","conforme RGPD"]].map(([n,l],i) => (
+          <div key={i} style={{ padding:"32px 36px", borderRight:i<3?"1px solid rgba(255,255,255,.1)":"none", textAlign:"center" }}>
+            <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:42, color:"#fff", marginBottom:6 }}>{n}</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,.45)", fontFamily:"'DM Mono',monospace" }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* FEATURES */}
+      <div id="lp-features" style={{ padding:"90px 48px", maxWidth:1100, margin:"0 auto" }}>
+        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Fonctionnalités</div>
+        <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:14 }}>Tout ce qu'il vous faut</h2>
+        <p style={{ fontSize:15, color:"#64748b", maxWidth:500, lineHeight:1.7, marginBottom:48, fontWeight:300 }}>Une interface pensée pour aller vite. Pas de formation, juste l'essentiel.</p>
+        <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
+          {[{icon:"🔍",title:"Recherche client",desc:"Tapez un nom et la fiche client apparaît avec tout son historique de RDV."},{icon:"📋",title:"Fiches par catégorie",desc:"Médecin, restaurant, garage — chaque type de RDV a ses champs adaptés."},{icon:"🔔",title:"Rappels automatiques",desc:"Emails de rappel J-3 et J-1 envoyés automatiquement à vos clients."},{icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Export Google Calendar ou Outlook."},{icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité et vos statistiques en temps réel."},{icon:"📄",title:"Export PDF",desc:"Générez un planning PDF professionnel en un clic depuis l'agenda."}].map((f,i) => (
+            <div key={i} className="lp-feature-card">
+              <div style={{ width:44, height:44, background:"#f0f4f8", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, marginBottom:16 }}>{f.icon}</div>
+              <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>{f.title}</div>
+              <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7, fontWeight:300 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PRICING */}
+      <div style={{ padding:"90px 48px", background:"#f0f4f8" }}>
+        <div style={{ maxWidth:1000, margin:"0 auto" }}>
+          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Tarifs</div>
+          <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:14 }}>Simple et transparent</h2>
+          <p style={{ fontSize:15, color:"#64748b", maxWidth:440, lineHeight:1.7, marginBottom:44, fontWeight:300 }}>Commencez gratuitement. Passez au Pro quand vous êtes prêt.</p>
+          <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
+            {[
+              {name:"Gratuit",price:"0€",period:"pour toujours",features:["10 RDV par mois","Fiches clients de base","Agenda semaine / mois","Export Google Calendar"],featured:false,badge:null,cta:"Commencer →"},
+              {name:"Pro",price:"9€",period:"par mois · sans engagement",features:["RDV illimités","Fiches clients complètes","Rappels email automatiques","Export PDF","Tableau de bord stats"],featured:true,badge:"🎁 1er mois offert",cta:"Essayer 1 mois gratuit →"},
+              {name:"Business",price:"29€",period:"par mois · sans engagement",features:["Tout le plan Pro","Multi-utilisateurs","Import CSV patients","Support prioritaire","1er mois offert"],featured:false,badge:"🚀 Offre lancement",cta:"Démarrer →"},
+            ].map((plan,i) => (
+              <div key={i} className="lp-pricing-card" style={{ background:plan.featured?"#0f2340":"#fff", borderColor:plan.featured?"#0f2340":"#e2e8f0" }}>
+                {plan.badge && <div style={{ position:"absolute", top:-11, left:"50%", transform:"translateX(-50%)", background:plan.featured?"#e8b86d":"#0f2340", color:plan.featured?"#0f2340":"#fff", padding:"3px 13px", borderRadius:100, fontSize:10, fontWeight:700, fontFamily:"'DM Mono',monospace", whiteSpace:"nowrap" }}>{plan.badge}</div>}
+                <div style={{ fontSize:11, fontFamily:"'DM Mono',monospace", color:plan.featured?"rgba(255,255,255,.5)":"#64748b", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.1em" }}>{plan.name}</div>
+                <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:46, color:plan.featured?"#fff":"#0f2340", lineHeight:1, marginBottom:4 }}>{plan.price}</div>
+                <div style={{ fontSize:12, color:plan.featured?"rgba(255,255,255,.45)":"#64748b", marginBottom:20 }}>{plan.period}</div>
+                <div style={{ height:1, background:plan.featured?"rgba(255,255,255,.1)":"#e2e8f0", marginBottom:20 }}></div>
+                <ul style={{ listStyle:"none", marginBottom:24 }}>
+                  {plan.features.map((f,j) => (
+                    <li key={j} style={{ fontSize:13, color:plan.featured?"rgba(255,255,255,.7)":"#64748b", padding:"6px 0", display:"flex", alignItems:"center", gap:9 }}>
+                      <span style={{ color:plan.featured?"#e8b86d":"#4a90d9", fontWeight:700 }}>✓</span>{f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={onLogin} style={{ display:"block", width:"100%", textAlign:"center", padding:"11px", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", background:plan.featured?"#fff":"transparent", color:"#0f2340", border:plan.featured?"none":"1px solid #e2e8f0", fontFamily:"'DM Sans',sans-serif" }}>
+                  {plan.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign:"center", marginTop:18, fontSize:12, color:"#94a3b8", fontFamily:"'DM Mono',monospace" }}>
+            ⏳ Offres valables jusqu'au <span style={{ color:"#e8b86d", fontWeight:600 }}>30 avril 2026</span>
+          </div>
+        </div>
+      </div>
+
+      {/* TESTIMONIALS */}
+      <div style={{ padding:"90px 48px", maxWidth:1000, margin:"0 auto" }}>
+        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Témoignages</div>
+        <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:44 }}>Ils nous font confiance</h2>
+        <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
+          {[{stars:5,text:"Enfin une app simple pour noter mes RDV après chaque appel. Plus aucun oubli !",name:"Sophie M.",role:"Assistante médicale",init:"S"},{stars:5,text:"Les rappels automatiques ont changé ma vie. Mes clients arrivent toujours à l'heure maintenant.",name:"Karim B.",role:"Gérant de garage",init:"K"},{stars:5,text:"Interface claire, rapide à prendre en main. Exactement ce qu'il me fallait pour mon cabinet.",name:"Amina L.",role:"Avocate",init:"A"}].map((t,i) => (
+            <div key={i} className="lp-testimonial">
+              <div style={{ color:"#e8b86d", marginBottom:12, fontSize:14 }}>{"★".repeat(t.stars)}</div>
+              <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:15, color:"#0f2340", lineHeight:1.7, marginBottom:20, fontStyle:"italic" }}>"{t.text}"</div>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ width:38, height:38, borderRadius:"50%", background:"#0f2340", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:14 }}>{t.init}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600 }}>{t.name}</div>
+                  <div style={{ fontSize:11, color:"#94a3b8" }}>{t.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA FINAL */}
+      <div style={{ padding:"90px 48px", background:"#0f2340", textAlign:"center", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)", backgroundSize:"60px 60px" }}></div>
+        <div style={{ position:"relative", zIndex:1 }}>
+          <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(34px,4vw,52px)", color:"#fff", marginBottom:18, lineHeight:1.2 }}>Prêt à simplifier<br/>votre gestion de RDV ?</h2>
+          <p style={{ fontSize:16, color:"rgba(255,255,255,.5)", marginBottom:36, fontWeight:300 }}>Gratuit pour commencer — sans carte bancaire.</p>
+          <button className="lp-btn-primary" onClick={onLogin} style={{ fontSize:15, padding:"15px 34px" }}>Créer mon compte gratuitement →</button>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div style={{ padding:"32px 48px", borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:14 }}>
+        <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:17, color:"#0f2340" }}>📞 CallRDV IA</div>
+        <div style={{ display:"flex", gap:20 }}>
+          {["Confidentialité","CGU","Contact"].map(l => <a key={l} href="#" style={{ fontSize:12, color:"#94a3b8", textDecoration:"none" }}>{l}</a>)}
+        </div>
+        <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"'DM Mono',monospace" }}>© 2026 CallRDV IA · Conforme RGPD</div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main App ─────────────────────────────────────────────────
 export default function App() {
   const auth = useAuth();
@@ -1455,7 +1636,10 @@ export default function App() {
     updateUser({ plan:key }); setPrice(false);
   };
 
-  if (!user) return (<><style>{CSS}</style><AuthPage authHooks={{ signIn, signUp, loading }} /></>);
+  if (!user) {
+    if (showLanding) return <LandingPage onLogin={() => setShowLanding(false)} />;
+    return (<><style>{CSS}</style><AuthPage authHooks={{ signIn, signUp, loading }} /></>);
+  }
 
   return (
     <>
