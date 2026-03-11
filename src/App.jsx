@@ -1334,180 +1334,286 @@ function RdvForm({ onSave, onCancel }) {
 
 // ── Landing Page ─────────────────────────────────────────────
 function LandingPage({ onLogin }) {
+  const LP_CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+    .lp-body { font-family: "DM Sans", sans-serif; background: #fafaf8; color: #0f2340; overflow-x: hidden; }
+    .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 60px; background: rgba(250,250,248,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; }
+    .lp-logo { font-family: "Instrument Serif", serif; font-size: 22px; color: #0f2340; display: flex; align-items: center; gap: 10px; }
+    .lp-logo span { background: #0f2340; color: #fff; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-family: "DM Mono", monospace; }
+    .lp-nav-links { display: flex; align-items: center; gap: 28px; }
+    .lp-nav-links a { text-decoration: none; color: #64748b; font-size: 14px; font-weight: 500; transition: color .2s; }
+    .lp-nav-links a:hover { color: #0f2340; }
+    .lp-btn-nav { background: #0f2340 !important; color: #fff !important; padding: 10px 22px; border-radius: 8px; cursor: pointer; border: none; font-size: 14px; font-weight: 600; font-family: "DM Sans", sans-serif; }
+    .lp-hero { min-height: 100vh; display: flex; align-items: center; padding: 120px 60px 80px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f8faff 0%, #eef4fb 50%, #f8faff 100%); }
+    .lp-hero-grid { position: absolute; inset: 0; background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 60px 60px; opacity: 0.4; }
+    .lp-hero-content { position: relative; z-index: 1; max-width: 600px; }
+    .lp-badge { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; padding: 6px 16px; font-size: 12px; font-family: "DM Mono", monospace; color: #1e3a5f; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .lp-badge::before { content: ""; width: 6px; height: 6px; background: #22c55e; border-radius: 50%; display: inline-block; }
+    .lp-h1 { font-family: "Instrument Serif", serif; font-size: clamp(40px,5vw,62px); line-height: 1.1; color: #0f2340; margin-bottom: 24px; }
+    .lp-h1 em { font-style: italic; color: #2d5a8e; }
+    .lp-sub { font-size: 18px; color: #64748b; line-height: 1.7; margin-bottom: 40px; font-weight: 300; }
+    .lp-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .lp-btn-primary { background: #0f2340; color: #fff; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; font-family: "DM Sans", sans-serif; box-shadow: 0 4px 16px rgba(30,58,95,0.3); transition: all .2s; }
+    .lp-btn-primary:hover { background: #2d5a8e; transform: translateY(-1px); }
+    .lp-btn-secondary { color: #0f2340; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 500; text-decoration: none; border: 1px solid #e2e8f0; background: #fff; transition: all .2s; }
+    .lp-btn-secondary:hover { background: #f0f4f8; }
+    .lp-mockup { width: 440px; background: #fff; border-radius: 16px; box-shadow: 0 24px 64px rgba(15,35,64,0.15); overflow: hidden; border: 1px solid #e2e8f0; position: absolute; right: 60px; top: 50%; transform: translateY(-50%); z-index: 1; }
+    .lp-mockup-bar { background: #0f2340; padding: 14px 20px; display: flex; align-items: center; gap: 8px; }
+    .lp-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .lp-mockup-title { color: #fff; font-size: 12px; font-family: "DM Mono", monospace; margin-left: 8px; }
+    .lp-mockup-body { padding: 20px; }
+    .lp-search { background: #f0f4f8; border-radius: 8px; padding: 11px 14px; font-size: 12px; color: #94a3b8; margin-bottom: 16px; }
+    .lp-rdv { background: #f8faff; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .lp-rdv-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .lp-rdv-title { font-size: 12px; font-weight: 600; color: #0f2340; }
+    .lp-rdv-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .lp-rdv-tag { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: "DM Mono", monospace; }
+    .lp-stats { display: grid; grid-template-columns: repeat(4,1fr); background: #0f2340; }
+    .lp-stat { padding: 32px 20px; text-align: center; border-right: 1px solid rgba(255,255,255,0.1); }
+    .lp-stat:last-child { border-right: none; }
+    .lp-stat-num { font-family: "Instrument Serif", serif; font-size: 40px; color: #fff; }
+    .lp-stat-label { font-size: 11px; color: rgba(255,255,255,0.45); font-family: "DM Mono", monospace; margin-top: 6px; }
+    .lp-section { padding: 90px 60px; max-width: 1200px; margin: 0 auto; }
+    .lp-label { font-family: "DM Mono", monospace; font-size: 11px; color: #4a90d9; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 14px; }
+    .lp-h2 { font-family: "Instrument Serif", serif; font-size: clamp(30px,3vw,44px); color: #0f2340; margin-bottom: 14px; line-height: 1.2; }
+    .lp-section-sub { font-size: 16px; color: #64748b; max-width: 520px; line-height: 1.7; margin-bottom: 56px; font-weight: 300; }
+    .lp-features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .lp-feature { padding: 28px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; transition: all .2s; }
+    .lp-feature:hover { border-color: #4a90d9; box-shadow: 0 8px 32px rgba(74,144,217,0.1); transform: translateY(-2px); }
+    .lp-feature-icon { width: 44px; height: 44px; background: #f0f4f8; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+    .lp-feature-title { font-size: 15px; font-weight: 600; color: #0f2340; margin-bottom: 8px; }
+    .lp-feature-desc { font-size: 13px; color: #64748b; line-height: 1.7; font-weight: 300; }
+    .lp-video-section { padding: 80px 60px; background: #f0f4f8; }
+    .lp-video-inner { max-width: 860px; margin: 0 auto; text-align: center; }
+    .lp-video-box { background: #0f2340; border-radius: 18px; aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; margin-top: 44px; cursor: pointer; position: relative; overflow: hidden; }
+    .lp-play { width: 68px; height: 68px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); transition: all .2s; }
+    .lp-video-box:hover .lp-play { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+    .lp-play::after { content: ""; border-left: 22px solid #fff; border-top: 13px solid transparent; border-bottom: 13px solid transparent; margin-left: 4px; }
+    .lp-video-label { color: rgba(255,255,255,0.5); font-size: 12px; font-family: "DM Mono", monospace; }
+    .lp-pricing-section { padding: 90px 60px; max-width: 1200px; margin: 0 auto; }
+    .lp-pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 44px; }
+    .lp-plan { border: 1px solid #e2e8f0; border-radius: 18px; padding: 36px 28px; background: #fff; position: relative; transition: all .2s; }
+    .lp-plan:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(15,35,64,0.1); }
+    .lp-plan.featured { background: #0f2340; border-color: #0f2340; }
+    .lp-plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: #e8b86d; color: #0f2340; padding: 3px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; font-family: "DM Mono", monospace; white-space: nowrap; }
+    .lp-plan-name { font-size: 12px; font-family: "DM Mono", monospace; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .lp-plan.featured .lp-plan-name { color: rgba(255,255,255,0.45); }
+    .lp-plan-price { font-family: "Instrument Serif", serif; font-size: 48px; color: #0f2340; line-height: 1; margin-bottom: 4px; }
+    .lp-plan.featured .lp-plan-price { color: #fff; }
+    .lp-plan-period { font-size: 12px; color: #64748b; margin-bottom: 24px; }
+    .lp-plan.featured .lp-plan-period { color: rgba(255,255,255,0.45); }
+    .lp-plan-divider { height: 1px; background: #e2e8f0; margin-bottom: 24px; }
+    .lp-plan.featured .lp-plan-divider { background: rgba(255,255,255,0.1); }
+    .lp-plan ul { list-style: none; margin-bottom: 28px; }
+    .lp-plan ul li { font-size: 13px; color: #64748b; padding: 7px 0; display: flex; align-items: center; gap: 8px; }
+    .lp-plan.featured ul li { color: rgba(255,255,255,0.65); }
+    .lp-plan ul li::before { content: "✓"; color: #4a90d9; font-weight: 700; flex-shrink: 0; }
+    .lp-plan.featured ul li::before { color: #e8b86d; }
+    .lp-plan-cta { display: block; text-align: center; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all .2s; cursor: pointer; border: none; font-family: "DM Sans", sans-serif; width: 100%; }
+    .lp-plan-cta-outline { border: 1px solid #e2e8f0; color: #0f2340; background: transparent; }
+    .lp-plan-cta-outline:hover { background: #f0f4f8; }
+    .lp-plan-cta-filled { background: #fff; color: #0f2340; }
+    .lp-plan-cta-filled:hover { background: rgba(255,255,255,0.9); }
+    .lp-promo-note { text-align: center; margin-top: 18px; font-size: 12px; color: #94a3b8; font-family: "DM Mono", monospace; }
+    .lp-promo-note span { color: #e8b86d; font-weight: 600; }
+    .lp-testi-section { padding: 90px 60px; background: #f0f4f8; }
+    .lp-testi-inner { max-width: 1100px; margin: 0 auto; }
+    .lp-testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 44px; }
+    .lp-testi { background: #fff; border-radius: 14px; padding: 28px; border: 1px solid #e2e8f0; }
+    .lp-stars { color: #e8b86d; font-size: 13px; margin-bottom: 14px; }
+    .lp-testi-text { font-size: 15px; color: #0f2340; line-height: 1.7; margin-bottom: 20px; font-style: italic; font-family: "Instrument Serif", serif; }
+    .lp-author { display: flex; align-items: center; gap: 10px; }
+    .lp-avatar { width: 38px; height: 38px; border-radius: 50%; background: #0f2340; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+    .lp-author-name { font-size: 13px; font-weight: 600; color: #0f2340; }
+    .lp-author-role { font-size: 11px; color: #94a3b8; }
+    .lp-cta-section { padding: 100px 60px; background: #0f2340; text-align: center; position: relative; overflow: hidden; }
+    .lp-cta-section::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; }
+    .lp-cta-content { position: relative; z-index: 1; }
+    .lp-cta-title { font-family: "Instrument Serif", serif; font-size: clamp(32px,4vw,52px); color: #fff; margin-bottom: 18px; line-height: 1.2; }
+    .lp-cta-sub { font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 36px; font-weight: 300; }
+    .lp-footer { padding: 36px 60px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .lp-footer-logo { font-family: "Instrument Serif", serif; font-size: 18px; color: #0f2340; }
+    .lp-footer-copy { font-size: 11px; color: #94a3b8; font-family: "DM Mono", monospace; }
+    .lp-footer-links { display: flex; gap: 20px; }
+    .lp-footer-links a { font-size: 12px; color: #94a3b8; text-decoration: none; }
+    .lp-footer-links a:hover { color: #0f2340; }
+    @media(max-width:1024px){.lp-mockup{display:none;}.lp-features-grid,.lp-pricing-grid,.lp-testi-grid{grid-template-columns:1fr 1fr;}.lp-stats{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:768px){.lp-nav{padding:16px 24px;}.lp-nav-links{display:none;}.lp-hero,.lp-section,.lp-pricing-section,.lp-video-section,.lp-testi-section,.lp-cta-section{padding:70px 24px;}.lp-features-grid,.lp-pricing-grid,.lp-testi-grid{grid-template-columns:1fr;}.lp-stats{grid-template-columns:1fr 1fr;}.lp-footer{flex-direction:column;text-align:center;}}
+  `;
+
   return (
-    <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#fafaf8", color:"#0f2340", overflowX:"hidden" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-        .lp-btn-primary { background:#0f2340; color:#fff; padding:13px 26px; border-radius:10px; font-size:15px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 16px rgba(15,35,64,.25); cursor:pointer; border:none; transition:all .2s; font-family:'DM Sans',sans-serif; }
-        .lp-btn-primary:hover { background:#1e3a5f; transform:translateY(-1px); }
-        .lp-btn-outline { background:#fff; color:#0f2340; padding:13px 26px; border-radius:10px; font-size:15px; font-weight:500; text-decoration:none; border:1px solid #e2e8f0; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
-        .lp-btn-outline:hover { background:#f0f4f8; }
-        .lp-feature-card { padding:28px; border:1px solid #e2e8f0; border-radius:16px; background:#fff; transition:all .2s; }
-        .lp-feature-card:hover { border-color:#4a90d9; box-shadow:0 8px 32px rgba(74,144,217,.1); transform:translateY(-2px); }
-        .lp-pricing-card { border:1px solid #e2e8f0; border-radius:20px; padding:36px 28px; background:#fff; transition:all .2s; position:relative; }
-        .lp-pricing-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(15,35,64,.1); }
-        .lp-testimonial { background:#fff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; }
-        @media(max-width:900px) { .lp-hero-mock { display:none !important; } }
-        @media(max-width:768px) { .lp-grid { grid-template-columns:1fr !important; } .lp-stats { grid-template-columns:repeat(2,1fr) !important; } }
-      `}</style>
+    <div className="lp-body">
+      <style>{LP_CSS}</style>
 
       {/* NAV */}
-      <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 48px", background:"rgba(250,250,248,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid #e2e8f0" }}>
-        <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:20, color:"#0f2340", display:"flex", alignItems:"center", gap:10 }}>
-          📞 CallRDV IA
-          <span style={{ background:"#0f2340", color:"#fff", borderRadius:8, padding:"3px 9px", fontSize:11, fontFamily:"'DM Mono',monospace" }}>BETA</span>
+      <nav className="lp-nav">
+        <div className="lp-logo">📞 CallRDV IA <span>BETA</span></div>
+        <div className="lp-nav-links">
+          <a href="#lp-features">Fonctionnalités</a>
+          <a href="#lp-demo">Démo</a>
+          <a href="#lp-pricing">Tarifs</a>
+          <button className="lp-btn-nav" onClick={onLogin}>Se connecter →</button>
         </div>
-        <div style={{ display:"flex", gap:10 }}>
-          <button className="lp-btn-outline" onClick={onLogin} style={{ padding:"9px 18px", fontSize:13 }}>Se connecter</button>
-          <button className="lp-btn-primary" onClick={onLogin} style={{ padding:"9px 18px", fontSize:13 }}>Commencer gratuitement →</button>
-        </div>
-      </div>
+      </nav>
 
       {/* HERO */}
-      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", padding:"120px 48px 80px", background:"linear-gradient(135deg,#f8faff 0%,#eef4fb 50%,#f8faff 100%)", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px)", backgroundSize:"60px 60px", opacity:.35 }}></div>
-        <div style={{ position:"relative", zIndex:1, maxWidth:560 }}>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"#fff", border:"1px solid #e2e8f0", borderRadius:100, padding:"5px 14px", fontSize:12, fontFamily:"'DM Mono',monospace", color:"#1e3a5f", marginBottom:28, boxShadow:"0 2px 8px rgba(0,0,0,.06)" }}>
-            <span style={{ width:6, height:6, background:"#22c55e", borderRadius:"50%", display:"inline-block" }}></span>
-            🎁 Offre de lancement — 1er mois offert
-          </div>
-          <h1 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(40px,5vw,60px)", lineHeight:1.1, marginBottom:22 }}>
-            Vos rendez-vous,<br/><span style={{ fontStyle:"italic", color:"#2d5a8e" }}>organisés en secondes</span>
-          </h1>
-          <p style={{ fontSize:17, color:"#64748b", lineHeight:1.7, marginBottom:36, fontWeight:300 }}>
-            Après chaque appel, retrouvez votre client par son nom et créez son RDV en 2 minutes. Rappels automatiques inclus.
-          </p>
-          <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-            <button className="lp-btn-primary" onClick={onLogin} style={{ fontSize:15, padding:"14px 28px" }}>Commencer gratuitement →</button>
-            <button className="lp-btn-outline" onClick={()=>document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})} style={{ fontSize:15, padding:"14px 28px" }}>Voir les fonctionnalités</button>
+      <section className="lp-hero">
+        <div className="lp-hero-grid"></div>
+        <div className="lp-hero-content">
+          <div className="lp-badge">🟢 Disponible maintenant — offre de lancement</div>
+          <h1 className="lp-h1">Vos rendez-vous,<br/><em>organisés en secondes</em></h1>
+          <p className="lp-sub">CallRDV IA transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.</p>
+          <div className="lp-actions">
+            <button className="lp-btn-primary" onClick={onLogin}>Commencer gratuitement →</button>
+            <a href="#lp-demo" className="lp-btn-secondary">Voir la démo</a>
           </div>
         </div>
-        {/* Mockup */}
-        <div className="lp-hero-mock" style={{ position:"absolute", right:48, top:"50%", transform:"translateY(-50%)", zIndex:1 }}>
-          <div style={{ width:400, background:"#fff", borderRadius:16, boxShadow:"0 24px 64px rgba(15,35,64,.15)", border:"1px solid #e2e8f0", overflow:"hidden" }}>
-            <div style={{ background:"#0f2340", padding:"12px 16px", display:"flex", alignItems:"center", gap:7 }}>
-              {["#ff5f57","#febc2e","#28c840"].map(col => <div key={col} style={{ width:9, height:9, borderRadius:"50%", background:col }}></div>)}
-              <span style={{ color:"#fff", fontSize:11, fontFamily:"'DM Mono',monospace", marginLeft:8 }}>callrdv.com</span>
+        <div className="lp-mockup">
+          <div className="lp-mockup-bar">
+            <div className="lp-dot" style={{background:"#ff5f57"}}></div>
+            <div className="lp-dot" style={{background:"#febc2e"}}></div>
+            <div className="lp-dot" style={{background:"#28c840"}}></div>
+            <span className="lp-mockup-title">callrdv.com</span>
+          </div>
+          <div className="lp-mockup-body">
+            <div className="lp-search">🔍 Rechercher un client...</div>
+            <div className="lp-rdv">
+              <div className="lp-rdv-dot" style={{background:"#3b82f6"}}></div>
+              <div><div className="lp-rdv-title">Dr. Martin — Consultation</div><div className="lp-rdv-sub">Demain à 14h00 · Cabinet</div></div>
+              <div className="lp-rdv-tag" style={{background:"#3b82f620",color:"#3b82f6"}}>médical</div>
             </div>
-            <div style={{ padding:18 }}>
-              <div style={{ background:"#f0f4f8", borderRadius:8, padding:"10px 13px", fontSize:12, color:"#94a3b8", marginBottom:14 }}>🔍 Rechercher un client...</div>
-              {[{color:"#3b82f6",title:"Dr. Martin — Consultation",sub:"Demain à 14h00 · Cabinet",cat:"médical"},{color:"#f59e0b",title:"Garage Dupont — Révision",sub:"15 mars · Renault Clio",cat:"garage"},{color:"#8b5cf6",title:"Maître Leblanc — Dossier",sub:"18 mars à 16h00",cat:"juridique"}].map((r,i) => (
-                <div key={i} style={{ background:"#f8faff", borderRadius:9, padding:"11px 13px", marginBottom:7, display:"flex", alignItems:"center", gap:9 }}>
-                  <div style={{ width:7, height:7, borderRadius:"50%", background:r.color, flexShrink:0 }}></div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:11, fontWeight:600, color:"#0f2340" }}>{r.title}</div>
-                    <div style={{ fontSize:10, color:"#94a3b8" }}>{r.sub}</div>
-                  </div>
-                  <div style={{ fontSize:9, background:r.color+"20", color:r.color, padding:"2px 7px", borderRadius:20, fontFamily:"'DM Mono',monospace" }}>{r.cat}</div>
-                </div>
-              ))}
+            <div className="lp-rdv">
+              <div className="lp-rdv-dot" style={{background:"#f59e0b"}}></div>
+              <div><div className="lp-rdv-title">Garage Dupont — Révision</div><div className="lp-rdv-sub">15 mars · Renault Clio</div></div>
+              <div className="lp-rdv-tag" style={{background:"#f59e0b20",color:"#f59e0b"}}>garage</div>
+            </div>
+            <div className="lp-rdv">
+              <div className="lp-rdv-dot" style={{background:"#8b5cf6"}}></div>
+              <div><div className="lp-rdv-title">Maître Leblanc — Dossier</div><div className="lp-rdv-sub">18 mars à 16h00 · Cabinet</div></div>
+              <div className="lp-rdv-tag" style={{background:"#8b5cf620",color:"#8b5cf6"}}>juridique</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* STATS */}
-      <div className="lp-stats" style={{ background:"#0f2340", display:"grid", gridTemplateColumns:"repeat(4,1fr)" }}>
-        {[["2min","pour créer un RDV"],["13","catégories disponibles"],["J-3","rappels automatiques"],["100%","conforme RGPD"]].map(([n,l],i) => (
-          <div key={i} style={{ padding:"32px 36px", borderRight:i<3?"1px solid rgba(255,255,255,.1)":"none", textAlign:"center" }}>
-            <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:42, color:"#fff", marginBottom:6 }}>{n}</div>
-            <div style={{ fontSize:11, color:"rgba(255,255,255,.45)", fontFamily:"'DM Mono',monospace" }}>{l}</div>
-          </div>
+      <div className="lp-stats">
+        {[["2min","pour créer un RDV"],["13","catégories disponibles"],["J-3","rappels automatiques"],["100%","conforme RGPD"]].map(([n,l])=>(
+          <div key={l} className="lp-stat"><div className="lp-stat-num">{n}</div><div className="lp-stat-label">{l}</div></div>
         ))}
       </div>
 
       {/* FEATURES */}
-      <div id="lp-features" style={{ padding:"90px 48px", maxWidth:1100, margin:"0 auto" }}>
-        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Fonctionnalités</div>
-        <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:14 }}>Tout ce qu'il vous faut</h2>
-        <p style={{ fontSize:15, color:"#64748b", maxWidth:500, lineHeight:1.7, marginBottom:48, fontWeight:300 }}>Une interface pensée pour aller vite. Pas de formation, juste l'essentiel.</p>
-        <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
-          {[{icon:"🔍",title:"Recherche client",desc:"Tapez un nom et la fiche client apparaît avec tout son historique de RDV."},{icon:"📋",title:"Fiches par catégorie",desc:"Médecin, restaurant, garage — chaque type de RDV a ses champs adaptés."},{icon:"🔔",title:"Rappels automatiques",desc:"Emails de rappel J-3 et J-1 envoyés automatiquement à vos clients."},{icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Export Google Calendar ou Outlook."},{icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité et vos statistiques en temps réel."},{icon:"📄",title:"Export PDF",desc:"Générez un planning PDF professionnel en un clic depuis l'agenda."}].map((f,i) => (
-            <div key={i} className="lp-feature-card">
-              <div style={{ width:44, height:44, background:"#f0f4f8", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, marginBottom:16 }}>{f.icon}</div>
-              <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>{f.title}</div>
-              <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7, fontWeight:300 }}>{f.desc}</div>
+      <section className="lp-section" id="lp-features">
+        <div className="lp-label">Fonctionnalités</div>
+        <h2 className="lp-h2">Tout ce qu'il vous faut<br/>pour gérer vos RDV</h2>
+        <p className="lp-section-sub">Une interface pensée pour aller vite. Pas de formation, pas de complexité — juste l'essentiel.</p>
+        <div className="lp-features-grid">
+          {[
+            {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
+            {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
+            {icon:"🔔",title:"Rappels automatiques",desc:"Vos clients reçoivent un email de rappel 3 jours et 1 jour avant leur RDV. Automatiquement."},
+            {icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Exportez vers Google Calendar ou Outlook en un clic."},
+            {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
+            {icon:"📄",title:"Export PDF",desc:"Générez un planning PDF propre et professionnel en un clic depuis votre agenda."},
+          ].map(({icon,title,desc})=>(
+            <div key={title} className="lp-feature">
+              <div className="lp-feature-icon">{icon}</div>
+              <div className="lp-feature-title">{title}</div>
+              <div className="lp-feature-desc">{desc}</div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
+
+      {/* VIDEO */}
+      <section className="lp-video-section" id="lp-demo">
+        <div className="lp-video-inner">
+          <div className="lp-label">Démo</div>
+          <h2 className="lp-h2">Voyez CallRDV IA en action</h2>
+          <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>De la recherche client à la confirmation du RDV — en moins de 2 minutes.</p>
+          <div className="lp-video-box">
+            <div className="lp-play"></div>
+            <div className="lp-video-label">Démo disponible bientôt</div>
+          </div>
+        </div>
+      </section>
 
       {/* PRICING */}
-      <div style={{ padding:"90px 48px", background:"#f0f4f8" }}>
-        <div style={{ maxWidth:1000, margin:"0 auto" }}>
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Tarifs</div>
-          <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:14 }}>Simple et transparent</h2>
-          <p style={{ fontSize:15, color:"#64748b", maxWidth:440, lineHeight:1.7, marginBottom:44, fontWeight:300 }}>Commencez gratuitement. Passez au Pro quand vous êtes prêt.</p>
-          <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
+      <section className="lp-pricing-section" id="lp-pricing">
+        <div className="lp-label">Tarifs</div>
+        <h2 className="lp-h2">Simple et transparent</h2>
+        <p className="lp-section-sub">Commencez gratuitement. Passez au Pro quand vous êtes prêt.</p>
+        <div className="lp-pricing-grid">
+          <div className="lp-plan">
+            <div className="lp-plan-name">Gratuit</div>
+            <div className="lp-plan-price">0€</div>
+            <div className="lp-plan-period">pour toujours</div>
+            <div className="lp-plan-divider"></div>
+            <ul><li>10 RDV par mois</li><li>Fiches clients de base</li><li>Agenda semaine / mois</li><li>Export Google Calendar</li></ul>
+            <button className="lp-plan-cta lp-plan-cta-outline" onClick={onLogin}>Commencer →</button>
+          </div>
+          <div className="lp-plan featured">
+            <div className="lp-plan-badge">🎁 1er mois offert</div>
+            <div className="lp-plan-name">Pro</div>
+            <div className="lp-plan-price">9€</div>
+            <div className="lp-plan-period">par mois · sans engagement</div>
+            <div className="lp-plan-divider"></div>
+            <ul><li>RDV illimités</li><li>Fiches clients complètes</li><li>Rappels email automatiques</li><li>Export PDF</li><li>Tableau de bord stats</li></ul>
+            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00" className="lp-plan-cta lp-plan-cta-filled">Essayer 1 mois gratuit →</a>
+          </div>
+          <div className="lp-plan">
+            <div className="lp-plan-badge" style={{background:"#1e3a5f",color:"#fff"}}>🚀 Offre lancement</div>
+            <div className="lp-plan-name">Business</div>
+            <div className="lp-plan-price">29€</div>
+            <div className="lp-plan-period">par mois · sans engagement</div>
+            <div className="lp-plan-divider"></div>
+            <ul><li>Tout le plan Pro</li><li>Multi-utilisateurs</li><li>Import CSV patients</li><li>Support prioritaire</li><li>1er mois offert</li></ul>
+            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01" className="lp-plan-cta lp-plan-cta-outline">Démarrer →</a>
+          </div>
+        </div>
+        <div className="lp-promo-note">⏳ Offres de lancement valables jusqu'au <span>30 avril 2026</span></div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="lp-testi-section">
+        <div className="lp-testi-inner">
+          <div className="lp-label">Témoignages</div>
+          <h2 className="lp-h2">Ils nous font confiance</h2>
+          <div className="lp-testi-grid">
             {[
-              {name:"Gratuit",price:"0€",period:"pour toujours",features:["10 RDV par mois","Fiches clients de base","Agenda semaine / mois","Export Google Calendar"],featured:false,badge:null,cta:"Commencer →"},
-              {name:"Pro",price:"9€",period:"par mois · sans engagement",features:["RDV illimités","Fiches clients complètes","Rappels email automatiques","Export PDF","Tableau de bord stats"],featured:true,badge:"🎁 1er mois offert",cta:"Essayer 1 mois gratuit →"},
-              {name:"Business",price:"29€",period:"par mois · sans engagement",features:["Tout le plan Pro","Multi-utilisateurs","Import CSV patients","Support prioritaire","1er mois offert"],featured:false,badge:"🚀 Offre lancement",cta:"Démarrer →"},
-            ].map((plan,i) => (
-              <div key={i} className="lp-pricing-card" style={{ background:plan.featured?"#0f2340":"#fff", borderColor:plan.featured?"#0f2340":"#e2e8f0" }}>
-                {plan.badge && <div style={{ position:"absolute", top:-11, left:"50%", transform:"translateX(-50%)", background:plan.featured?"#e8b86d":"#0f2340", color:plan.featured?"#0f2340":"#fff", padding:"3px 13px", borderRadius:100, fontSize:10, fontWeight:700, fontFamily:"'DM Mono',monospace", whiteSpace:"nowrap" }}>{plan.badge}</div>}
-                <div style={{ fontSize:11, fontFamily:"'DM Mono',monospace", color:plan.featured?"rgba(255,255,255,.5)":"#64748b", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.1em" }}>{plan.name}</div>
-                <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:46, color:plan.featured?"#fff":"#0f2340", lineHeight:1, marginBottom:4 }}>{plan.price}</div>
-                <div style={{ fontSize:12, color:plan.featured?"rgba(255,255,255,.45)":"#64748b", marginBottom:20 }}>{plan.period}</div>
-                <div style={{ height:1, background:plan.featured?"rgba(255,255,255,.1)":"#e2e8f0", marginBottom:20 }}></div>
-                <ul style={{ listStyle:"none", marginBottom:24 }}>
-                  {plan.features.map((f,j) => (
-                    <li key={j} style={{ fontSize:13, color:plan.featured?"rgba(255,255,255,.7)":"#64748b", padding:"6px 0", display:"flex", alignItems:"center", gap:9 }}>
-                      <span style={{ color:plan.featured?"#e8b86d":"#4a90d9", fontWeight:700 }}>✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={onLogin} style={{ display:"block", width:"100%", textAlign:"center", padding:"11px", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", background:plan.featured?"#fff":"transparent", color:"#0f2340", border:plan.featured?"none":"1px solid #e2e8f0", fontFamily:"'DM Sans',sans-serif" }}>
-                  {plan.cta}
-                </button>
+              {init:"S",name:"Sophie M.",role:"Assistante médicale",text:"Enfin une app simple pour noter mes RDV après chaque appel. Plus aucun oubli !"},
+              {init:"K",name:"Karim B.",role:"Gérant de garage",text:"Les rappels automatiques ont changé ma vie. Mes clients arrivent toujours à l'heure maintenant."},
+              {init:"A",name:"Amina L.",role:"Avocate",text:"Interface claire, rapide à prendre en main. Exactement ce qu'il me fallait pour mon cabinet."},
+            ].map(({init,name,role,text})=>(
+              <div key={name} className="lp-testi">
+                <div className="lp-stars">★★★★★</div>
+                <div className="lp-testi-text">"{text}"</div>
+                <div className="lp-author">
+                  <div className="lp-avatar">{init}</div>
+                  <div><div className="lp-author-name">{name}</div><div className="lp-author-role">{role}</div></div>
+                </div>
               </div>
             ))}
           </div>
-          <div style={{ textAlign:"center", marginTop:18, fontSize:12, color:"#94a3b8", fontFamily:"'DM Mono',monospace" }}>
-            ⏳ Offres valables jusqu'au <span style={{ color:"#e8b86d", fontWeight:600 }}>30 avril 2026</span>
-          </div>
         </div>
-      </div>
+      </section>
 
-      {/* TESTIMONIALS */}
-      <div style={{ padding:"90px 48px", maxWidth:1000, margin:"0 auto" }}>
-        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#4a90d9", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:14 }}>Témoignages</div>
-        <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(30px,3vw,44px)", marginBottom:44 }}>Ils nous font confiance</h2>
-        <div className="lp-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
-          {[{stars:5,text:"Enfin une app simple pour noter mes RDV après chaque appel. Plus aucun oubli !",name:"Sophie M.",role:"Assistante médicale",init:"S"},{stars:5,text:"Les rappels automatiques ont changé ma vie. Mes clients arrivent toujours à l'heure maintenant.",name:"Karim B.",role:"Gérant de garage",init:"K"},{stars:5,text:"Interface claire, rapide à prendre en main. Exactement ce qu'il me fallait pour mon cabinet.",name:"Amina L.",role:"Avocate",init:"A"}].map((t,i) => (
-            <div key={i} className="lp-testimonial">
-              <div style={{ color:"#e8b86d", marginBottom:12, fontSize:14 }}>{"★".repeat(t.stars)}</div>
-              <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:15, color:"#0f2340", lineHeight:1.7, marginBottom:20, fontStyle:"italic" }}>"{t.text}"</div>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:38, height:38, borderRadius:"50%", background:"#0f2340", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:14 }}>{t.init}</div>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:600 }}>{t.name}</div>
-                  <div style={{ fontSize:11, color:"#94a3b8" }}>{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* CTA */}
+      <section className="lp-cta-section">
+        <div className="lp-cta-content">
+          <h2 className="lp-cta-title">Prêt à simplifier<br/>votre gestion de RDV ?</h2>
+          <p className="lp-cta-sub">Rejoignez CallRDV IA — gratuit pour commencer, sans carte bancaire.</p>
+          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onLogin}>Créer mon compte gratuitement →</button>
         </div>
-      </div>
-
-      {/* CTA FINAL */}
-      <div style={{ padding:"90px 48px", background:"#0f2340", textAlign:"center", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)", backgroundSize:"60px 60px" }}></div>
-        <div style={{ position:"relative", zIndex:1 }}>
-          <h2 style={{ fontFamily:"'Instrument Serif',serif", fontSize:"clamp(34px,4vw,52px)", color:"#fff", marginBottom:18, lineHeight:1.2 }}>Prêt à simplifier<br/>votre gestion de RDV ?</h2>
-          <p style={{ fontSize:16, color:"rgba(255,255,255,.5)", marginBottom:36, fontWeight:300 }}>Gratuit pour commencer — sans carte bancaire.</p>
-          <button className="lp-btn-primary" onClick={onLogin} style={{ fontSize:15, padding:"15px 34px" }}>Créer mon compte gratuitement →</button>
-        </div>
-      </div>
+      </section>
 
       {/* FOOTER */}
-      <div style={{ padding:"32px 48px", borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:14 }}>
-        <div style={{ fontFamily:"'Instrument Serif',serif", fontSize:17, color:"#0f2340" }}>📞 CallRDV IA</div>
-        <div style={{ display:"flex", gap:20 }}>
-          {["Confidentialité","CGU","Contact"].map(l => <a key={l} href="#" style={{ fontSize:12, color:"#94a3b8", textDecoration:"none" }}>{l}</a>)}
-        </div>
-        <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"'DM Mono',monospace" }}>© 2026 CallRDV IA · Conforme RGPD</div>
-      </div>
+      <footer className="lp-footer">
+        <div className="lp-footer-logo">📞 CallRDV IA</div>
+        <div className="lp-footer-links"><a href="#">Confidentialité</a><a href="#">CGU</a><a href="#">Contact</a></div>
+        <div className="lp-footer-copy">© 2026 CallRDV IA · Conforme RGPD</div>
+      </footer>
     </div>
   );
 }
