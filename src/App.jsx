@@ -568,7 +568,7 @@ function exportPDF(appointments, viewMode) {
         </thead>
         <tbody>${rows}</tbody>
       </table>`}
-      <div class="footer">CallRDV IA — Conforme RGPD · callrdv-ia.vercel.app</div>
+      <div class="footer">CallRDV IA — Conforme RGPD · callrdv.com</div>
     </body>
     </html>
   `;
