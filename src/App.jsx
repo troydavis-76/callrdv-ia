@@ -322,12 +322,15 @@ function PricingModal({ currentPlan, onUpgrade, onClose }) {
 }
 
 // ── Calendar Modal ───────────────────────────────────────────
-function CalendarModal({ rdv, onClose }) {
-  const [done, setDone] = useState(null);
-  const [adding, setAdding] = useState(null);
-  const open = async (type) => {
-    setAdding(type);
-    await delay(800);
+function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
+  const catColors = {
+    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
+    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
+    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b",
+    restaurant:"#e11d48", autre:"#94a3b8"
+  };
+
+  const exportTo = (type) => {
     const title = encodeURIComponent(rdv.titre);
     const details = encodeURIComponent(`Avec: ${rdv.personne}\nLieu: ${rdv.lieu||""}\n${rdv.notes||""}`);
     const loc = encodeURIComponent(rdv.adresse||rdv.lieu||"");
@@ -336,23 +339,71 @@ function CalendarModal({ rdv, onClose }) {
     const end = new Date(now.getTime()+3600000).toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
     if (type==="google") window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${loc}&dates=${start}/${end}`,"_blank");
     else window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&location=${loc}`,"_blank");
-    setAdding(null); setDone(type);
   };
+
   return (
-    <div style={{ position:"fixed", inset:0, background:"#f0f4f8cc", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div className="card fade-up" style={{ width:"100%", maxWidth:400, padding:32 }}>
-        <div style={{ fontWeight:800, fontSize:20, marginBottom:4 }}>Ajouter au calendrier</div>
-        <div style={{ fontSize:13, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:24 }}>{rdv.titre}</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          {[["google","📅","Google Calendar"],["outlook","📆","Outlook / Office 365"]].map(([type,icon,label])=>(
-            <button key={type} className="btn btn-outline" onClick={()=>open(type)} disabled={!!adding}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, padding:"16px", borderColor:done===type?"#0284c7":"#e2e8f0" }}>
-              {adding===type ? <span className="spinner"></span> : <span style={{ fontSize:20 }}>{icon}</span>}
-              <span>{done===type ? `Ajoute : ${label}` : label}</span>
-            </button>
+    <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div className="card fade-up" style={{ width:"100%", maxWidth:460, padding:32 }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"flex-start", gap:14, marginBottom:24 }}>
+          <div style={{ width:48, height:48, borderRadius:12, background:(catColors[rdv.categorie]||"#94a3b8")+"20", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>
+            📋
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:4 }}>{rdv.titre||"Rendez-vous"}</div>
+            <div style={{ display:"inline-block", background:(catColors[rdv.categorie]||"#94a3b8")+"20", color:catColors[rdv.categorie]||"#94a3b8", padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:600 }}>{rdv.categorie||"autre"}</div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#94a3b8", padding:4 }}>✕</button>
+        </div>
+
+        {/* Infos */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
+          {[
+            { icon:"👤", label:"Contact", value:rdv.personne },
+            { icon:"📅", label:"Date", value:rdv.date },
+            { icon:"🕐", label:"Heure", value:rdv.heure||"Non définie" },
+            { icon:"📍", label:"Lieu", value:rdv.lieu||"Non défini" },
+          ].map(({icon,label,value}) => (
+            <div key={label} style={{ background:"#f8fafc", borderRadius:10, padding:"10px 14px" }}>
+              <div style={{ fontSize:11, color:"#94a3b8", marginBottom:4 }}>{icon} {label}</div>
+              <div style={{ fontSize:13, fontWeight:600, color:"#1e293b" }}>{value||"—"}</div>
+            </div>
           ))}
         </div>
-        <button className="btn btn-outline btn-sm" onClick={onClose} style={{ width:"100%", marginTop:18 }}>Fermer</button>
+
+        {/* Statut */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, fontFamily:"DM Mono" }}>STATUT</div>
+          <select
+            value={rdv.statut||"en_attente"}
+            onChange={e => onUpdateStatut && onUpdateStatut(rdv.id, e.target.value)}
+            style={{ width:"100%", padding:"10px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, background:"#fff" }}>
+            <option value="en_attente">⏳ En attente</option>
+            <option value="confirme">✅ Confirmé</option>
+            <option value="reporte">🔄 Reporté</option>
+            <option value="annule">❌ Annulé</option>
+          </select>
+        </div>
+
+        {rdv.notes && (
+          <div style={{ background:"#f8fafc", borderRadius:10, padding:"12px 14px", marginBottom:20, fontSize:13, color:"#475569", lineHeight:1.6 }}>
+            📝 {rdv.notes}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+          <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#1e3a5f" }}>✏️ Modifier</button>
+          <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#ef4444" }}>🗑️ Supprimer</button>
+        </div>
+
+        {/* Export */}
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={()=>exportTo("google")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Google Calendar</button>
+          <button onClick={()=>exportTo("outlook")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📆 Outlook</button>
+        </div>
+
       </div>
     </div>
   );
@@ -1916,7 +1967,7 @@ export default function App() {
       <style>{CSS}</style>
       {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} />}
       {showPricing && <PricingModal currentPlan={user.plan} onUpgrade={handleUpgrade} onClose={()=>setPrice(false)} />}
-      {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} />}
+      {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} onEdit={setEditingRdv} onDelete={handleDeleteRdv} onUpdateStatut={handleUpdateStatut} />}
 
       <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Inter',sans-serif", color:"#1e293b", display:"flex", flexDirection:"column" }}>
 
