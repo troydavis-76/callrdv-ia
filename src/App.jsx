@@ -1,4 +1,4 @@
-iimport React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
