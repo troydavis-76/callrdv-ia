@@ -171,8 +171,9 @@ function useAuth() {
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
+:root{--bg:#f0f4f8;--bg2:#fff;--card:#fff;--border:#e2e8f0;--text:#1e293b;--text2:#64748b;--input-bg:#fff;--nav-bg:rgba(255,255,255,0.95);}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#f0f4f8;}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
@@ -192,7 +193,7 @@ body{background:#f0f4f8;}
 .btn-outline{background:#fff;color:#1e3a5f;border:1.5px solid #cbd5e1;padding:12px 24px;font-size:14px;}
 .btn-outline:hover{border-color:#1e3a5f;background:#f8faff;}
 .btn-sm{padding:8px 16px;font-size:13px;border-radius:8px;}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 4px #00000008;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 4px #00000008;}
 input,select{background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;color:#1e293b;font-family:'Inter',sans-serif;font-size:14px;padding:11px 14px;width:100%;outline:none;transition:border-color .2s;}
 input:focus,select:focus{border-color:#1e3a5f;box-shadow:0 0 0 3px #1e3a5f15;}
 input::placeholder{color:#94a3b8;}
@@ -396,6 +397,21 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
         <div style={{ display:"flex", gap:8, marginBottom:12 }}>
           <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#1e3a5f" }}>✏️ Modifier</button>
           <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#ef4444" }}>🗑️ Supprimer</button>
+        </div>
+        <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+          <button onClick={()=>{
+            const msg = `📅 Rappel RDV\n${rdv.titre||"Rendez-vous"}\n👤 ${rdv.personne||""}\n📆 ${rdv.date||""}${rdv.heure?" à "+rdv.heure:""}\n📍 ${rdv.lieu||""}\n\nCallRDV IA — callrdv.com`;
+            if (navigator.share) { navigator.share({ title:"RDV", text:msg }); }
+            else { navigator.clipboard.writeText(msg); alert("Copié dans le presse-papier !"); }
+          }} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#16a34a" }}>
+            📤 Partager
+          </button>
+          <button onClick={()=>{
+            const sms = `sms:${rdv.telephone||""}?body=${encodeURIComponent(`Rappel RDV : ${rdv.titre||"RDV"} le ${rdv.date}${rdv.heure?" à "+rdv.heure:""}. Lieu: ${rdv.lieu||""}. CallRDV IA`)}`;
+            window.open(sms);
+          }} style={{ flex:1, background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#0284c7" }}>
+            💬 SMS
+          </button>
         </div>
 
         {/* Export */}
@@ -874,6 +890,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   const [importing, setImporting] = React.useState(false);
   const [editingPatient, setEditingPatient] = React.useState(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState("nom"); // nom | date | rdv
   const [confirmClean, setConfirmClean] = React.useState(false);
 
   const isDirtyContact = (p) => {
@@ -898,7 +915,13 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
     setConfirmClean(false);
   };
 
-  const filtered = patients.filter(p => p.nom.toLowerCase().includes(search.toLowerCase()));
+  const filtered = patients
+    .filter(p => p.nom?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => {
+      if (sortBy === "rdv") return getPatientRdvs(b.nom).length - getPatientRdvs(a.nom).length;
+      if (sortBy === "date") return new Date(b.created_at) - new Date(a.created_at);
+      return (a.nom||"").localeCompare(b.nom||"");
+    });
 
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
@@ -1079,6 +1102,11 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
           <div style={{ display:"flex", gap:8, marginBottom:12 }}>
             <input placeholder="🔍 Rechercher un patient..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{ fontSize:12, padding:"6px 8px", borderRadius:8, border:"1px solid var(--border)", background:"var(--input-bg)", color:"var(--text)", cursor:"pointer" }}>
+              <option value="nom">A→Z</option>
+              <option value="rdv">RDV ↓</option>
+              <option value="date">Récent</option>
+            </select>
           </div>
           <div style={{ display:"flex", gap:8 }}>
             <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)} style={{ flex:1 }}>+ Ajouter</button>
@@ -1914,6 +1942,7 @@ export default function App() {
   const [showPatients, setShowPatients] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [editingRdv, setEditingRdv] = useState(null);
   const [stripeSuccess, setStripeSuccess] = useState(() => window.location.search.includes("success=1"));
   const [showPricing, setPrice]   = useState(false);
@@ -1957,6 +1986,35 @@ export default function App() {
     await sb.updateAppointment(token, id, { statut });
     setAppts(prev => prev.map(r => r.id === id ? { ...r, statut } : r));
   };
+
+  // Dark mode
+  useEffect(() => {
+    localStorage.setItem("darkMode", darkMode);
+    const root = document.documentElement;
+    if (darkMode) {
+      root.style.setProperty("--bg", "#0f172a");
+      root.style.setProperty("--bg2", "#1e293b");
+      root.style.setProperty("--card", "#1e293b");
+      root.style.setProperty("--border", "#334155");
+      root.style.setProperty("--text", "#f1f5f9");
+      root.style.setProperty("--text2", "#94a3b8");
+      root.style.setProperty("--input-bg", "#0f172a");
+      root.style.setProperty("--nav-bg", "rgba(15,23,42,0.95)");
+      document.body.style.background = "#0f172a";
+      document.body.style.color = "#f1f5f9";
+    } else {
+      root.style.setProperty("--bg", "#f0f4f8");
+      root.style.setProperty("--bg2", "#fff");
+      root.style.setProperty("--card", "#fff");
+      root.style.setProperty("--border", "#e2e8f0");
+      root.style.setProperty("--text", "#1e293b");
+      root.style.setProperty("--text2", "#64748b");
+      root.style.setProperty("--input-bg", "#fff");
+      root.style.setProperty("--nav-bg", "rgba(255,255,255,0.95)");
+      document.body.style.background = "#f0f4f8";
+      document.body.style.color = "#1e293b";
+    }
+  }, [darkMode]);
 
   // Vérification rappels push quotidiens
   useEffect(() => {
@@ -2097,6 +2155,9 @@ export default function App() {
             <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
               {plan.name.toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
             </div>
+            <button onClick={()=>setDarkMode(d=>!d)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title={darkMode?"Mode clair":"Mode sombre"}>
+              {darkMode ? "☀️" : "🌙"}
+            </button>
             <button onClick={()=>setShowSettings(true)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title="Paramètres">⚙️</button>
             <div onClick={signOut} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:28, height:28, background:"#e2e8f0", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
