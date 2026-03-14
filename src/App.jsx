@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+iimport React, { useState, useEffect, useRef } from "react";
 
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
@@ -164,6 +164,19 @@ function useAuth() {
 
   const updateUser = async (data) => {
     setUser(prev => ({ ...prev, ...data }));
+    // Sauvegarder dans Supabase
+    if (user?.id && user?.token) {
+      await fetch(`https://vcnguzlwyacnlysnsogv.supabase.co/rest/v1/profiles?id=eq.${user.id}`, {
+        method: "PATCH",
+        headers: {
+          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
+          "Authorization": `Bearer ${user.token}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(data)
+      });
+    }
   };
 
   return { user, loading, signUp, signIn, signOut, updateUser };
