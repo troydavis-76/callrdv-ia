@@ -772,6 +772,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   const [form, setForm] = React.useState({ nom:"", email:"", telephone:"", notes:"", categorie:"autre" });
   const [importing, setImporting] = React.useState(false);
   const [editingPatient, setEditingPatient] = React.useState(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = React.useState(false);
 
   const filtered = patients.filter(p => p.nom.toLowerCase().includes(search.toLowerCase()));
 
@@ -831,6 +832,9 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
         const nom = fullName || row["nom"] || row["name"] || row["Name"] || vals[0] || "";
         if (!nom) continue;
+        // Ignorer les contacts sans vrai nom (que des virgules, chiffres, emails)
+        if (/^[,;\s\d@.+\-_]+$/.test(nom)) continue;
+        if (nom.length < 2) continue;
 
         const email = row["E-mail Address"] || row["E-mail 2 Address"] || row["email"] || row["Email"] || row["mail"] || "";
         const telephone = row["Mobile Phone"] || row["Home Phone"] || row["Primary Phone"] || row["Business Phone"] || row["telephone"] || row["Téléphone"] || row["phone"] || "";
@@ -847,6 +851,15 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
     reader.readAsText(file);
   };
 
+  const handleDeleteAll = async () => {
+    for (const p of patients) {
+      await sb.deletePatient(token, p.id);
+    }
+    setPatients([]);
+    setSelected(null);
+    setConfirmDeleteAll(false);
+  };
+
   const handleUpdatePatient = async (data) => {
     await sb.updatePatient(token, editingPatient.id, data);
     setPatients(prev => prev.map(p => p.id === editingPatient.id ? { ...p, ...data } : p));
@@ -856,6 +869,25 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
 
   return (
     <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", height:"100%" }}>
+      {/* Modal confirmation suppression tout */}
+      {confirmDeleteAll && (
+        <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div className="card fade-up" style={{ maxWidth:400, width:"100%", padding:32, textAlign:"center" }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>🗑️</div>
+            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:10 }}>Supprimer tous les contacts ?</div>
+            <div style={{ fontSize:14, color:"#64748b", marginBottom:28, lineHeight:1.6 }}>
+              Cette action supprimera <strong>{patients.length} contacts</strong> définitivement. Les RDV existants ne seront pas supprimés.
+            </div>
+            <div style={{ display:"flex", gap:12 }}>
+              <button className="btn btn-outline" onClick={()=>setConfirmDeleteAll(false)} style={{ flex:1 }}>Annuler</button>
+              <button onClick={handleDeleteAll} style={{ flex:1, background:"#ef4444", color:"#fff", border:"none", borderRadius:8, padding:"12px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
+                Tout supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal édition patient */}
       {editingPatient && (
         <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
@@ -905,6 +937,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
               </div>
               <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display:"none" }} />
             </label>
+            <button className="btn btn-sm" onClick={()=>setConfirmDeleteAll(true)} style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>🗑️ Tout</button>
           </div>
         </div>
         <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
@@ -915,7 +948,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
               <div style={{ color:"#cbd5e1", fontSize:11, marginTop:4 }}>Ils s'ajoutent automatiquement à chaque RDV</div>
             </div>
           ) : filtered.map(p => (
-            <div key={p.id} onClick={()=>{ setSelected(p); setTimeout(()=>{ const el = document.getElementById("patients-right-panel"); if(el) el.scrollTop = 0; }, 50); }}
+            <div key={p.id} onClick={()=>{ setSelected(p); setTimeout(()=>{ document.getElementById("patients-right-panel")?.scrollTo({top:0,behavior:"smooth"}); window.scrollTo({top:0,behavior:"smooth"}); }, 50); }}
               style={{ padding:"14px 16px", borderBottom:"1px solid #f1f5f9", cursor:"pointer", background:selected?.id===p.id?"#f0f4ff":"#fff", display:"flex", alignItems:"center", gap:12, transition:"background .15s" }}>
               <div style={{ width:38, height:38, borderRadius:"50%", background:catColors[p.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:15, flexShrink:0 }}>
                 {p.nom[0]?.toUpperCase()}
