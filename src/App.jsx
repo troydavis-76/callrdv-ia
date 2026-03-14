@@ -1206,7 +1206,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         ) : (
           <div style={{ textAlign:"center", padding:"80px 40px" }}>
             <div style={{ fontSize:56, marginBottom:16 }}>👥</div>
-            <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Vos patients & contacts</div>
+            <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Vos patients & clients</div>
             <div style={{ color:"#94a3b8", fontSize:14, lineHeight:1.7 }}>Sélectionnez un patient pour voir sa fiche,<br/>ou ajoutez-en un manuellement.<br/><br/>💡 Ils s'ajoutent automatiquement à chaque nouveau RDV !</div>
           </div>
         )}
@@ -2107,7 +2107,7 @@ export default function App() {
 
         {/* Onglets */}
         <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients","patients"],["📊","Stats","stats"]].map(([icon,label,tab]) => (
+          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients/Clients","patients"],["📊","Stats","stats"]].map(([icon,label,tab]) => (
             <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); setShowStats(tab==="stats"); }}
               style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
               {icon} {label}
