@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
-  STRIPE_LINKS: { pro: "https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00", business: "https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01" },
+  STRIPE_LINKS: { pro: "https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1", business: "https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" },
 };
 
 // Supabase client leger (sans SDK)
@@ -661,6 +661,7 @@ function exportPDF(appointments, viewMode) {
 function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut }) {
   const [viewMode, setViewMode] = React.useState("semaine"); // semaine | mois | liste
   const [currentDate, setCurrentDate] = React.useState(new Date());
+  const [agendaSearch, setAgendaSearch] = React.useState("");
 
   const today = new Date();
 
@@ -752,6 +753,12 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
           <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
             📄 PDF
           </button>
+          <input
+            placeholder="🔍 Rechercher un RDV..."
+            value={agendaSearch}
+            onChange={e => { setAgendaSearch(e.target.value); if(e.target.value) setViewMode("liste"); }}
+            style={{ fontSize:13, padding:"6px 14px", borderRadius:8, border:"1px solid #e2e8f0", width:200, background:"#fff" }}
+          />
         </div>
       </div>
 
@@ -825,7 +832,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
               <div style={{ fontSize:48, marginBottom:12 }}>📅</div>
               <div style={{ color:"#94a3b8", fontSize:14 }}>Aucun RDV enregistré</div>
             </div>
-          ) : appointments.sort((a,b) => a.date > b.date ? 1 : -1).map((rdv, i) => (
+          ) : appointments.filter(r => !agendaSearch || (r.titre||"").toLowerCase().includes(agendaSearch.toLowerCase()) || (r.personne||"").toLowerCase().includes(agendaSearch.toLowerCase()) || (r.lieu||"").toLowerCase().includes(agendaSearch.toLowerCase())).sort((a,b) => a.date > b.date ? 1 : -1).map((rdv, i) => (
             <div key={i} className="card" style={{ marginBottom:12, display:"flex", alignItems:"center", gap:16 }}>
               <div style={{ width:4, height:50, borderRadius:4, background:catColors[rdv.categorie]||"#1e3a5f", flexShrink:0 }}></div>
               <div style={{ flex:1 }}>
@@ -1211,6 +1218,26 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
 // ── Paramètres Modal ─────────────────────────────────────────
 function SettingsModal({ user, onSave, onClose, sb, token }) {
   const [rappels, setRappels] = React.useState(user.rappels || ["j-1","j-3"]);
+  const [pushEnabled, setPushEnabled] = React.useState(user.push_enabled || false);
+  const [pushJ3, setPushJ3] = React.useState(user.push_j3 !== false);
+  const [pushJ1, setPushJ1] = React.useState(user.push_j1 !== false);
+  const [pushConfirm, setPushConfirm] = React.useState(user.push_confirm !== false);
+  const [notifPermission, setNotifPermission] = React.useState(typeof Notification !== "undefined" ? Notification.permission : "default");
+
+  const requestPushPermission = async () => {
+    if (typeof Notification === "undefined") return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+    if (result === "granted") {
+      setPushEnabled(true);
+      // Test notification
+      new Notification("CallRDV IA 📞", {
+        body: "Notifications activées ! Vous recevrez vos rappels directement ici.",
+        icon: "/icon-192.png"
+      });
+    }
+  };
+
   const [email, setEmail] = React.useState(user.email || user.email_auth || "");
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
@@ -1265,7 +1292,52 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
         {saved && <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#16a34a", fontWeight:600 }}>✅ Paramètres sauvegardés !</div>}
 
         <div style={{ display:"flex", gap:10 }}>
-          <button className="btn btn-outline" onClick={onClose} style={{ flex:1 }}>Annuler</button>
+          {/* Notifications Push */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+            📲 Notifications push
+          </div>
+
+          {notifPermission === "denied" && (
+            <div style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:10, padding:12, marginBottom:14, fontSize:12, color:"#ef4444" }}>
+              ⚠️ Notifications bloquées dans votre navigateur. Modifiez les paramètres de votre navigateur pour les autoriser.
+            </div>
+          )}
+
+          {notifPermission !== "granted" && notifPermission !== "denied" && (
+            <button onClick={requestPushPermission} style={{ width:"100%", background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:10, padding:"12px 16px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#1e3a5f", marginBottom:14, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+              🔔 Activer les notifications push
+            </button>
+          )}
+
+          {notifPermission === "granted" && (
+            <div style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:10, padding:12, marginBottom:14, fontSize:12, color:"#16a34a", display:"flex", alignItems:"center", gap:8 }}>
+              ✅ Notifications autorisées
+            </div>
+          )}
+
+          {notifPermission === "granted" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {[
+                { label:"Activer les notifications push", value:pushEnabled, set:setPushEnabled },
+                { label:"Rappel J-3 par notification", value:pushJ3, set:setPushJ3 },
+                { label:"Rappel J-1 par notification", value:pushJ1, set:setPushJ1 },
+                { label:"Confirmation de création RDV", value:pushConfirm, set:setPushConfirm },
+              ].map(({label, value, set}) => (
+                <div key={label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"#f8fafc", borderRadius:8 }}>
+                  <span style={{ fontSize:13, color:"#475569" }}>{label}</span>
+                  <div
+                    onClick={()=>set(!value)}
+                    style={{ width:44, height:24, borderRadius:12, background:value?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s" }}>
+                    <div style={{ position:"absolute", top:3, left:value?20:3, width:18, height:18, borderRadius:"50%", background:"#fff", transition:"left .2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button className="btn btn-outline" onClick={onClose} style={{ flex:1 }}>Annuler</button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex:2, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
             {saving ? <span className="spinner"></span> : "💾 Sauvegarder"}
           </button>
@@ -1762,7 +1834,7 @@ function LandingPage({ onLogin }) {
             <div className="lp-plan-period">par mois · sans engagement</div>
             <div className="lp-plan-divider"></div>
             <ul><li>RDV illimités</li><li>Fiches clients complètes</li><li>Rappels email automatiques</li><li>Export PDF</li><li>Tableau de bord stats</li></ul>
-            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00" className="lp-plan-cta lp-plan-cta-filled">Essayer 1 mois gratuit →</a>
+            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-filled">Essayer 1 mois gratuit →</a>
           </div>
           <div className="lp-plan">
             <div className="lp-plan-badge" style={{background:"#1e3a5f",color:"#fff"}}>🚀 Offre lancement</div>
@@ -1771,7 +1843,7 @@ function LandingPage({ onLogin }) {
             <div className="lp-plan-period">par mois · sans engagement</div>
             <div className="lp-plan-divider"></div>
             <ul><li>Tout le plan Pro</li><li>Multi-utilisateurs</li><li>Import CSV patients</li><li>Support prioritaire</li><li>1er mois offert</li></ul>
-            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01" className="lp-plan-cta lp-plan-cta-outline">Démarrer →</a>
+            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-outline">Démarrer →</a>
           </div>
         </div>
         <div className="lp-promo-note">⏳ Offres de lancement valables jusqu'au <span>30 avril 2026</span></div>
@@ -1821,6 +1893,13 @@ function LandingPage({ onLogin }) {
 }
 
 // ── Main App ─────────────────────────────────────────────────
+// ── Push Notification Helper ─────────────────────────────────
+function sendPushNotif(title, body) {
+  if (typeof Notification === "undefined") return;
+  if (Notification.permission !== "granted") return;
+  new Notification(title, { body, icon: "/icon-192.png" });
+}
+
 export default function App() {
   const auth = useAuth();
   const { user, loading, signIn, signUp, signOut, updateUser } = auth;
@@ -1836,6 +1915,7 @@ export default function App() {
   const [showStats, setShowStats] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
   const [editingRdv, setEditingRdv] = useState(null);
+  const [stripeSuccess, setStripeSuccess] = useState(() => window.location.search.includes("success=1"));
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -1877,6 +1957,34 @@ export default function App() {
     await sb.updateAppointment(token, id, { statut });
     setAppts(prev => prev.map(r => r.id === id ? { ...r, statut } : r));
   };
+
+  // Vérification rappels push quotidiens
+  useEffect(() => {
+    if (!user?.push_enabled) return;
+    if (Notification.permission !== "granted") return;
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const lastCheck = localStorage.getItem("lastPushCheck");
+    if (lastCheck === todayStr) return;
+    localStorage.setItem("lastPushCheck", todayStr);
+
+    appointments.forEach(rdv => {
+      if (!rdv.date) return;
+      const rdvDate = new Date(rdv.date);
+      const diff = Math.round((rdvDate - today) / (1000*60*60*24));
+      if (diff === 3 && user.push_j3) {
+        sendPushNotif("📅 RDV dans 3 jours", `${rdv.titre||"RDV"} avec ${rdv.personne} le ${rdv.date}${rdv.heure?" à "+rdv.heure:""}`);
+      }
+      if (diff === 1 && user.push_j1) {
+        sendPushNotif("⏰ RDV demain !", `${rdv.titre||"RDV"} avec ${rdv.personne} demain${rdv.heure?" à "+rdv.heure:""}`);
+      }
+    });
+  }, [appointments, user]);
+
+  // Onboarding — montrer si nouveau utilisateur
+  const isNewUser = appointments.length === 0 && patients.length === 0 && !loading;
+  const [dismissOnboarding, setDismissOnboarding] = useState(false);
+  const showOnboarding = isNewUser && !dismissOnboarding;
 
   // Exposer patients et startWithName pour la recherche client
   useEffect(() => {
@@ -1924,6 +2032,11 @@ export default function App() {
       heure: rdv.heure, lieu: rdv.lieu, notes: rdv.notes || "", statut: rdv.statut
     });
     await sb.addAnalyse(token, user.id, true);
+
+    // Notification push si activée
+    if (user.push_confirm && user.push_enabled) {
+      sendPushNotif("✅ RDV créé !", `${rdv.titre||"Rendez-vous"} avec ${rdv.personne} le ${rdv.date}${rdv.heure ? " à "+rdv.heure : ""}`);
+    }
 
     // Ajout automatique du patient si nouveau
     if (rdv.personne) {
@@ -2005,6 +2118,44 @@ export default function App() {
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
           {/* STATS VIEW */}
+          {/* Stripe Success Modal */}
+          {stripeSuccess && (
+            <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+              <div className="card fade-up" style={{ maxWidth:420, width:"100%", padding:40, textAlign:"center" }}>
+                <div style={{ fontSize:64, marginBottom:16 }}>🎉</div>
+                <div style={{ fontWeight:800, fontSize:22, color:"#1e293b", marginBottom:10 }}>Paiement réussi !</div>
+                <div style={{ fontSize:15, color:"#64748b", lineHeight:1.7, marginBottom:28 }}>
+                  Bienvenue dans le plan <strong>{user?.plan === "business" ? "Business" : "Pro"}</strong> !<br/>
+                  Votre compte a été mis à jour. Profitez de toutes les fonctionnalités sans limite.
+                </div>
+                <button className="btn btn-primary" onClick={()=>{ setStripeSuccess(false); window.history.replaceState({}, "", window.location.pathname); }} style={{ width:"100%", padding:14 }}>
+                  🚀 Commencer à utiliser CallRDV IA
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Onboarding nouveau utilisateur */}
+          {showOnboarding && !showAgenda && !showPatients && !showStats && (
+            <div style={{ position:"fixed", bottom:24, right:24, zIndex:150, maxWidth:320 }}>
+              <div className="card fade-up" style={{ padding:24, boxShadow:"0 8px 32px rgba(30,58,95,0.2)", border:"2px solid #1e3a5f20" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+                  <div style={{ fontWeight:700, fontSize:15, color:"#1e293b" }}>👋 Bienvenue sur CallRDV IA !</div>
+                  <button onClick={()=>setDismissOnboarding(true)} style={{ background:"none", border:"none", cursor:"pointer", color:"#94a3b8", fontSize:16 }}>✕</button>
+                </div>
+                <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7, marginBottom:16 }}>
+                  Pour créer votre premier RDV :<br/>
+                  1️⃣ Tapez le nom d'un client<br/>
+                  2️⃣ Remplissez la fiche RDV<br/>
+                  3️⃣ Confirmez !
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={()=>setDismissOnboarding(true)} style={{ width:"100%" }}>
+                  C'est compris ! ✓
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Modal modification RDV */}
           {editingRdv && (
             <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
