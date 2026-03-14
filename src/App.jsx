@@ -855,7 +855,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   };
 
   return (
-    <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative" }}>
+    <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", height:"100%" }}>
       {/* Modal édition patient */}
       {editingPatient && (
         <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
@@ -892,7 +892,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         </div>
       )}
       {/* Liste patients */}
-      <div style={{ width:320, borderRight:"1px solid #e2e8f0", display:"flex", flexDirection:"column" }}>
+      <div style={{ width:320, borderRight:"1px solid #e2e8f0", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
           <div style={{ display:"flex", gap:8, marginBottom:12 }}>
             <input placeholder="🔍 Rechercher un patient..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
@@ -907,7 +907,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
             </label>
           </div>
         </div>
-        <div style={{ flex:1, overflowY:"auto" }}>
+        <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
           {filtered.length === 0 ? (
             <div style={{ textAlign:"center", padding:"40px 20px" }}>
               <div style={{ fontSize:36, marginBottom:8 }}>👥</div>
