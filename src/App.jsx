@@ -155,7 +155,7 @@ function useAuth() {
     const tk = res.access_token;
     await delay(600);
     const profile = await sb.getProfile(tk, res.user.id);
-    setUser({ id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk });
+    setUser({ id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false });
     setLoading(false);
     return { error: null };
   };
