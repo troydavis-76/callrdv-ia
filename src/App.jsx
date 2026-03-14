@@ -916,11 +916,13 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   };
 
   const filtered = patients
-    .filter(p => p.nom?.toLowerCase().includes(search.toLowerCase()))
+    .filter(p => p.nom && p.nom.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => {
-      if (sortBy === "rdv") return getPatientRdvs(b.nom).length - getPatientRdvs(a.nom).length;
-      if (sortBy === "date") return new Date(b.created_at) - new Date(a.created_at);
-      return (a.nom||"").localeCompare(b.nom||"");
+      try {
+        if (sortBy === "rdv") return getPatientRdvs(b.nom).length - getPatientRdvs(a.nom).length;
+        if (sortBy === "date") return new Date(b.created_at) - new Date(a.created_at);
+        return (a.nom||"").localeCompare(b.nom||"", "fr", {sensitivity:"base"});
+      } catch(e) { return 0; }
     });
 
   const catColors = {
@@ -1098,7 +1100,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         </div>
       )}
       {/* Liste patients */}
-      <div style={{ width:320, borderRight:"1px solid #e2e8f0", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
+      <div style={{ width:320, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
           <div style={{ display:"flex", gap:8, marginBottom:12 }}>
             <input placeholder="🔍 Rechercher un patient..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
@@ -1992,16 +1994,17 @@ export default function App() {
     localStorage.setItem("darkMode", darkMode);
     const root = document.documentElement;
     if (darkMode) {
-      root.style.setProperty("--bg", "#0f172a");
-      root.style.setProperty("--bg2", "#1e293b");
-      root.style.setProperty("--card", "#1e293b");
-      root.style.setProperty("--border", "#334155");
-      root.style.setProperty("--text", "#f1f5f9");
-      root.style.setProperty("--text2", "#94a3b8");
-      root.style.setProperty("--input-bg", "#0f172a");
-      root.style.setProperty("--nav-bg", "rgba(15,23,42,0.95)");
-      document.body.style.background = "#0f172a";
-      document.body.style.color = "#f1f5f9";
+      root.style.setProperty("--bg", "#0a0f1e");
+      root.style.setProperty("--bg2", "#111827");
+      root.style.setProperty("--card", "#1a2235");
+      root.style.setProperty("--border", "#2d3748");
+      root.style.setProperty("--text", "#f8fafc");
+      root.style.setProperty("--text2", "#a0aec0");
+      root.style.setProperty("--input-bg", "#111827");
+      root.style.setProperty("--nav-bg", "rgba(10,15,30,0.98)");
+      document.body.style.background = "#0a0f1e";
+      document.body.style.color = "#f8fafc";
+      document.body.style.colorScheme = "dark";
     } else {
       root.style.setProperty("--bg", "#f0f4f8");
       root.style.setProperty("--bg2", "#fff");
@@ -2140,10 +2143,10 @@ export default function App() {
       {showPricing && <PricingModal currentPlan={user.plan} onUpgrade={handleUpgrade} onClose={()=>setPrice(false)} />}
       {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} onEdit={setEditingRdv} onDelete={handleDeleteRdv} onUpdateStatut={handleUpdateStatut} />}
 
-      <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Inter',sans-serif", color:"#1e293b", display:"flex", flexDirection:"column" }}>
+      <div style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'Inter',sans-serif", color:"var(--text)", display:"flex", flexDirection:"column", transition:"background .3s,color .3s" }}>
 
         {/* NAV */}
-        <nav style={{ padding:"14px 24px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <nav style={{ padding:"14px 24px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:32, height:32, background:"#1e3a5f", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>📞</div>
             <span style={{ fontWeight:800, fontSize:16 }}>CallRDV <span style={{ color:"#1e3a5f" }}>IA</span></span>
