@@ -122,7 +122,6 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 
 function useAuth() {
   const [user, setUser] = useState(null);
-  const [showLanding, setShowLanding] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const signUp = async (email, password, name) => {
@@ -1632,6 +1631,7 @@ export default function App() {
   const [patients, setPatients] = useState([]);
   const [showPatients, setShowPatients] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
