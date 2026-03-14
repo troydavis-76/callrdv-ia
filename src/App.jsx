@@ -741,7 +741,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv }) {
 
       {/* List View */}
       {viewMode==="liste" && (
-        <div style={{ flex:1, overflowY:"auto", padding:24 }}>
+        <div id="patients-right-panel" style={{ flex:1, overflowY:"auto", padding:24 }}>
           {appointments.length===0 ? (
             <div style={{ textAlign:"center", padding:"60px 0" }}>
               <div style={{ fontSize:48, marginBottom:12 }}>📅</div>
@@ -915,7 +915,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
               <div style={{ color:"#cbd5e1", fontSize:11, marginTop:4 }}>Ils s'ajoutent automatiquement à chaque RDV</div>
             </div>
           ) : filtered.map(p => (
-            <div key={p.id} onClick={()=>setSelected(p)}
+            <div key={p.id} onClick={()=>{ setSelected(p); setTimeout(()=>{ const el = document.getElementById("patients-right-panel"); if(el) el.scrollTop = 0; }, 50); }}
               style={{ padding:"14px 16px", borderBottom:"1px solid #f1f5f9", cursor:"pointer", background:selected?.id===p.id?"#f0f4ff":"#fff", display:"flex", alignItems:"center", gap:12, transition:"background .15s" }}>
               <div style={{ width:38, height:38, borderRadius:"50%", background:catColors[p.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:15, flexShrink:0 }}>
                 {p.nom[0]?.toUpperCase()}
@@ -933,7 +933,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
       </div>
 
       {/* Fiche patient */}
-      <div style={{ flex:1, overflowY:"auto", padding:24 }}>
+      <div id="patients-right-panel" style={{ flex:1, overflowY:"auto", padding:24 }}>
         {showAdd ? (
           <div className="card fade-up" style={{ maxWidth:480 }}>
             <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>➕ Nouveau patient</div>
@@ -949,7 +949,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
             </div>
           </div>
         ) : selected ? (
-          <div className="fade-up">
+          <div className="fade-up" id="fiche-patient">
             {/* Header fiche */}
             <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
               <div style={{ width:56, height:56, borderRadius:"50%", background:catColors[selected.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:22, flexShrink:0 }}>
