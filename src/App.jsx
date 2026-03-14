@@ -87,6 +87,20 @@ const sb = {
       body: JSON.stringify(data),
     });
   },
+  async deleteAppointment(token, id) {
+    await fetch(`${this.url}/rest/v1/appointments?id=eq.${id}`, {
+      method: "DELETE",
+      headers: this.headers(token)
+    });
+  },
+  async updateAppointment(token, id, data) {
+    const r = await fetch(`${this.url}/rest/v1/appointments?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { ...this.headers(token), "Prefer": "return=representation" },
+      body: JSON.stringify(data)
+    });
+    return r.json();
+  },
   async deletePatient(token, patientId) {
     await fetch(`${this.url}/rest/v1/patients?id=eq.${patientId}`, {
       method: "DELETE",
@@ -373,6 +387,19 @@ function StatsView({ appointments, patients, user }) {
     beaute:"💈 Beauté", formation:"🎓 Formation", pro:"💼 Pro", perso:"👤 Perso", autre:"📋 Autre"
   };
 
+  const statutColors = {
+    confirme: "#22c55e",
+    annule: "#ef4444",
+    reporte: "#f59e0b",
+    en_attente: "#94a3b8"
+  };
+  const statutLabels = {
+    confirme: "✅ Confirmé",
+    annule: "❌ Annulé",
+    reporte: "🔄 Reporté",
+    en_attente: "⏳ En attente"
+  };
+
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
     garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
@@ -580,7 +607,7 @@ function exportPDF(appointments, viewMode) {
 }
 
 // ── Vue Agenda Calendrier ────────────────────────────────────
-function CalendarView({ appointments, onNewCall, onCalRdv }) {
+function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut }) {
   const [viewMode, setViewMode] = React.useState("semaine"); // semaine | mois | liste
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
@@ -754,6 +781,22 @@ function CalendarView({ appointments, onNewCall, onCalRdv }) {
                 <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{rdv.titre||"Rendez-vous"}</div>
                 <div style={{ fontSize:12, color:"#64748b" }}>{rdv.personne} · {rdv.date}{rdv.heure ? ` à ${rdv.heure}` : ""}</div>
                 {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>📍 {rdv.lieu}</div>}
+                <div style={{ marginTop:6 }}>
+                  <select
+                    value={rdv.statut||"en_attente"}
+                    onChange={e => onUpdateStatut(rdv.id, e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    style={{ fontSize:11, padding:"2px 8px", borderRadius:20, border:"1px solid #e2e8f0", background: rdv.statut==="confirme"?"#f0fdf4":rdv.statut==="annule"?"#fff5f5":rdv.statut==="reporte"?"#fffbeb":"#f8fafc", color: rdv.statut==="confirme"?"#16a34a":rdv.statut==="annule"?"#ef4444":rdv.statut==="reporte"?"#d97706":"#64748b", cursor:"pointer" }}>
+                    <option value="en_attente">⏳ En attente</option>
+                    <option value="confirme">✅ Confirmé</option>
+                    <option value="reporte">🔄 Reporté</option>
+                    <option value="annule">❌ Annulé</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                <button onClick={(e)=>{e.stopPropagation();onEditRdv(rdv);}} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12, color:"#1e3a5f" }}>✏️</button>
+                <button onClick={(e)=>{e.stopPropagation();onDeleteRdv(rdv.id);}} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12, color:"#ef4444" }}>🗑️</button>
               </div>
               <button onClick={()=>onCalRdv(rdv)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Exporter</button>
             </div>
@@ -773,6 +816,29 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   const [importing, setImporting] = React.useState(false);
   const [editingPatient, setEditingPatient] = React.useState(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = React.useState(false);
+  const [confirmClean, setConfirmClean] = React.useState(false);
+
+  const isDirtyContact = (p) => {
+    const nom = p.nom || "";
+    // Contact sale si : que des virgules/chiffres/emails/symboles, ou nom trop court, ou contient des métadonnées Samsung
+    if (/^[,;\s\d@.+\-_]+$/.test(nom)) return true;
+    if (nom.length < 2) return true;
+    if (nom.includes("depuis l'appareil") || nom.includes("Importé le") || nom.includes("myContacts") || nom.includes("Restaurés")) return true;
+    if (/^[,;]+/.test(nom)) return true;
+    if ((nom.match(/,/g)||[]).length > 3) return true;
+    return false;
+  };
+
+  const dirtyContacts = patients.filter(isDirtyContact);
+
+  const handleCleanContacts = async () => {
+    for (const p of dirtyContacts) {
+      await sb.deletePatient(token, p.id);
+    }
+    setPatients(prev => prev.filter(p => !isDirtyContact(p)));
+    setSelected(null);
+    setConfirmClean(false);
+  };
 
   const filtered = patients.filter(p => p.nom.toLowerCase().includes(search.toLowerCase()));
 
@@ -869,6 +935,33 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
 
   return (
     <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", height:"100%" }}>
+      {/* Modal nettoyage contacts sales */}
+      {confirmClean && (
+        <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div className="card fade-up" style={{ maxWidth:440, width:"100%", padding:32 }}>
+            <div style={{ fontSize:40, marginBottom:12, textAlign:"center" }}>🧹</div>
+            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:8, textAlign:"center" }}>Nettoyer les contacts</div>
+            <div style={{ fontSize:14, color:"#64748b", marginBottom:16, lineHeight:1.6, textAlign:"center" }}>
+              <strong>{dirtyContacts.length} contacts invalides</strong> détectés — sans nom ou mal formatés.
+            </div>
+            <div style={{ background:"#fff8f0", border:"1px solid #fed7aa", borderRadius:10, padding:14, marginBottom:20, maxHeight:160, overflowY:"auto" }}>
+              {dirtyContacts.slice(0,10).map(p => (
+                <div key={p.id} style={{ fontSize:12, color:"#92400e", padding:"3px 0", borderBottom:"1px solid #fed7aa30" }}>
+                  ⚠️ {p.nom?.substring(0,60) || "(vide)"}
+                </div>
+              ))}
+              {dirtyContacts.length > 10 && <div style={{ fontSize:11, color:"#f97316", marginTop:6 }}>...et {dirtyContacts.length - 10} autres</div>}
+            </div>
+            <div style={{ display:"flex", gap:12 }}>
+              <button className="btn btn-outline" onClick={()=>setConfirmClean(false)} style={{ flex:1 }}>Annuler</button>
+              <button onClick={handleCleanContacts} style={{ flex:2, background:"#f97316", color:"#fff", border:"none", borderRadius:8, padding:"12px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
+                🧹 Supprimer ces {dirtyContacts.length} contacts
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal confirmation suppression tout */}
       {confirmDeleteAll && (
         <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
@@ -937,6 +1030,11 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
               </div>
               <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display:"none" }} />
             </label>
+            {dirtyContacts.length > 0 && (
+              <button className="btn btn-sm" onClick={()=>setConfirmClean(true)} style={{ background:"#fff8f0", border:"1px solid #fed7aa", color:"#f97316", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>
+                🧹 {dirtyContacts.length}
+              </button>
+            )}
             <button className="btn btn-sm" onClick={()=>setConfirmDeleteAll(true)} style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>🗑️ Tout</button>
           </div>
         </div>
@@ -1686,6 +1784,7 @@ export default function App() {
   const [showPatients, setShowPatients] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [editingRdv, setEditingRdv] = useState(null);
   const [showPricing, setPrice]   = useState(false);
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
@@ -1716,6 +1815,17 @@ export default function App() {
       }
     });
   }, []);
+
+  const handleDeleteRdv = async (id) => {
+    if (!window.confirm("Supprimer ce rendez-vous ?")) return;
+    await sb.deleteAppointment(token, id);
+    setAppts(prev => prev.filter(r => r.id !== id));
+  };
+
+  const handleUpdateStatut = async (id, statut) => {
+    await sb.updateAppointment(token, id, { statut });
+    setAppts(prev => prev.map(r => r.id === id ? { ...r, statut } : r));
+  };
 
   // Exposer patients et startWithName pour la recherche client
   useEffect(() => {
@@ -1844,6 +1954,53 @@ export default function App() {
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
           {/* STATS VIEW */}
+          {/* Modal modification RDV */}
+          {editingRdv && (
+            <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
+              <div className="card fade-up" style={{ width:"100%", maxWidth:500, padding:32, maxHeight:"90vh", overflowY:"auto" }}>
+                <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>✏️ Modifier le rendez-vous</div>
+                {[
+                  { key:"titre", label:"TITRE", type:"text" },
+                  { key:"personne", label:"CONTACT / PERSONNE", type:"text" },
+                  { key:"date", label:"DATE", type:"date" },
+                  { key:"heure", label:"HEURE", type:"time" },
+                  { key:"lieu", label:"LIEU", type:"text" },
+                  { key:"adresse", label:"ADRESSE", type:"text" },
+                ].map(f => (
+                  <div key={f.key} style={{ marginBottom:14 }}>
+                    <div className="field-label">{f.label}</div>
+                    <input type={f.type} defaultValue={editingRdv[f.key]||""} id={`edit-rdv-${f.key}`} />
+                  </div>
+                ))}
+                <div style={{ marginBottom:14 }}>
+                  <div className="field-label">STATUT</div>
+                  <select id="edit-rdv-statut" defaultValue={editingRdv.statut||"en_attente"} style={{ width:"100%", padding:"10px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14 }}>
+                    <option value="en_attente">⏳ En attente</option>
+                    <option value="confirme">✅ Confirmé</option>
+                    <option value="reporte">🔄 Reporté</option>
+                    <option value="annule">❌ Annulé</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom:20 }}>
+                  <div className="field-label">NOTES</div>
+                  <textarea rows={3} defaultValue={editingRdv.notes||""} id="edit-rdv-notes" />
+                </div>
+                <div style={{ display:"flex", gap:10 }}>
+                  <button className="btn btn-outline" onClick={()=>setEditingRdv(null)} style={{ flex:1 }}>Annuler</button>
+                  <button className="btn btn-primary" onClick={async ()=>{
+                    const data = {};
+                    ["titre","personne","date","heure","lieu","adresse"].forEach(k => { data[k] = document.getElementById(`edit-rdv-${k}`).value; });
+                    data.statut = document.getElementById("edit-rdv-statut").value;
+                    data.notes = document.getElementById("edit-rdv-notes").value;
+                    await sb.updateAppointment(token, editingRdv.id, data);
+                    setAppts(prev => prev.map(r => r.id === editingRdv.id ? { ...r, ...data } : r));
+                    setEditingRdv(null);
+                  }} style={{ flex:2 }}>💾 Sauvegarder</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showStats && (
             <StatsView appointments={appointments} patients={patients} user={user} />
           )}
@@ -1866,6 +2023,9 @@ export default function App() {
               appointments={appointments}
               onNewCall={()=>{ setShowAgenda(false); setPhase("calling"); }}
               onCalRdv={setCalRdv}
+              onEditRdv={setEditingRdv}
+              onDeleteRdv={handleDeleteRdv}
+              onUpdateStatut={handleUpdateStatut}
             />
           )}
 
