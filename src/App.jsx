@@ -805,18 +805,39 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
     setImporting(true);
     const reader = new FileReader();
     reader.onload = async (evt) => {
+      // Parser CSV robuste (gère les virgules dans les champs entre guillemets)
+      const parseCSVLine = (line) => {
+        const result = []; let cur = ""; let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          if (line[i] === '"') { inQuotes = !inQuotes; }
+          else if (line[i] === ',' && !inQuotes) { result.push(cur.trim()); cur = ""; }
+          else { cur += line[i]; }
+        }
+        result.push(cur.trim());
+        return result;
+      };
       const lines = evt.target.result.split("\n").filter(Boolean);
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g,""));
+      const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g,"").trim());
       let added = 0;
       for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(",").map(v => v.trim().replace(/"/g,""));
+        const vals = parseCSVLine(lines[i]);
         const row = {};
-        headers.forEach((h, idx) => row[h] = vals[idx] || "");
-        const nom = row.nom || row.name || row.prenom || vals[0];
+        headers.forEach((h, idx) => row[h] = (vals[idx]||"").replace(/"/g,"").trim());
+
+        // Support format Google Contacts / Outlook (First Name, Last Name, Mobile Phone...)
+        const firstName = row["First Name"] || row["Prénom"] || row["prenom"] || "";
+        const middleName = row["Middle Name"] || "";
+        const lastName = row["Last Name"] || row["Nom"] || row["nom"] || "";
+        const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+        const nom = fullName || row["nom"] || row["name"] || row["Name"] || vals[0] || "";
         if (!nom) continue;
+
+        const email = row["E-mail Address"] || row["E-mail 2 Address"] || row["email"] || row["Email"] || row["mail"] || "";
+        const telephone = row["Mobile Phone"] || row["Home Phone"] || row["Primary Phone"] || row["Business Phone"] || row["telephone"] || row["Téléphone"] || row["phone"] || "";
+
         const exists = patients.find(p => p.nom.toLowerCase() === nom.toLowerCase());
         if (!exists) {
-          const res = await sb.addPatient(token, user.id, { nom, email: row.email||"", telephone: row.telephone||row.tel||row.phone||"", notes: row.notes||"", categorie:"autre" });
+          const res = await sb.addPatient(token, user.id, { nom, email, telephone, notes: row.notes||row.Notes||"", categorie:"autre" });
           if (Array.isArray(res) && res[0]) { setPatients(prev => [...prev, res[0]]); added++; }
         }
       }
