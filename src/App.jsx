@@ -1693,7 +1693,153 @@ function RdvForm({ onSave, onCancel }) {
 }
 
 // ── Landing Page ─────────────────────────────────────────────
+function LegalModal({ type, onClose }) {
+  const privacy = `
+POLITIQUE DE CONFIDENTIALITÉ — CallRDV IA
+Dernière mise à jour : mars 2026
+
+1. RESPONSABLE DU TRAITEMENT
+CallRDV IA est édité par un entrepreneur individuel.
+Contact : contact@callrdv.com
+
+2. DONNÉES COLLECTÉES
+Dans le cadre de l'utilisation de CallRDV IA, nous collectons :
+• Données d'identification : nom, adresse email
+• Données professionnelles : rendez-vous, contacts clients, notes
+• Données techniques : adresse IP, type de navigateur, logs de connexion
+
+3. FINALITÉS DU TRAITEMENT
+Vos données sont utilisées pour :
+• Fournir le service de gestion de rendez-vous
+• Envoyer les rappels automatiques par email
+• Gérer votre abonnement et vos paiements
+• Améliorer le service
+
+4. BASE LÉGALE
+Le traitement de vos données est fondé sur :
+• L'exécution du contrat (utilisation du service)
+• Votre consentement (communications marketing)
+• L'intérêt légitime (sécurité, amélioration du service)
+
+5. DESTINATAIRES DES DONNÉES
+Vos données peuvent être partagées avec :
+• Supabase (hébergement base de données) — États-Unis
+• Stripe (paiements) — États-Unis
+• Resend (envoi d'emails) — États-Unis
+• Vercel (hébergement) — États-Unis
+Ces prestataires sont soumis à des garanties appropriées (clauses contractuelles types).
+
+6. DURÉE DE CONSERVATION
+• Données de compte : jusqu'à suppression du compte + 1 an
+• Données de rendez-vous : durée de l'abonnement + 1 an
+• Données de paiement : 10 ans (obligation légale)
+
+7. VOS DROITS
+Conformément au RGPD, vous disposez des droits suivants :
+• Droit d'accès à vos données
+• Droit de rectification
+• Droit à l'effacement ("droit à l'oubli")
+• Droit à la portabilité
+• Droit d'opposition
+Pour exercer vos droits : contact@callrdv.com
+
+8. SÉCURITÉ
+Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données (chiffrement SSL, authentification sécurisée, accès restreint).
+
+9. COOKIES
+CallRDV IA utilise uniquement des cookies techniques nécessaires au fonctionnement du service (session utilisateur). Aucun cookie publicitaire n'est utilisé.
+
+10. MODIFICATIONS
+Nous nous réservons le droit de modifier cette politique. Vous serez informé par email en cas de changement substantiel.
+
+11. RÉCLAMATIONS
+Vous pouvez introduire une réclamation auprès de la CNIL : www.cnil.fr
+  `;
+
+  const cgu = `
+CONDITIONS GÉNÉRALES D'UTILISATION — CallRDV IA
+Dernière mise à jour : mars 2026
+
+1. OBJET
+Les présentes CGU régissent l'utilisation du service CallRDV IA accessible sur callrdv.com, un outil SaaS de gestion de rendez-vous post-appel téléphonique.
+
+2. ACCEPTATION
+L'utilisation du service implique l'acceptation pleine et entière des présentes CGU. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser le service.
+
+3. DESCRIPTION DU SERVICE
+CallRDV IA permet de :
+• Créer et gérer des rendez-vous
+• Gérer une base de contacts clients
+• Recevoir des rappels automatiques par email
+• Accéder à des statistiques d'activité
+
+4. INSCRIPTION
+Pour utiliser CallRDV IA, vous devez créer un compte avec une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.
+
+5. PLANS ET TARIFS
+• Plan Gratuit : 10 RDV/mois, gratuit
+• Plan Pro : RDV illimités, 9€/mois HT
+• Plan Business : fonctionnalités avancées, 29€/mois HT
+Les prix sont susceptibles d'évoluer avec un préavis de 30 jours.
+
+6. PAIEMENT
+Les paiements sont traités par Stripe. Les abonnements sont sans engagement et résiliables à tout moment. Aucun remboursement n'est effectué pour les périodes entamées.
+
+7. DONNÉES ET CONFIDENTIALITÉ
+L'utilisation du service implique le traitement de données personnelles conformément à notre Politique de Confidentialité.
+
+8. RESPONSABILITÉS
+CallRDV IA s'engage à fournir le service avec le soin raisonnable. Nous ne sommes pas responsables des pertes de données dues à des cas de force majeure ou à une utilisation incorrecte.
+
+L'utilisateur s'engage à :
+• Ne pas utiliser le service à des fins illégales
+• Ne pas tenter de compromettre la sécurité du service
+• Respecter les droits des tiers
+
+9. PROPRIÉTÉ INTELLECTUELLE
+L'ensemble des éléments de CallRDV IA (code, design, marque) sont protégés par le droit de la propriété intellectuelle. Toute reproduction est interdite sans autorisation.
+
+10. RÉSILIATION
+Vous pouvez supprimer votre compte à tout moment. Nous nous réservons le droit de suspendre un compte en cas de violation des présentes CGU.
+
+11. DROIT APPLICABLE
+Les présentes CGU sont soumises au droit français. Tout litige sera soumis aux tribunaux compétents de France.
+
+12. CONTACT
+Pour toute question : contact@callrdv.com
+  `;
+
+  const content = type === "privacy" ? privacy : cgu;
+  const title = type === "privacy" ? "Politique de Confidentialité" : "Conditions Générales d'Utilisation";
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:20, width:"100%", maxWidth:680, maxHeight:"85vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        <div style={{ padding:"24px 32px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>📄 {title}</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#94a3b8" }}>✕</button>
+        </div>
+        <div style={{ padding:"24px 32px", overflowY:"auto", flex:1 }}>
+          <pre style={{ fontFamily:"DM Sans, sans-serif", fontSize:13, color:"#475569", lineHeight:1.8, whiteSpace:"pre-wrap" }}>{content}</pre>
+        </div>
+        <div style={{ padding:"16px 32px", borderTop:"1px solid #e2e8f0", textAlign:"center" }}>
+          <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LandingPage({ onLogin }) {
+  const [legalType, setLegalType] = React.useState(null);
+
+  React.useEffect(() => {
+    window.__showLegal = (type) => setLegalType(type);
+    return () => { delete window.__showLegal; };
+  }, []);
+
   const LP_CSS = `
     @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
     .lp-body { font-family: "DM Sans", sans-serif; background: #fafaf8; color: #0f2340; overflow-x: hidden; }
@@ -1803,6 +1949,7 @@ function LandingPage({ onLogin }) {
 
   return (
     <div className="lp-body">
+      {legalType && <LegalModal type={legalType} onClose={()=>setLegalType(null)} />}
       <style>{LP_CSS}</style>
 
       {/* NAV */}
@@ -1971,7 +2118,7 @@ function LandingPage({ onLogin }) {
       {/* FOOTER */}
       <footer className="lp-footer">
         <div className="lp-footer-logo">📞 CallRDV IA</div>
-        <div className="lp-footer-links"><a href="#">Confidentialité</a><a href="#">CGU</a><a href="#">Contact</a></div>
+        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>Confidentialité</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>CGU</a><a href="mailto:contact@callrdv.com">Contact</a></div>
         <div className="lp-footer-copy">© 2026 CallRDV IA · Conforme RGPD</div>
       </footer>
     </div>
