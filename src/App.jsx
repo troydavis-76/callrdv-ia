@@ -136,6 +136,31 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 
 function useAuth() {
   const [user, setUser] = useState(null);
+
+  // Restaurer session au démarrage
+  useEffect(() => {
+    const saved = localStorage.getItem("callrdv_session");
+    if (!saved) return;
+    const { token, userId } = JSON.parse(saved);
+    if (!token || !userId) return;
+    // Vérifier que le token est encore valide
+    sb.getProfile(token, userId).then(profile => {
+      if (!profile) { localStorage.removeItem("callrdv_session"); return; }
+      setUser({
+        id: userId,
+        email: profile.email || "",
+        name: profile.name || "",
+        plan: profile.plan || "free",
+        usage: profile.usage || 0,
+        token,
+        rappels: profile.rappels || ["j-1","j-3"],
+        push_enabled: profile.push_enabled || false,
+        push_j1: profile.push_j1 !== false,
+        push_j3: profile.push_j3 !== false,
+        push_confirm: profile.push_confirm !== false
+      });
+    }).catch(() => localStorage.removeItem("callrdv_session"));
+  }, []);
   const [loading, setLoading] = useState(false);
 
   const signUp = async (email, password, name) => {
@@ -155,12 +180,19 @@ function useAuth() {
     const tk = res.access_token;
     await delay(600);
     const profile = await sb.getProfile(tk, res.user.id);
-    setUser({ id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false });
+    const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false };
+    setUser(userData);
+    // Persister la session
+    localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, userId: res.user.id, email: res.user.email }));
+    localStorage.setItem("callrdv_email", res.user.email);
     setLoading(false);
     return { error: null };
   };
 
-  const signOut = () => setUser(null);
+  const signOut = () => {
+    setUser(null);
+    localStorage.removeItem("callrdv_session");
+  };
 
   const updateUser = async (data) => {
     setUser(prev => ({ ...prev, ...data }));
@@ -222,10 +254,11 @@ textarea::placeholder{color:#94a3b8;}
 // ── Auth Page ────────────────────────────────────────────────
 function AuthPage({ authHooks }) {
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("callrdv_email") || "");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const { signIn, signUp, loading } = authHooks;
   const handle = async () => {
     setError("");
@@ -253,6 +286,16 @@ function AuthPage({ authHooks }) {
             <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
             <input type="password" placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handle()} />
           </div>
+          {mode === "login" && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12 }}>
+              <div
+                onClick={()=>setRememberMe(r=>!r)}
+                style={{ width:36, height:20, borderRadius:10, background:rememberMe?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
+                <div style={{ position:"absolute", top:2, left:rememberMe?16:2, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left .2s" }}></div>
+              </div>
+              <span style={{ fontSize:13, color:"#64748b", cursor:"pointer" }} onClick={()=>setRememberMe(r=>!r)}>Se souvenir de moi</span>
+            </div>
+          )}
           {error && <div style={{ color:"#ff6b6b", fontSize:13, marginTop:10, fontFamily:"DM Mono" }}>⚠ {error}</div>}
           <button className="btn btn-primary" onClick={handle} disabled={loading} style={{ width:"100%", marginTop:18, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
             {loading ? <span className="spinner"></span> : (mode==="login" ? "Se connecter" : "Créer mon compte")}
@@ -2212,26 +2255,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Onboarding nouveau utilisateur */}
-          {showOnboarding && !showAgenda && !showPatients && !showStats && (
-            <div style={{ position:"fixed", bottom:24, right:24, zIndex:150, maxWidth:320 }}>
-              <div className="card fade-up" style={{ padding:24, boxShadow:"0 8px 32px rgba(30,58,95,0.2)", border:"2px solid #1e3a5f20" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
-                  <div style={{ fontWeight:700, fontSize:15, color:"#1e293b" }}>👋 Bienvenue sur CallRDV IA !</div>
-                  <button onClick={()=>setDismissOnboarding(true)} style={{ background:"none", border:"none", cursor:"pointer", color:"#94a3b8", fontSize:16 }}>✕</button>
-                </div>
-                <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7, marginBottom:16 }}>
-                  Pour créer votre premier RDV :<br/>
-                  1️⃣ Tapez le nom d'un client<br/>
-                  2️⃣ Remplissez la fiche RDV<br/>
-                  3️⃣ Confirmez !
-                </div>
-                <button className="btn btn-primary btn-sm" onClick={()=>setDismissOnboarding(true)} style={{ width:"100%" }}>
-                  C'est compris ! ✓
-                </button>
-              </div>
-            </div>
-          )}
+
 
           {/* Modal modification RDV */}
           {editingRdv && (
@@ -2314,6 +2338,40 @@ export default function App() {
             {/* IDLE */}
             {phase==="idle" && (
               <div className="fade-up">
+
+                {/* Welcome screen pour nouveau utilisateur */}
+                {showOnboarding && (
+                  <div style={{ marginBottom:28 }}>
+                    <div style={{ background:"linear-gradient(135deg, #1e3a5f, #2d5a8e)", borderRadius:20, padding:32, color:"#fff", marginBottom:20, position:"relative", overflow:"hidden" }}>
+                      <div style={{ position:"absolute", right:-20, top:-20, fontSize:120, opacity:0.08 }}>📞</div>
+                      <div style={{ fontSize:13, opacity:0.7, marginBottom:8, fontFamily:"DM Mono" }}>BIENVENUE 👋</div>
+                      <div style={{ fontSize:24, fontWeight:800, marginBottom:8 }}>Bonjour {user.name?.split(" ")[0] || "!"} </div>
+                      <div style={{ fontSize:14, opacity:0.8, lineHeight:1.7 }}>
+                        Votre espace CallRDV IA est prêt.<br/>Créez votre premier rendez-vous en quelques secondes.
+                      </div>
+                      <button
+                        onClick={()=>{ if(canAdd) setPhase("form"); setDismissOnboarding(true); }}
+                        style={{ marginTop:20, background:"#fff", color:"#1e3a5f", border:"none", borderRadius:10, padding:"12px 24px", fontWeight:700, fontSize:14, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8 }}>
+                        ➕ Créer mon premier RDV
+                      </button>
+                    </div>
+
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:8 }}>
+                      {[
+                        { step:"1️⃣", title:"Cherchez votre client", desc:"Tapez son nom dans la barre de recherche" },
+                        { step:"2️⃣", title:"Remplissez la fiche", desc:"Date, heure, lieu et infos spécifiques" },
+                        { step:"3️⃣", title:"C'est confirmé !", desc:"Rappels automatiques envoyés par email" },
+                      ].map(({step,title,desc}) => (
+                        <div key={title} className="card" style={{ padding:16, textAlign:"center" }}>
+                          <div style={{ fontSize:28, marginBottom:8 }}>{step}</div>
+                          <div style={{ fontWeight:700, fontSize:13, marginBottom:6 }}>{title}</div>
+                          <div style={{ fontSize:12, color:"var(--text2)", lineHeight:1.5 }}>{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {saved && (
                   <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:12, padding:"14px 18px", marginBottom:20, display:"flex", alignItems:"center", gap:12, animation:"slideIn .4s ease" }}>
                     <span style={{ fontSize:20 }}>✅</span>
