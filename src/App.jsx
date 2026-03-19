@@ -2189,9 +2189,15 @@ function LandingPage({ onLogin }) {
           <div className="lp-label">Démo</div>
           <h2 className="lp-h2">Voyez CallRDV IA en action</h2>
           <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>De la recherche client à la confirmation du RDV — en moins de 2 minutes.</p>
-          <div className="lp-video-box">
-            <div className="lp-play"></div>
-            <div className="lp-video-label">Démo disponible bientôt</div>
+          <div style={{ marginTop:44, borderRadius:20, overflow:"hidden", boxShadow:"0 24px 64px rgba(15,35,64,0.2)", position:"relative", paddingBottom:"56.25%", height:0 }}>
+            <iframe
+              src="https://www.youtube.com/embed/9_GsFNca7_g"
+              title="CallRDV IA — Démo"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", borderRadius:20 }}
+            ></iframe>
           </div>
         </div>
       </section>
