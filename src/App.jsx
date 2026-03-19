@@ -259,11 +259,34 @@ function AuthPage({ authHooks }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const { signIn, signUp, loading } = authHooks;
+
   const handle = async () => {
     setError("");
     const res = mode === "login" ? await signIn(email, password) : await signUp(email, password, name);
     if (res.error) setError(res.error);
+  };
+
+  const handleForgot = async () => {
+    if (!email.trim()) { setError("Entrez votre email d'abord."); return; }
+    setForgotLoading(true);
+    setError("");
+    try {
+      const res = await fetch("https://vcnguzlwyacnlysnsogv.supabase.co/auth/v1/recover", {
+        method: "POST",
+        headers: {
+          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, redirect_to: "https://callrdv.com" })
+      });
+      if (res.ok) { setForgotSent(true); }
+      else { setError("Email introuvable. Vérifiez l'adresse."); }
+    } catch(e) { setError("Erreur réseau. Réessayez."); }
+    setForgotLoading(false);
   };
   return (
     <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',sans-serif", padding:24 }}>
@@ -286,7 +309,40 @@ function AuthPage({ authHooks }) {
             <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
             <input type="password" placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handle()} />
           </div>
-          {mode === "login" && (
+          {mode === "login" && !forgotMode && (
+            <div style={{ textAlign:"right", marginTop:8 }}>
+              <span onClick={()=>{ setForgotMode(true); setError(""); setForgotSent(false); }} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer", fontFamily:"DM Mono" }}>
+                Mot de passe oublié ?
+              </span>
+            </div>
+          )}
+
+          {/* Mode mot de passe oublié */}
+          {forgotMode && (
+            <div style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:12, padding:20, marginTop:12 }}>
+              {forgotSent ? (
+                <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:32, marginBottom:8 }}>📧</div>
+                  <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:6 }}>Email envoyé !</div>
+                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.</div>
+                  <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>← Retour à la connexion</span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize:13, color:"#1e293b", marginBottom:12, fontWeight:600 }}>Réinitialiser le mot de passe</div>
+                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>Entrez votre email et nous vous enverrons un lien de réinitialisation.</div>
+                  <button onClick={handleForgot} disabled={forgotLoading} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"11px", cursor:"pointer", fontWeight:700, fontSize:13, opacity:forgotLoading?0.7:1 }}>
+                    {forgotLoading ? "⏳ Envoi..." : "📧 Envoyer le lien"}
+                  </button>
+                  <div style={{ textAlign:"center", marginTop:10 }}>
+                    <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>← Retour</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {mode === "login" && !forgotMode && (
             <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12 }}>
               <div
                 onClick={()=>setRememberMe(r=>!r)}
@@ -1693,6 +1749,98 @@ function RdvForm({ onSave, onCancel }) {
 }
 
 // ── Landing Page ─────────────────────────────────────────────
+function ContactModal({ onClose }) {
+  const [nom, setNom] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  const handleSend = async () => {
+    if (!nom.trim() || !email.trim() || !message.trim()) {
+      setError("Veuillez remplir tous les champs.");
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer re_Udoa4JRG_67oApeXEvk2M5RV5FNFXVBNU"
+        },
+        body: JSON.stringify({
+          from: "CallRDV IA <rappels@callrdv.com>",
+          to: ["Abdoulsalam.sow@outlook.fr"],
+          subject: `📬 Message de ${nom} — CallRDV IA`,
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+              <h2 style="color:#1e3a5f;">📞 Nouveau message — CallRDV IA</h2>
+              <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-top:20px;">
+                <p><strong>Nom :</strong> ${nom}</p>
+                <p><strong>Email :</strong> ${email}</p>
+                <p><strong>Message :</strong></p>
+                <p style="white-space:pre-wrap;color:#475569;">${message}</p>
+              </div>
+              <p style="color:#94a3b8;font-size:12px;margin-top:24px;">Envoyé depuis callrdv.com</p>
+            </div>
+          `
+        })
+      });
+      if (res.ok) {
+        setSent(true);
+      } else {
+        setError("Erreur lors de l'envoi. Réessayez.");
+      }
+    } catch(e) {
+      setError("Erreur réseau. Réessayez.");
+    }
+    setSending(false);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden" }}>
+        <div style={{ padding:"24px 32px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>📬 Nous contacter</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#94a3b8" }}>✕</button>
+        </div>
+        <div style={{ padding:"28px 32px" }}>
+          {sent ? (
+            <div style={{ textAlign:"center", padding:"20px 0" }}>
+              <div style={{ fontSize:56, marginBottom:16 }}>✅</div>
+              <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Message envoyé !</div>
+              <div style={{ fontSize:14, color:"#64748b", marginBottom:24 }}>Nous vous répondrons dans les plus brefs délais.</div>
+              <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700 }}>Fermer</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>VOTRE NOM</div>
+                <input value={nom} onChange={e=>setNom(e.target.value)} placeholder="Nom complet" style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
+              </div>
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>VOTRE EMAIL</div>
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@..." style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
+              </div>
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>MESSAGE</div>
+                <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Votre message..." rows={4} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif", resize:"vertical" }} />
+              </div>
+              {error && <div style={{ color:"#ef4444", fontSize:13, marginBottom:14 }}>⚠️ {error}</div>}
+              <button onClick={handleSend} disabled={sending} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"13px", cursor:"pointer", fontWeight:700, fontSize:14, opacity:sending?0.7:1 }}>
+                {sending ? "⏳ Envoi en cours..." : "📤 Envoyer le message"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LegalModal({ type, onClose }) {
   const privacy = `
 POLITIQUE DE CONFIDENTIALITÉ — CallRDV IA
@@ -1834,6 +1982,7 @@ Pour toute question : contact@callrdv.com
 
 function LandingPage({ onLogin }) {
   const [legalType, setLegalType] = React.useState(null);
+  const [showContact, setShowContact] = React.useState(false);
 
   React.useEffect(() => {
     window.__showLegal = (type) => setLegalType(type);
@@ -1950,6 +2099,7 @@ function LandingPage({ onLogin }) {
   return (
     <div className="lp-body">
       {legalType && <LegalModal type={legalType} onClose={()=>setLegalType(null)} />}
+      {showContact && <ContactModal onClose={()=>setShowContact(false)} />}
       <style>{LP_CSS}</style>
 
       {/* NAV */}
@@ -2118,7 +2268,7 @@ function LandingPage({ onLogin }) {
       {/* FOOTER */}
       <footer className="lp-footer">
         <div className="lp-footer-logo">📞 CallRDV IA</div>
-        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>Confidentialité</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>CGU</a><a href="mailto:contact@callrdv.com">Contact</a></div>
+        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>Confidentialité</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>CGU</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
         <div className="lp-footer-copy">© 2026 CallRDV IA · Conforme RGPD</div>
       </footer>
     </div>
