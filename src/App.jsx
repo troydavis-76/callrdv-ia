@@ -2686,10 +2686,10 @@ export default function App() {
                 )}
 
                 <h1 style={{ fontSize:28, fontWeight:800, letterSpacing:"-0.03em", lineHeight:1.2, marginBottom:10 }}>
-                  Bonjour {user.name||""} 👋<br/><span style={{ color:"#1e3a5f" }}>Raccrochez, on s'occupe du reste.</span>
+                  Bonjour {user.name||""} 👋<br/><span style={{ color:"#1e3a5f" }}>Notez votre RDV pendant l'appel.</span>
                 </h1>
                 <p style={{ color:"#94a3b8", fontSize:14, marginBottom:24, lineHeight:1.7 }}>
-                  Demarrez un appel, puis raccrochez — la fiche de RDV s'ouvre automatiquement pour que vous puissiez saisir les details.
+                  Mettez sur haut-parleur, ouvrez l'app et saisissez le RDV en direct — avant même de raccrocher !
                 </p>
 
                 <div className="privacy-badge" style={{ marginBottom:20 }}>
@@ -2712,8 +2712,8 @@ export default function App() {
                 <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:16, padding:20, marginBottom:20 }}>
                   <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:14 }}>COMMENT CA MARCHE</div>
                   {[
-                    ["1","📞","Demarrez un appel","Appuyez sur le bouton et passez votre appel normalement"],
-                    ["2","🔴","Raccrochez","Appuyez sur Raccrocher — la fiche RDV s'ouvre instantanement"],
+                    ["1","📞","Passez votre appel","Mettez sur haut-parleur et ouvrez CallRDV IA en même temps"],
+                    ["2","🔍","Recherchez le client","Tapez son nom — sa fiche apparaît automatiquement"],
                     ["3","📋","Remplissez la fiche","Saisissez lieu, adresse, notes... en quelques secondes"],
                     ["4","📅","C'est dans l'agenda !","Le RDV est enregistre et synchronisable avec votre calendrier"],
                   ].map(([num,icon,title,desc])=>(
