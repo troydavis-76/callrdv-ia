@@ -8,7 +8,9 @@ function App() {
         <h1>🚀 Réservation en ligne pour pros</h1>
         <p>Coiffeurs • Barbiers • Restos • Assos<br/>
         <strong>Site + RDV = 250€</strong><br/>En ligne en 48h</p>
-        <a href="#tarifs" className="cta-button">DÉMO GRATUITE</a>
+    <a href="https://callrdv-ia.vercel.app/" target="_blank" className="cta-button" rel="noopener noreferrer">
+  VOIR LA DÉMO RDV
+</a>
       </section>
 
       <section className="features">
@@ -58,3 +60,6 @@ function App() {
 }
 
 export default App;
+<button type="button" onClick={() => window.open('https://callrdv-ia.vercel.app/', '_blank')} className="cta-button">
+  Tester la démo RDV
+</button>
