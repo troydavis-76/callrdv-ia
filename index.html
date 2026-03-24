@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallRDV - Réservation en ligne pour pros | 250€ clé en main</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #333; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 80px 20px; }
+        .hero h1 { font-size: 3em; font-weight: 800; margin-bottom: 20px; }
+        .hero p { font-size: 1.3em; margin-bottom: 40px; opacity: 0.95; }
+        .cta-button { background: #ff6b6b; color: white; padding: 18px 40px; font-size: 1.2em; font-weight: 600; border: none; border-radius: 50px; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.3s; }
+        .cta-button:hover { background: #ff5252; transform: translateY(-2px); }
+        .features { padding: 80px 20px; max-width: 1200px; margin: 0 auto; }
+        .features h2 { text-align: center; font-size: 2.5em; margin-bottom: 60px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+        .feature-card { text-align: center; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .feature-card img { width: 80px; height: 80px; margin-bottom: 20px; }
+        .tarifs { background: #f8f9fa; padding: 80px 20px; }
+        .tarifs h2 { text-align: center; font-size: 2.5em; margin-bottom: 60px; }
+        .prix-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1000px; margin: 0 auto; }
+        .prix-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
+        .prix { font-size: 3em; font-weight: 800; color: #ff6b6b; margin: 20px 0; }
+        .exemples { padding: 80px 20px; background: white; }
+        .exemples h2 { text-align: center; font-size: 2.5em; margin-bottom: 60px; }
+        @media (max-width: 768px) { .hero h1 { font-size: 2em; } }
+    </style>
+</head>
+<body>
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <h1>🚀 Réservation en ligne pour pros</h1>
+        <p>Coiffeurs • Barbiers • Restos • Associations<br>
+        <strong>Site complet + prise de RDV = 250€</strong><br>
+        En ligne en 48h - Sans abonnement</p>
+        <a href="#tarifs" class="cta-button">JE VEUX ÇA MAINTENANT</a>
+    </section>
+
+    <!-- FONCTIONNALITÉS -->
+    <section class="features">
+        <h2>Ce que vous avez pour 250€</h2>
+        <div class="grid">
+            <div class="feature-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/3061/3061270.png" alt="Site">
+                <h3>Site professionnel</h3>
+                <p>Design moderne + votre logo + vos couleurs<br>Responsive mobile</p>
+            </div>
+            <div class="feature-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/1087/1087482.png" alt="RDV">
+                <h3>Prise de RDV en ligne</h3>
+                <p>Calendrier • Confirmation auto • Rappels<br>Illimité</p>
+            </div>
+            <div class="feature-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/2272/2272969.png" alt="Formation">
+                <h3>Formation incluse</h3>
+                <p>Vidéo 15min + support 1 mois<br>Vous êtes autonome direct</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TARIFS -->
+    <section class="tarifs" id="tarifs">
+        <h2>💰 Tarifs clairs</h2>
+        <div class="prix-grid">
+            <div class="prix-card">
+                <h3>Site + RDV</h3>
+                <div class="prix">250€</div>
+                <p>Une fois • Tout inclus<br>Pas d'abonnement caché</p>
+                <a href="tel:+337XXXXXXXX" class="cta-button">Appel gratuit</a>
+            </div>
+            <div class="prix-card">
+                <h3>Maintenance</h3>
+                <div class="prix">20€/mois</div>
+                <p>Modifs + hébergement<br>Optionnel</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXEMPLES -->
+    <section class="exemples">
+        <h2>👀 Exemples réels</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div style="text-align: center;">
+                <a href="https://coiffeur-exemple.vercel.app" target="_blank" style="font-size: 1.2em; color: #ff6b6b;">Coiffeur Le Havre</a><br>
+                <img src="screenshot-coiffeur.jpg" style="max-width: 100%; border-radius: 10px;">
+            </div>
+            <!-- Ajoute tes vrais exemples ici -->
+        </div>
+    </section>
+
+    <script>
+        // Scroll smooth vers tarifs
+        document.querySelector('.cta-button[href="#tarifs"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#tarifs').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
