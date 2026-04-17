@@ -1528,11 +1528,12 @@ function RdvForm({ onSave, onCancel, userMetier }) {
   const [showMore, setShowMore] = useState(false);
   window.__prefillNom = null;
   window.__prefillPatient = null;
+  setTimeout(()=>{ window.__prefillCategorie = null; }, 100);
 
   const [form, setForm] = useState({
     titre: "",
     personne: prefillNom,
-    categorie: userMetier && userMetier !== "autre" ? userMetier : "",
+    categorie: window.__prefillCategorie || (userMetier && userMetier !== "autre" ? userMetier : ""),
     date: "",
     heure: "",
     lieu: "",
@@ -2586,6 +2587,10 @@ export default function App() {
                     <button key={v} onClick={async()=>{
                       await updateUser({ metier: v });
                       setShowMetierSetup(false);
+                      if (v !== "autre" && canAdd) {
+                        window.__prefillCategorie = v;
+                        setPhase("form");
+                      }
                     }} style={{ padding:"16px 12px", background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:12, cursor:"pointer", textAlign:"left", transition:"all .2s" }}>
                       <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:4 }}>{l}</div>
                       <div style={{ fontSize:11, color:"#94a3b8" }}>{d}</div>
