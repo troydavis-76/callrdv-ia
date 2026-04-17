@@ -153,6 +153,7 @@ function useAuth() {
         plan: profile.plan || "free",
         usage: profile.usage || 0,
         token,
+        metier: profile.metier || null,
         rappels: profile.rappels || ["j-1","j-3"],
         push_enabled: profile.push_enabled || false,
         push_j1: profile.push_j1 !== false,
@@ -180,7 +181,7 @@ function useAuth() {
     const tk = res.access_token;
     await delay(600);
     const profile = await sb.getProfile(tk, res.user.id);
-    const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false };
+    const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false };
     setUser(userData);
     // Persister la session
     localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, userId: res.user.id, email: res.user.email }));
@@ -293,7 +294,7 @@ function AuthPage({ authHooks }) {
       <div style={{ width:"100%", maxWidth:420 }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:36 }}>
           <div style={{ width:56, height:56, background:"#1e3a5f", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, margin:"0 auto 14px" }}>📞</div>
-          <div style={{ fontWeight:800, fontSize:28, color:"#1e293b", letterSpacing:"-0.03em" }}>CallRDV <span style={{ color:"#1e3a5f" }}>IA</span></div>
+          <div style={{ fontWeight:800, fontSize:28, color:"#1e293b", letterSpacing:"-0.03em" }}>CallRDV</div>
           <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", marginTop:4 }}>PRISE DE RDV AUTOMATIQUE</div>
         </div>
         <div className="card" style={{ padding:32 }}>
@@ -512,14 +513,14 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
         </div>
         <div style={{ display:"flex", gap:8, marginBottom:12 }}>
           <button onClick={()=>{
-            const msg = `📅 Rappel RDV\n${rdv.titre||"Rendez-vous"}\n👤 ${rdv.personne||""}\n📆 ${rdv.date||""}${rdv.heure?" à "+rdv.heure:""}\n📍 ${rdv.lieu||""}\n\nCallRDV IA — callrdv.com`;
+            const msg = `📅 Rappel RDV\n${rdv.titre||"Rendez-vous"}\n👤 ${rdv.personne||""}\n📆 ${rdv.date||""}${rdv.heure?" à "+rdv.heure:""}\n📍 ${rdv.lieu||""}\n\nCallRDV — callrdv.com`;
             if (navigator.share) { navigator.share({ title:"RDV", text:msg }); }
             else { navigator.clipboard.writeText(msg); alert("Copié dans le presse-papier !"); }
           }} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#16a34a" }}>
             📤 Partager
           </button>
           <button onClick={()=>{
-            const sms = `sms:${rdv.telephone||""}?body=${encodeURIComponent(`Rappel RDV : ${rdv.titre||"RDV"} le ${rdv.date}${rdv.heure?" à "+rdv.heure:""}. Lieu: ${rdv.lieu||""}. CallRDV IA`)}`;
+            const sms = `sms:${rdv.telephone||""}?body=${encodeURIComponent(`Rappel RDV : ${rdv.titre||"RDV"} le ${rdv.date}${rdv.heure?" à "+rdv.heure:""}. Lieu: ${rdv.lieu||""}. CallRDV`)}`;
             window.open(sms);
           }} style={{ flex:1, background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#0284c7" }}>
             💬 SMS
@@ -733,7 +734,7 @@ function exportPDF(appointments, viewMode) {
     <html lang="fr">
     <head>
       <meta charset="utf-8"/>
-      <title>CallRDV IA — ${title}</title>
+      <title>CallRDV — ${title}</title>
       <style>
         body { font-family: Arial, sans-serif; color: #1e293b; margin: 0; padding: 32px; }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #1e3a5f; }
@@ -751,7 +752,7 @@ function exportPDF(appointments, viewMode) {
     <body>
       <div class="header">
         <div>
-          <div class="logo">📞 CallRDV IA</div>
+          <div class="logo">📞 CallRDV</div>
           <div class="subtitle">Prise de rendez-vous automatique</div>
         </div>
         <div style="text-align:right">
@@ -774,7 +775,7 @@ function exportPDF(appointments, viewMode) {
         </thead>
         <tbody>${rows}</tbody>
       </table>`}
-      <div class="footer">CallRDV IA — Conforme RGPD · callrdv.com</div>
+      <div class="footer">CallRDV — Conforme RGPD · callrdv.com</div>
     </body>
     </html>
   `;
@@ -1215,7 +1216,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
       <div style={{ width:320, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
           <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-            <input placeholder="🔍 Rechercher un patient..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
+            <input placeholder="🔍 Rechercher un client..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex:1, fontSize:13 }} />
             <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{ fontSize:12, padding:"6px 8px", borderRadius:8, border:"1px solid var(--border)", background:"var(--input-bg)", color:"var(--text)", cursor:"pointer" }}>
               <option value="nom">A→Z</option>
               <option value="rdv">RDV ↓</option>
@@ -1242,7 +1243,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
           {filtered.length === 0 ? (
             <div style={{ textAlign:"center", padding:"40px 20px" }}>
               <div style={{ fontSize:36, marginBottom:8 }}>👥</div>
-              <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun patient trouvé</div>
+              <div style={{ color:"#94a3b8", fontSize:13 }}>Aucun client trouvé</div>
               <div style={{ color:"#cbd5e1", fontSize:11, marginTop:4 }}>Ils s'ajoutent automatiquement à chaque RDV</div>
             </div>
           ) : filtered.map(p => (
@@ -1259,7 +1260,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
           ))}
         </div>
         <div style={{ padding:"12px 16px", borderTop:"1px solid #e2e8f0", background:"#f8fafc" }}>
-          <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{patients.length} patient(s) au total</div>
+          <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{patients.length} client(s) au total</div>
         </div>
       </div>
 
@@ -1267,7 +1268,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
       <div id="patients-right-panel" style={{ flex:1, overflowY:"auto", padding:24 }}>
         {showAdd ? (
           <div className="card fade-up" style={{ maxWidth:480 }}>
-            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>➕ Nouveau patient</div>
+            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>➕ Nouveau client</div>
             <div style={{ marginBottom:14 }}><div className="field-label">NOM *</div><input placeholder="Nom complet" value={form.nom} onChange={e=>setForm(p=>({...p,nom:e.target.value}))} /></div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
               <div><div className="field-label">EMAIL</div><input type="email" placeholder="email@..." value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} /></div>
@@ -1276,7 +1277,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
             <div style={{ marginBottom:14 }}><div className="field-label">NOTES</div><textarea rows={3} placeholder="Informations importantes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} /></div>
             <div style={{ display:"flex", gap:10 }}>
               <button className="btn btn-outline" onClick={()=>setShowAdd(false)} style={{ flex:1 }}>Annuler</button>
-              <button className="btn btn-primary" onClick={handleAdd} style={{ flex:2 }}>Ajouter le patient</button>
+              <button className="btn btn-primary" onClick={handleAdd} style={{ flex:2 }}>Ajouter le client</button>
             </div>
           </div>
         ) : selected ? (
@@ -1348,7 +1349,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         ) : (
           <div style={{ textAlign:"center", padding:"80px 40px" }}>
             <div style={{ fontSize:56, marginBottom:16 }}>👥</div>
-            <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Vos patients & clients</div>
+            <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Vos clients</div>
             <div style={{ color:"#94a3b8", fontSize:14, lineHeight:1.7 }}>Sélectionnez un patient pour voir sa fiche,<br/>ou ajoutez-en un manuellement.<br/><br/>💡 Ils s'ajoutent automatiquement à chaque nouveau RDV !</div>
           </div>
         )}
@@ -1373,7 +1374,7 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
     if (result === "granted") {
       setPushEnabled(true);
       // Test notification
-      new Notification("CallRDV IA 📞", {
+      new Notification("CallRDV 📞", {
         body: "Notifications activées ! Vous recevrez vos rappels directement ici.",
         icon: "/icon-192.png"
       });
@@ -1521,15 +1522,17 @@ function useSpeech(onResult) {
   return { listening, start, stop };
 }
 
-function RdvForm({ onSave, onCancel }) {
+function RdvForm({ onSave, onCancel, userMetier }) {
   const prefillNom = window.__prefillNom || "";
   const prefillPatient = window.__prefillPatient || null;
+  const [showMore, setShowMore] = useState(false);
   window.__prefillNom = null;
   window.__prefillPatient = null;
 
   const [form, setForm] = useState({
     titre: "",
     personne: prefillNom,
+    categorie: userMetier && userMetier !== "autre" ? userMetier : "",
     date: "",
     heure: "",
     lieu: "",
@@ -1671,6 +1674,15 @@ function RdvForm({ onSave, onCancel }) {
           style={{ colorScheme:"dark" }} />
       </div>
 
+      {/* Bouton Plus de détails */}
+      <div style={{ marginBottom:showMore?20:16 }}>
+        <button type="button" onClick={()=>setShowMore(s=>!s)} style={{ background:"transparent", border:"1px dashed #cbd5e1", borderRadius:10, padding:"10px 16px", width:"100%", cursor:"pointer", color:"#64748b", fontSize:13, fontWeight:600, fontFamily:"Inter, sans-serif" }}>
+          {showMore ? "− Moins de détails" : "+ Plus de détails (lieu, adresse, notes...)"}
+        </button>
+      </div>
+
+      {showMore && <>
+
       {/* Lieu + Adresse */}
       <div style={{ marginBottom:16 }}>
         <div className="field-label">LIEU</div>
@@ -1735,6 +1747,8 @@ function RdvForm({ onSave, onCancel }) {
         </div>
       </div>
 
+      </>}
+
       {/* Buttons */}
       <div style={{ display:"flex", gap:10 }}>
         <button className="btn btn-outline" onClick={onCancel} style={{ flex:1 }}>Annuler</button>
@@ -1772,12 +1786,12 @@ function ContactModal({ onClose }) {
           "Authorization": "Bearer re_Udoa4JRG_67oApeXEvk2M5RV5FNFXVBNU"
         },
         body: JSON.stringify({
-          from: "CallRDV IA <rappels@callrdv.com>",
+          from: "CallRDV <rappels@callrdv.com>",
           to: ["Abdoulsalam.sow@outlook.fr"],
-          subject: `📬 Message de ${nom} — CallRDV IA`,
+          subject: `📬 Message de ${nom} — CallRDV`,
           html: `
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
-              <h2 style="color:#1e3a5f;">📞 Nouveau message — CallRDV IA</h2>
+              <h2 style="color:#1e3a5f;">📞 Nouveau message — CallRDV</h2>
               <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-top:20px;">
                 <p><strong>Nom :</strong> ${nom}</p>
                 <p><strong>Email :</strong> ${email}</p>
@@ -1843,15 +1857,15 @@ function ContactModal({ onClose }) {
 
 function LegalModal({ type, onClose }) {
   const privacy = `
-POLITIQUE DE CONFIDENTIALITÉ — CallRDV IA
+POLITIQUE DE CONFIDENTIALITÉ — CallRDV
 Dernière mise à jour : mars 2026
 
 1. RESPONSABLE DU TRAITEMENT
-CallRDV IA est édité par un entrepreneur individuel.
+CallRDV est édité par un entrepreneur individuel.
 Contact : contact@callrdv.com
 
 2. DONNÉES COLLECTÉES
-Dans le cadre de l'utilisation de CallRDV IA, nous collectons :
+Dans le cadre de l'utilisation de CallRDV, nous collectons :
 • Données d'identification : nom, adresse email
 • Données professionnelles : rendez-vous, contacts clients, notes
 • Données techniques : adresse IP, type de navigateur, logs de connexion
@@ -1895,7 +1909,7 @@ Pour exercer vos droits : contact@callrdv.com
 Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données (chiffrement SSL, authentification sécurisée, accès restreint).
 
 9. COOKIES
-CallRDV IA utilise uniquement des cookies techniques nécessaires au fonctionnement du service (session utilisateur). Aucun cookie publicitaire n'est utilisé.
+CallRDV utilise uniquement des cookies techniques nécessaires au fonctionnement du service (session utilisateur). Aucun cookie publicitaire n'est utilisé.
 
 10. MODIFICATIONS
 Nous nous réservons le droit de modifier cette politique. Vous serez informé par email en cas de changement substantiel.
@@ -1905,24 +1919,24 @@ Vous pouvez introduire une réclamation auprès de la CNIL : www.cnil.fr
   `;
 
   const cgu = `
-CONDITIONS GÉNÉRALES D'UTILISATION — CallRDV IA
+CONDITIONS GÉNÉRALES D'UTILISATION — CallRDV
 Dernière mise à jour : mars 2026
 
 1. OBJET
-Les présentes CGU régissent l'utilisation du service CallRDV IA accessible sur callrdv.com, un outil SaaS de gestion de rendez-vous post-appel téléphonique.
+Les présentes CGU régissent l'utilisation du service CallRDV accessible sur callrdv.com, un outil SaaS de gestion de rendez-vous post-appel téléphonique.
 
 2. ACCEPTATION
 L'utilisation du service implique l'acceptation pleine et entière des présentes CGU. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser le service.
 
 3. DESCRIPTION DU SERVICE
-CallRDV IA permet de :
+CallRDV permet de :
 • Créer et gérer des rendez-vous
 • Gérer une base de contacts clients
 • Recevoir des rappels automatiques par email
 • Accéder à des statistiques d'activité
 
 4. INSCRIPTION
-Pour utiliser CallRDV IA, vous devez créer un compte avec une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.
+Pour utiliser CallRDV, vous devez créer un compte avec une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.
 
 5. PLANS ET TARIFS
 • Plan Gratuit : 10 RDV/mois, gratuit
@@ -1937,7 +1951,7 @@ Les paiements sont traités par Stripe. Les abonnements sont sans engagement et 
 L'utilisation du service implique le traitement de données personnelles conformément à notre Politique de Confidentialité.
 
 8. RESPONSABILITÉS
-CallRDV IA s'engage à fournir le service avec le soin raisonnable. Nous ne sommes pas responsables des pertes de données dues à des cas de force majeure ou à une utilisation incorrecte.
+CallRDV s'engage à fournir le service avec le soin raisonnable. Nous ne sommes pas responsables des pertes de données dues à des cas de force majeure ou à une utilisation incorrecte.
 
 L'utilisateur s'engage à :
 • Ne pas utiliser le service à des fins illégales
@@ -1945,7 +1959,7 @@ L'utilisateur s'engage à :
 • Respecter les droits des tiers
 
 9. PROPRIÉTÉ INTELLECTUELLE
-L'ensemble des éléments de CallRDV IA (code, design, marque) sont protégés par le droit de la propriété intellectuelle. Toute reproduction est interdite sans autorisation.
+L'ensemble des éléments de CallRDV (code, design, marque) sont protégés par le droit de la propriété intellectuelle. Toute reproduction est interdite sans autorisation.
 
 10. RÉSILIATION
 Vous pouvez supprimer votre compte à tout moment. Nous nous réservons le droit de suspendre un compte en cas de violation des présentes CGU.
@@ -2104,7 +2118,7 @@ function LandingPage({ onLogin }) {
 
       {/* NAV */}
       <nav className="lp-nav">
-        <div className="lp-logo">📞 CallRDV IA <span>BETA</span></div>
+        <div className="lp-logo">📞 CallRDV <span>BETA</span></div>
         <div className="lp-nav-links">
           <a href="#lp-features">Fonctionnalités</a>
           <a href="#lp-demo">Démo</a>
@@ -2119,7 +2133,7 @@ function LandingPage({ onLogin }) {
         <div className="lp-hero-content">
           <div className="lp-badge">🟢 Disponible maintenant — offre de lancement</div>
           <h1 className="lp-h1">Vos rendez-vous,<br/><em>organisés en secondes</em></h1>
-          <p className="lp-sub">CallRDV IA transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.</p>
+          <p className="lp-sub">CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.</p>
           <div className="lp-actions">
             <button className="lp-btn-primary" onClick={onLogin}>Commencer gratuitement →</button>
             <a href="#lp-demo" className="lp-btn-secondary">Voir la démo</a>
@@ -2187,12 +2201,12 @@ function LandingPage({ onLogin }) {
       <section className="lp-video-section" id="lp-demo">
         <div className="lp-video-inner">
           <div className="lp-label">Démo</div>
-          <h2 className="lp-h2">Voyez CallRDV IA en action</h2>
+          <h2 className="lp-h2">Voyez CallRDV en action</h2>
           <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>De la recherche client à la confirmation du RDV — en moins de 2 minutes.</p>
           <div style={{ marginTop:44, borderRadius:20, overflow:"hidden", boxShadow:"0 24px 64px rgba(15,35,64,0.2)", position:"relative", paddingBottom:"56.25%", height:0 }}>
             <iframe
               src="https://www.youtube.com/embed/9_GsFNca7_g"
-              title="CallRDV IA — Démo"
+              title="CallRDV — Démo"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -2266,16 +2280,16 @@ function LandingPage({ onLogin }) {
       <section className="lp-cta-section">
         <div className="lp-cta-content">
           <h2 className="lp-cta-title">Prêt à simplifier<br/>votre gestion de RDV ?</h2>
-          <p className="lp-cta-sub">Rejoignez CallRDV IA — gratuit pour commencer, sans carte bancaire.</p>
+          <p className="lp-cta-sub">Rejoignez CallRDV — gratuit pour commencer, sans carte bancaire.</p>
           <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onLogin}>Créer mon compte gratuitement →</button>
         </div>
       </section>
 
       {/* FOOTER */}
       <footer className="lp-footer">
-        <div className="lp-footer-logo">📞 CallRDV IA</div>
+        <div className="lp-footer-logo">📞 CallRDV</div>
         <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>Confidentialité</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>CGU</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
-        <div className="lp-footer-copy">© 2026 CallRDV IA · Conforme RGPD</div>
+        <div className="lp-footer-copy">© 2026 CallRDV · Conforme RGPD</div>
       </footer>
     </div>
   );
@@ -2303,6 +2317,7 @@ export default function App() {
   const [showPatients, setShowPatients] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [showMetierSetup, setShowMetierSetup] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [editingRdv, setEditingRdv] = useState(null);
   const [stripeSuccess, setStripeSuccess] = useState(() => window.location.search.includes("success=1"));
@@ -2400,6 +2415,13 @@ export default function App() {
       }
     });
   }, [appointments, user]);
+
+  // Afficher la config métier au premier login
+  useEffect(() => {
+    if (user && !user.metier && !loading) {
+      setShowMetierSetup(true);
+    }
+  }, [user, loading]);
 
   // Onboarding — montrer si nouveau utilisateur
   const isNewUser = appointments.length === 0 && patients.length === 0 && !loading;
@@ -2508,7 +2530,7 @@ export default function App() {
         <nav style={{ padding:"14px 24px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:32, height:32, background:"#1e3a5f", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>📞</div>
-            <span style={{ fontWeight:800, fontSize:16 }}>CallRDV <span style={{ color:"#1e3a5f" }}>IA</span></span>
+            <span style={{ fontWeight:800, fontSize:16 }}>CallRDV</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"6px 14px", fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>
@@ -2530,7 +2552,7 @@ export default function App() {
 
         {/* Onglets */}
         <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Patients/Clients","patients"],["📊","Stats","stats"]].map(([icon,label,tab]) => (
+          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Clients","patients"],...(appointments.length >= 5 ? [["📊","Stats","stats"]] : [])].map(([icon,label,tab]) => (
             <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); setShowStats(tab==="stats"); }}
               style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
               {icon} {label}
@@ -2541,6 +2563,45 @@ export default function App() {
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
           {/* STATS VIEW */}
+          {/* Configuration métier au premier login */}
+          {showMetierSetup && (
+            <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+              <div className="card fade-up" style={{ width:"100%", maxWidth:480, padding:32 }}>
+                <div style={{ textAlign:"center", marginBottom:24 }}>
+                  <div style={{ fontSize:48, marginBottom:12 }}>👋</div>
+                  <div style={{ fontWeight:800, fontSize:20, marginBottom:8 }}>Bienvenue {user?.name?.split(" ")[0] || ""} !</div>
+                  <div style={{ fontSize:14, color:"#64748b", lineHeight:1.6 }}>Pour personnaliser CallRDV à votre activité, dites-nous quel est votre métier :</div>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                  {[
+                    { v:"medical", l:"🏥 Médical", d:"Médecin, dentiste..." },
+                    { v:"restaurant", l:"🍽️ Restaurant", d:"Réservations" },
+                    { v:"garage", l:"🔧 Garage", d:"Auto, mécanique" },
+                    { v:"beaute", l:"💈 Beauté", d:"Coiffeur, esthétique" },
+                    { v:"juridique", l:"⚖️ Juridique", d:"Avocat, notaire" },
+                    { v:"travaux", l:"🏠 Travaux", d:"Artisan, BTP" },
+                    { v:"veterinaire", l:"🐾 Vétérinaire", d:"Animaux" },
+                    { v:"autre", l:"✨ Autre", d:"Tous métiers" },
+                  ].map(({v,l,d}) => (
+                    <button key={v} onClick={async()=>{
+                      await updateUser({ metier: v });
+                      setShowMetierSetup(false);
+                    }} style={{ padding:"16px 12px", background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:12, cursor:"pointer", textAlign:"left", transition:"all .2s" }}>
+                      <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:4 }}>{l}</div>
+                      <div style={{ fontSize:11, color:"#94a3b8" }}>{d}</div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={async()=>{
+                  await updateUser({ metier: "autre" });
+                  setShowMetierSetup(false);
+                }} style={{ marginTop:16, width:"100%", background:"none", border:"none", color:"#94a3b8", fontSize:12, cursor:"pointer", textDecoration:"underline" }}>
+                  Passer pour l'instant
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Stripe Success Modal */}
           {stripeSuccess && (
             <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
@@ -2552,7 +2613,7 @@ export default function App() {
                   Votre compte a été mis à jour. Profitez de toutes les fonctionnalités sans limite.
                 </div>
                 <button className="btn btn-primary" onClick={()=>{ setStripeSuccess(false); window.history.replaceState({}, "", window.location.pathname); }} style={{ width:"100%", padding:14 }}>
-                  🚀 Commencer à utiliser CallRDV IA
+                  🚀 Commencer à utiliser CallRDV
                 </button>
               </div>
             </div>
@@ -2650,7 +2711,7 @@ export default function App() {
                       <div style={{ fontSize:13, opacity:0.7, marginBottom:8, fontFamily:"DM Mono" }}>BIENVENUE 👋</div>
                       <div style={{ fontSize:24, fontWeight:800, marginBottom:8 }}>Bonjour {user.name?.split(" ")[0] || "!"} </div>
                       <div style={{ fontSize:14, opacity:0.8, lineHeight:1.7 }}>
-                        Votre espace CallRDV IA est prêt.<br/>Créez votre premier rendez-vous en quelques secondes.
+                        Votre espace CallRDV est prêt.<br/>Créez votre premier rendez-vous en quelques secondes.
                       </div>
                       <button
                         onClick={()=>{ if(canAdd) setPhase("form"); setDismissOnboarding(true); }}
@@ -2712,7 +2773,7 @@ export default function App() {
                 <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:16, padding:20, marginBottom:20 }}>
                   <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:14 }}>COMMENT CA MARCHE</div>
                   {[
-                    ["1","📞","Passez votre appel","Mettez sur haut-parleur et ouvrez CallRDV IA en même temps"],
+                    ["1","📞","Passez votre appel","Mettez sur haut-parleur et ouvrez CallRDV en même temps"],
                     ["2","🔍","Recherchez le client","Tapez son nom — sa fiche apparaît automatiquement"],
                     ["3","📋","Remplissez la fiche","Saisissez lieu, adresse, notes... en quelques secondes"],
                     ["4","📅","C'est dans l'agenda !","Le RDV est enregistre et synchronisable avec votre calendrier"],
@@ -2808,6 +2869,7 @@ export default function App() {
               <RdvForm
                 onSave={handleSave}
                 onCancel={()=>setPhase("idle")}
+                userMetier={user?.metier}
               />
             )}
           </div>}
