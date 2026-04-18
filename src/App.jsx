@@ -508,30 +508,27 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
 
         {/* Actions */}
         <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-          <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#1e3a5f" }}>✏️ Modifier</button>
-          <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#ef4444" }}>🗑️ Supprimer</button>
-        </div>
-        <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+          <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#1e3a5f" }}>✏️ Modifier</button>
+          <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#ef4444" }}>🗑️ Supprimer</button>
           <button onClick={()=>{
             const msg = `📅 Rappel RDV\n${rdv.titre||"Rendez-vous"}\n👤 ${rdv.personne||""}\n📆 ${rdv.date||""}${rdv.heure?" à "+rdv.heure:""}\n📍 ${rdv.lieu||""}\n\nCallRDV — callrdv.com`;
             if (navigator.share) { navigator.share({ title:"RDV", text:msg }); }
-            else { navigator.clipboard.writeText(msg); alert("Copié dans le presse-papier !"); }
-          }} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#16a34a" }}>
+            else { navigator.clipboard.writeText(msg); alert("Copié !"); }
+          }} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#16a34a" }}>
             📤 Partager
-          </button>
-          <button onClick={()=>{
-            const sms = `sms:${rdv.telephone||""}?body=${encodeURIComponent(`Rappel RDV : ${rdv.titre||"RDV"} le ${rdv.date}${rdv.heure?" à "+rdv.heure:""}. Lieu: ${rdv.lieu||""}. CallRDV`)}`;
-            window.open(sms);
-          }} style={{ flex:1, background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#0284c7" }}>
-            💬 SMS
           </button>
         </div>
 
-        {/* Export */}
-        <div style={{ display:"flex", gap:8 }}>
-          <button onClick={()=>exportTo("google")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Google Calendar</button>
-          <button onClick={()=>exportTo("outlook")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📆 Outlook</button>
-        </div>
+        {/* Export (replié) */}
+        <details style={{ marginTop:4 }}>
+          <summary style={{ cursor:"pointer", fontSize:12, color:"#94a3b8", padding:"8px 0", textAlign:"center", listStyle:"none" }}>
+            ⚙️ Plus d'options
+          </summary>
+          <div style={{ display:"flex", gap:8, marginTop:8 }}>
+            <button onClick={()=>exportTo("google")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Google Calendar</button>
+            <button onClick={()=>exportTo("outlook")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📆 Outlook</button>
+          </div>
+        </details>
 
       </div>
     </div>
@@ -1435,7 +1432,22 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
         {saved && <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#16a34a", fontWeight:600 }}>✅ Paramètres sauvegardés !</div>}
 
         <div style={{ display:"flex", gap:10 }}>
-          {/* Notifications Push */}
+          {/* Apparence */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+            🎨 Apparence
+          </div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"#f8fafc", borderRadius:8 }}>
+            <span style={{ fontSize:13, color:"#475569" }}>Mode sombre</span>
+            <div
+              onClick={()=>{ if(typeof window.__toggleDarkMode==="function") window.__toggleDarkMode(); }}
+              style={{ width:44, height:24, borderRadius:12, background:document.documentElement.style.getPropertyValue("--bg")==="#0a0f1e"?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s" }}>
+              <div style={{ position:"absolute", top:3, left:document.documentElement.style.getPropertyValue("--bg")==="#0a0f1e"?20:3, width:18, height:18, borderRadius:"50%", background:"#fff", transition:"left .2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }}></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications Push */}
         <div style={{ marginBottom:24 }}>
           <div style={{ fontWeight:700, fontSize:14, marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
             📲 Notifications push
@@ -2312,7 +2324,7 @@ export default function App() {
   const [phase, setPhase]         = useState("idle");   // idle | calling | form | agenda
   const [appointments, setAppts]  = useState([]);
   const [calRdv, setCalRdv]       = useState(null);
-  const [showAgenda, setShowAgenda] = useState(false);
+  const [showAgenda, setShowAgenda] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [patients, setPatients] = useState([]);
   const [showPatients, setShowPatients] = useState(false);
@@ -2363,6 +2375,12 @@ export default function App() {
     await sb.updateAppointment(token, id, { statut });
     setAppts(prev => prev.map(r => r.id === id ? { ...r, statut } : r));
   };
+
+  // Exposer toggle dark mode
+  useEffect(() => {
+    window.__toggleDarkMode = () => setDarkMode(d => !d);
+    return () => { delete window.__toggleDarkMode; };
+  }, []);
 
   // Dark mode
   useEffect(() => {
@@ -2535,14 +2553,11 @@ export default function App() {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"6px 14px", fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>
-              {plan.quota===Infinity ? "illimite" : `${plan.quota-(user.usage||0)}/${plan.quota} restants`}
+              {plan.quota===Infinity ? "✨ Illimité" : `${plan.quota-(user.usage||0)} RDV restants`}
             </div>
             <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
               {plan.name.toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
             </div>
-            <button onClick={()=>setDarkMode(d=>!d)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title={darkMode?"Mode clair":"Mode sombre"}>
-              {darkMode ? "☀️" : "🌙"}
-            </button>
             <button onClick={()=>setShowSettings(true)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title="Paramètres">⚙️</button>
             <div onClick={signOut} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
               <div style={{ width:28, height:28, background:"#e2e8f0", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
@@ -2553,9 +2568,9 @@ export default function App() {
 
         {/* Onglets */}
         <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["📞","Appels","appels"],["📅","Agenda","agenda"],["👥","Clients","patients"],...(appointments.length >= 5 ? [["📊","Stats","stats"]] : [])].map(([icon,label,tab]) => (
+          {[["📅","Mes RDV","agenda"],["👥","Clients","patients"],...(appointments.length >= 5 ? [["📊","Stats","stats"]] : [])].map(([icon,label,tab]) => (
             <button key={label} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); setShowStats(tab==="stats"); }}
-              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)||(tab==="appels"&&!showAgenda&&!showPatients&&!showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
+              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
               {icon} {label}
             </button>
           ))}
