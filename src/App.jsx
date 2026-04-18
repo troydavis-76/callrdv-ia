@@ -2626,6 +2626,36 @@ export default function App() {
 
 
 
+          {/* Bouton flottant + nouveau RDV */}
+          {user && !showMetierSetup && !stripeSuccess && !editingRdv && phase === "idle" && (
+            <button
+              onClick={()=>{ if(canAdd) setPhase("form"); }}
+              disabled={!canAdd}
+              style={{
+                position:"fixed",
+                bottom:24,
+                right:24,
+                width:60,
+                height:60,
+                borderRadius:"50%",
+                background: canAdd ? "#1e3a5f" : "#94a3b8",
+                color:"#fff",
+                border:"none",
+                fontSize:28,
+                fontWeight:700,
+                cursor: canAdd ? "pointer" : "not-allowed",
+                boxShadow:"0 8px 24px rgba(30,58,95,0.4)",
+                zIndex:50,
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"center",
+                transition:"all .2s"
+              }}
+              title="Nouveau RDV">
+              +
+            </button>
+          )}
+
           {/* Modal modification RDV */}
           {editingRdv && (
             <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
