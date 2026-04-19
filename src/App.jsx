@@ -2490,7 +2490,7 @@ export default function App() {
     // Sauvegarder dans Supabase
     const saved_res = await sb.addAppointment(token, user.id, {
       titre: rdv.titre, personne: rdv.personne, date: rdv.date,
-      heure: rdv.heure, lieu: rdv.lieu, notes: rdv.notes || "", statut: rdv.statut
+      heure: rdv.heure, lieu: rdv.lieu, adresse: rdv.adresse || "", notes: rdv.notes || "", statut: rdv.statut || "en_attente", categorie: rdv.categorie || "autre"
     });
     await sb.addAnalyse(token, user.id, true);
 
