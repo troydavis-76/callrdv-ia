@@ -874,7 +874,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
             </button>
           ))}
           <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>
-            📞 Nouvel appel
+            + Nouveau RDV
           </button>
           <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
             📄 PDF
@@ -2738,7 +2738,7 @@ export default function App() {
           {showAgenda && (
             <CalendarView
               appointments={appointments}
-              onNewCall={()=>{ setShowAgenda(false); setPhase("calling"); }}
+              onNewCall={()=>{ setShowAgenda(false); setPhase("form"); }}
               onCalRdv={setCalRdv}
               onEditRdv={setEditingRdv}
               onDeleteRdv={handleDeleteRdv}
