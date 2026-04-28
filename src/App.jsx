@@ -1788,7 +1788,7 @@ function RdvForm({ onSave, onCancel, userMetier }) {
       {/* Buttons */}
       <div style={{ display:"flex", gap:10 }}>
         <button className="btn btn-outline" onClick={onCancel} style={{ flex:1 }}>Annuler</button>
-        <button className="btn btn-primary" onClick={()=>isValid&&onSave({ ...form, id:"rdv_"+Date.now(), confirmedAt:new Date().toLocaleTimeString("fr-FR") })}
+        <button className="btn btn-primary" onClick={()=>isValid&&onSave({ ...form, confirmedAt:new Date().toLocaleTimeString("fr-FR") })}
           disabled={!isValid} style={{ flex:2, padding:"15px" }}>
           ✓ Enregistrer le RDV
         </button>
