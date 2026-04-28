@@ -2503,11 +2503,13 @@ export default function App() {
     if (user?.id && token) {
       sb.getAppointments(token, user.id).then(data => {
         if (Array.isArray(data)) {
-          setAppts(data.map(r => ({ ...r, confirmedAt: new Date(r.confirmed_at).toLocaleTimeString("fr-FR") })));
+          setAppts(data.map(r => ({ ...r, confirmedAt: r.confirmed_at ? new Date(r.confirmed_at).toLocaleTimeString("fr-FR") : "" })));
+        } else {
+          console.error("Erreur chargement RDV:", data);
         }
-      });
+      }).catch(err => console.error("Erreur RDV:", err));
     }
-  }, [user?.id]);
+  }, [user?.id, token]);
 
   const handleSave = async (rdv) => {
     // Sauvegarder dans Supabase
