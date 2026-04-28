@@ -52,12 +52,19 @@ const sb = {
     return r.json();
   },
   async addAppointment(token, userId, rdv) {
+    const payload = { ...rdv, user_id: userId };
+    console.log("[RDV] Envoi:", payload);
     const r = await fetch(`${this.url}/rest/v1/appointments`, {
       method: "POST",
       headers: { ...this.headers(token), "Prefer": "return=representation" },
-      body: JSON.stringify({ ...rdv, user_id: userId }),
+      body: JSON.stringify(payload),
     });
-    return r.json();
+    const data = await r.json();
+    if (!r.ok) {
+      console.error("[RDV] Erreur Supabase:", r.status, data);
+      alert("Erreur " + r.status + " : " + JSON.stringify(data));
+    }
+    return data;
   },
   async addAnalyse(token, userId, rdv_detecte) {
     await fetch(`${this.url}/rest/v1/analyses`, {
