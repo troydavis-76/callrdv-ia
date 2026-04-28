@@ -55,7 +55,7 @@ const sb = {
     const r = await fetch(`${this.url}/rest/v1/appointments`, {
       method: "POST",
       headers: { ...this.headers(token), "Prefer": "return=representation" },
-      body: JSON.stringify({ user_id: userId, ...rdv }),
+      body: JSON.stringify({ ...rdv, user_id: userId }),
     });
     return r.json();
   },
