@@ -2513,10 +2513,24 @@ export default function App() {
 
   const handleSave = async (rdv) => {
     // Sauvegarder dans Supabase
-    const saved_res = await sb.addAppointment(token, user.id, {
-      titre: rdv.titre, personne: rdv.personne, date: rdv.date,
-      heure: rdv.heure, lieu: rdv.lieu, adresse: rdv.adresse || "", notes: rdv.notes || "", statut: rdv.statut || "en_attente", categorie: rdv.categorie || "autre"
-    });
+    // Nettoyer l'objet pour ne garder que les champs valides
+    const cleanRdv = {
+      titre: rdv.titre || "",
+      personne: rdv.personne || "",
+      date: rdv.date || "",
+      heure: rdv.heure || "",
+      lieu: rdv.lieu || "",
+      adresse: rdv.adresse || "",
+      notes: rdv.notes || "",
+      statut: rdv.statut || "en_attente",
+      categorie: rdv.categorie || "autre"
+    };
+    const saved_res = await sb.addAppointment(token, user.id, cleanRdv);
+    if (!saved_res || !Array.isArray(saved_res) || !saved_res[0]) {
+      console.error("Erreur sauvegarde RDV:", saved_res);
+      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      return;
+    }
     await sb.addAnalyse(token, user.id, true);
 
     // Notification push si activée
