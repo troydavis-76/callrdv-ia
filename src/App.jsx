@@ -141,10 +141,31 @@ function useAuth() {
   useEffect(() => {
     const saved = localStorage.getItem("callrdv_session");
     if (!saved) return;
-    const { token, userId } = JSON.parse(saved);
-    if (!token || !userId) return;
-    // Vérifier que le token est encore valide
-    sb.getProfile(token, userId).then(profile => {
+    let { token, refresh_token, userId } = JSON.parse(saved);
+    if (!userId) { localStorage.removeItem("callrdv_session"); return; }
+
+    // Renouveler le token avec refresh_token avant tout
+    const tryRestore = async () => {
+      if (refresh_token) {
+        try {
+          const r = await fetch("https://vcnguzlwyacnlysnsogv.supabase.co/auth/v1/token?grant_type=refresh_token", {
+            method: "POST",
+            headers: {
+              "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ refresh_token })
+          });
+          if (r.ok) {
+            const data = await r.json();
+            token = data.access_token;
+            refresh_token = data.refresh_token;
+            localStorage.setItem("callrdv_session", JSON.stringify({ token, refresh_token, userId, email: data.user?.email }));
+          }
+        } catch(e) { console.error("Refresh error:", e); }
+      }
+      if (!token) { localStorage.removeItem("callrdv_session"); return; }
+      sb.getProfile(token, userId).then(profile => {
       if (!profile) { localStorage.removeItem("callrdv_session"); return; }
       setUser({
         id: userId,
@@ -161,6 +182,8 @@ function useAuth() {
         push_confirm: profile.push_confirm !== false
       });
     }).catch(() => localStorage.removeItem("callrdv_session"));
+    };
+    tryRestore();
   }, []);
   const [loading, setLoading] = useState(false);
 
@@ -184,7 +207,7 @@ function useAuth() {
     const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false };
     setUser(userData);
     // Persister la session
-    localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, userId: res.user.id, email: res.user.email }));
+    localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, refresh_token: res.refresh_token, userId: res.user.id, email: res.user.email }));
     localStorage.setItem("callrdv_email", res.user.email);
     setLoading(false);
     return { error: null };
