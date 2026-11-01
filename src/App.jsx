@@ -1244,7 +1244,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
 }
 
 // ── Patients View ────────────────────────────────────────────
-function PatientsView({ patients, setPatients, user, token, sb, appointments }) {
+function PatientsView({ patients, setPatients, user, token, sb, appointments, onNewRdv }) {
   const [search, setSearch] = React.useState("");
   const [selected, setSelected] = React.useState(null);
   const [showAdd, setShowAdd] = React.useState(false);
@@ -1568,6 +1568,12 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
                 <button onClick={()=>handleDelete(selected.id)} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#ef4444", fontWeight:600 }}>🗑️</button>
               </div>
             </div>
+
+            {onNewRdv && (
+              <button className="btn btn-primary" onClick={()=>onNewRdv(selected)} style={{ width:"100%", padding:"14px", fontSize:15, marginBottom:16 }}>
+                {tr("📅 Prendre un RDV pour ce client","📅 Book an appointment for this client")}
+              </button>
+            )}
 
             {/* Coordonnées */}
             <div className="card" style={{ marginBottom:16 }}>
@@ -1913,30 +1919,15 @@ function RdvForm({ onSave, onCancel, userMetier }) {
         </div>
       </div>
 
-      {/* Categorie */}
-      <div style={{ marginBottom:20 }}>
-        <div className="field-label">{tr("TYPE DE RDV","APPOINTMENT TYPE")}</div>
-        <select value={form.categorie} onChange={e=>handleCategorie(e.target.value)}
-          style={{ appearance:"none", WebkitAppearance:"none", backgroundImage:"url('data:image/svg+xml;utf8,<svg fill=\"%23c8f542\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M7 10l5 5 5-5z\"/></svg>')", backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", backgroundSize:20, paddingRight:40 }}>
-          {categories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Titre */}
+      {/* Nom du client */}
       <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("TITRE DU RDV","TITLE")}</div>
-        <input placeholder={tr("Ex: Consultation Dr. Martin, Révision Renault...","e.g. Dr Smith check-up, Ford service...")} value={form.titre} onChange={e=>set("titre",e.target.value)} />
-      </div>
-
-      {/* Personne + Date */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
         <div>
-          <div className="field-label">{tr("PERSONNE / CONTACT *","PERSON / CONTACT *")}</div>
+          <div className="field-label">{tr("NOM DU CLIENT *","CLIENT NAME *")}</div>
           <div style={{ position:"relative" }}>
             <input
-              placeholder={tr("Dr. Martin, Garage Renault...","Name of the person")}
+              placeholder={tr("Ex : Mme Durand","e.g. Mrs Smith")}
+              autoFocus={!form.personne}
+              autoCapitalize="words"
               value={form.personne}
               onChange={e=>{ set("personne",e.target.value); setShowSuggestions(true); }}
               onFocus={()=>setShowSuggestions(true)}
@@ -1964,24 +1955,43 @@ function RdvForm({ onSave, onCancel, userMetier }) {
                 </div>
               );
             })()}
-            <button onClick={speechPersonne.listening ? speechPersonne.stop : speechPersonne.start}
+            <button type="button" title={tr("Dicter le nom","Dictate the name")} onClick={speechPersonne.listening ? speechPersonne.stop : speechPersonne.start}
               style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color: speechPersonne.listening ? "#ff4444" : "#1e3a5f" }}>
               {speechPersonne.listening ? "⏹" : "🎤"}
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Categorie */}
+      <div style={{ marginBottom:20 }}>
+        <div className="field-label">{tr("TYPE DE RDV","APPOINTMENT TYPE")}</div>
+        <select value={form.categorie} onChange={e=>handleCategorie(e.target.value)}
+          style={{ appearance:"none", WebkitAppearance:"none", backgroundImage:"url('data:image/svg+xml;utf8,<svg fill=\"%23c8f542\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M7 10l5 5 5-5z\"/></svg>')", backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", backgroundSize:20, paddingRight:40 }}>
+          {categories.map(cat => (
+            <option key={cat.value} value={cat.value}>{cat.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Titre */}
+      <div style={{ marginBottom:16 }}>
+        <div className="field-label">{tr("TITRE DU RDV","TITLE")}</div>
+        <input placeholder={tr("Ex: Consultation Dr. Martin, Révision Renault...","e.g. Dr Smith check-up, Ford service...")} value={form.titre} onChange={e=>set("titre",e.target.value)} />
+      </div>
+
+      {/* Date + Heure */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
         <div>
           <div className="field-label">{tr("DATE *","DATE *")}</div>
           <input type="date" value={form.date} onChange={e=>set("date",e.target.value)}
             style={{ colorScheme:"dark" }} />
         </div>
-      </div>
-
-      {/* Heure */}
-      <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("HEURE","TIME")}</div>
-        <input type="time" value={form.heure} onChange={e=>set("heure",e.target.value)}
-          style={{ colorScheme:"dark" }} />
+        <div>
+          <div className="field-label">{tr("HEURE","TIME")}</div>
+          <input type="time" value={form.heure} onChange={e=>set("heure",e.target.value)}
+            style={{ colorScheme:"dark" }} />
+        </div>
       </div>
 
       {/* Email du client : rappel automatique */}
@@ -2074,7 +2084,7 @@ function RdvForm({ onSave, onCancel, userMetier }) {
           {tr("✓ Enregistrer le RDV","✓ Save appointment")}
         </button>
       </div>
-      {!isValid && <div style={{ fontSize:11, color:"#ff9a3c", fontFamily:"DM Mono", marginTop:10, textAlign:"center" }}>{tr("⚠ Personne et date sont obligatoires","⚠ Person and date are required")}</div>}
+      {!isValid && <div style={{ fontSize:11, color:"#ff9a3c", fontFamily:"DM Mono", marginTop:10, textAlign:"center" }}>{tr("⚠ Le nom du client et la date sont obligatoires","⚠ Client name and date are required")}</div>}
     </div>
   );
 }
@@ -2848,6 +2858,16 @@ export default function App() {
     });
   }, []);
 
+  // Ouvre « Nouveau rendez-vous » depuis n'importe quel écran (le formulaire s'affiche sur l'Accueil)
+  const ouvrirFormulaire = (patient) => {
+    if (!canAdd) { setPrice(true); return; }
+    setShowAgenda(false); setShowPatients(false); setShowStats(false);
+    window.__prefillNom = patient?.nom || "";
+    window.__prefillPatient = patient || null;
+    setPhase("form");
+    window.scrollTo(0, 0);
+  };
+
   const handleDeleteRdv = async (id) => {
     if (!window.confirm(tr("Supprimer ce rendez-vous ?","Delete this appointment?"))) return;
     await sb.deleteAppointment(token, id);
@@ -3170,8 +3190,7 @@ export default function App() {
           {/* Bouton flottant + nouveau RDV (caché sur l'accueil pour ne pas dupliquer la barre de recherche) */}
           {user && !showMetierSetup && !stripeSuccess && !editingRdv && phase === "idle" && (showAgenda || showPatients || showStats) && (
             <button
-              onClick={()=>{ if(canAdd) setPhase("form"); }}
-              disabled={!canAdd}
+              onClick={()=>ouvrirFormulaire()}
               style={{
                 position:"fixed",
                 bottom:24,
@@ -3260,6 +3279,7 @@ export default function App() {
               token={token}
               sb={sb}
               appointments={appointments}
+              onNewRdv={ouvrirFormulaire}
             />
           )}
 
@@ -3267,7 +3287,7 @@ export default function App() {
           {showAgenda && (
             <CalendarView
               appointments={appointments}
-              onNewCall={()=>{ setShowAgenda(false); setPhase("form"); }}
+              onNewCall={()=>ouvrirFormulaire()}
               onCalRdv={setCalRdv}
               onEditRdv={setEditingRdv}
               onDeleteRdv={handleDeleteRdv}
