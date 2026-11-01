@@ -124,12 +124,15 @@ const sb = {
   },
   async getSessionFromUrl() {
     const hash = window.location.hash;
-    if (!hash) return null;
+    if (!hash || hash.length < 2) return null;
     const params = new URLSearchParams(hash.replace("#", ""));
     const token = params.get("access_token");
-    if (!token) return null;
-    window.location.hash = "";
-    return token;
+    const error = params.get("error_description") || params.get("error");
+    if (!token && !error) return null;
+    // Nettoie l'adresse (le jeton ne reste pas dans la barre d'adresse)
+    try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch(e) { window.location.hash = ""; }
+    if (!token) return { error, errorCode: params.get("error_code") };
+    return { token, refresh_token: params.get("refresh_token"), type: params.get("type") };
   },
 };
 
@@ -288,7 +291,79 @@ function useAuth() {
     }
   };
 
-  return { user, loading, signUp, signIn, signOut, updateUser };
+  const loginWithToken = async (tk, refresh) => {
+    const r = await fetch(`${CONFIG.SUPABASE_URL}/auth/v1/user`, {
+      headers: { "apikey": CONFIG.SUPABASE_ANON_KEY, "Authorization": `Bearer ${tk}` }
+    });
+    const u = await r.json();
+    if (!u?.id) return false;
+    await delay(600);
+    const profile = await sb.getProfile(tk, u.id);
+    setUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || u.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false });
+    localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, refresh_token: refresh || null, userId: u.id, email: u.email }));
+    if (u.email) localStorage.setItem("callrdv_email", u.email);
+    return true;
+  };
+
+  return { user, loading, signUp, signIn, signOut, updateUser, loginWithToken };
+}
+
+// ── Nouveau mot de passe (après le lien "mot de passe oublié") ──
+function NewPasswordModal({ token, onDone }) {
+  const { t } = useLang();
+  const [pwd, setPwd] = useState("");
+  const [pwd2, setPwd2] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const save = async () => {
+    setError("");
+    if (pwd.length < 6) { setError(t("6 caractères minimum.","6 characters minimum.")); return; }
+    if (pwd !== pwd2) { setError(t("Les deux mots de passe ne sont pas identiques.","The two passwords do not match.")); return; }
+    setSaving(true);
+    try {
+      const r = await fetch(`${CONFIG.SUPABASE_URL}/auth/v1/user`, {
+        method: "PUT",
+        headers: { "apikey": CONFIG.SUPABASE_ANON_KEY, "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwd })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok) setDone(true);
+      else if (data.error_code === "same_password") setError(t("Choisissez un mot de passe différent de l'ancien.","Choose a password different from the old one."));
+      else if (data.error_code === "weak_password") setError(t("Mot de passe trop faible, choisissez-en un plus long.","Password too weak, choose a longer one."));
+      else setError(t("Le lien a expiré. Refaites « Mot de passe oublié ».","The link has expired. Use “Forgot password” again."));
+    } catch(e) { setError(t("Erreur réseau. Réessayez.","Network error. Try again.")); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:600, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div className="card fade-up" style={{ width:"100%", maxWidth:400, padding:28 }}>
+        {done ? (
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:44, marginBottom:10 }}>✅</div>
+            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:8 }}>{t("Mot de passe enregistré !","Password saved!")}</div>
+            <div style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>{t("La prochaine fois, connectez-vous avec votre email et ce nouveau mot de passe.","Next time, log in with your email and this new password.")}</div>
+            <button className="btn btn-primary" style={{ width:"100%" }} onClick={onDone}>{t("Continuer","Continue")}</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:6 }}>🔑 {t("Choisissez votre nouveau mot de passe","Choose your new password")}</div>
+            <div style={{ fontSize:13, color:"#64748b", marginBottom:18 }}>{t("Vous l'utiliserez pour vous connecter la prochaine fois.","You will use it to log in next time.")}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <input type="password" autoComplete="new-password" placeholder={t("Nouveau mot de passe","New password")} value={pwd} onChange={e=>setPwd(e.target.value)} />
+              <input type="password" autoComplete="new-password" placeholder={t("Confirmez le mot de passe","Confirm password")} value={pwd2} onChange={e=>setPwd2(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} />
+            </div>
+            {error && <div style={{ color:"#ef4444", fontSize:13, marginTop:10 }}>⚠ {error}</div>}
+            <button className="btn btn-primary" onClick={save} disabled={saving} style={{ width:"100%", marginTop:16 }}>
+              {saving ? t("⏳ Enregistrement...","⏳ Saving...") : t("Enregistrer le mot de passe","Save password")}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const CSS = `
@@ -2395,7 +2470,8 @@ function sendPushNotif(title, body) {
 
 export default function App() {
   const auth = useAuth();
-  const { user, loading, signIn, signUp, signOut, updateUser } = auth;
+  const { user, loading, signIn, signUp, signOut, updateUser, loginWithToken } = auth;
+  const [recoveryToken, setRecoveryToken] = useState(null);
   const token = user?.token;
 
   const [phase, setPhase]         = useState("idle");   // idle | calling | form | agenda
@@ -2426,19 +2502,19 @@ export default function App() {
   const plan = PLANS[user?.plan || "free"];
   const canAdd = user && (plan.quota === Infinity || (user.usage||0) < plan.quota);
 
-  // Récupérer session Google après redirect OAuth
+  // Retour d'un lien (Google, LinkedIn, confirmation d'email, mot de passe oublié)
   useEffect(() => {
-    sb.getSessionFromUrl().then(async (tk) => {
-      if (!tk) return;
-      const r = await fetch(`${CONFIG.SUPABASE_URL}/auth/v1/user`, {
-        headers: { "apikey": CONFIG.SUPABASE_ANON_KEY, "Authorization": `Bearer ${tk}` }
-      });
-      const u = await r.json();
-      if (u.id) {
-        await delay(600);
-        const profile = await sb.getProfile(tk, u.id);
-        updateUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk });
+    sb.getSessionFromUrl().then(async (s) => {
+      if (!s) return;
+      if (s.error) {
+        alert(s.errorCode === "otp_expired"
+          ? "Ce lien a expiré ou a déjà été utilisé. Refaites « Mot de passe oublié » pour en recevoir un nouveau."
+          : "Ce lien n'est plus valide. Réessayez depuis la page de connexion.");
+        return;
       }
+      setShowLanding(false);
+      const ok = await loginWithToken(s.token, s.refresh_token);
+      if (ok && s.type === "recovery") setRecoveryToken(s.token);
     });
   }, []);
 
@@ -2733,6 +2809,8 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {recoveryToken && <NewPasswordModal token={recoveryToken} onDone={()=>setRecoveryToken(null)} />}
 
           {/* Stripe Success Modal */}
           {stripeSuccess && (
