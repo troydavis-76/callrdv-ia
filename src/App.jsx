@@ -2304,14 +2304,14 @@ function LandingPage({ onLogin }) {
           {t([
             {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
             {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
-            {icon:"🔔",title:"Rappels automatiques",desc:"Vos clients reçoivent un email de rappel 3 jours et 1 jour avant leur RDV. Automatiquement."},
+            {icon:"🔔",title:"Rappels automatiques",desc:"Vous recevez un email de rappel 3 jours et 1 jour avant chaque RDV. Plus aucun oubli."},
             {icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Exportez vers Google Calendar ou Outlook en un clic."},
             {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
             {icon:"📄",title:"Export PDF",desc:"Générez un planning PDF propre et professionnel en un clic depuis votre agenda."},
           ],[
             {icon:"🔍",title:"Instant client search",desc:"Type your client's name and their profile appears instantly, with their full history."},
             {icon:"📋",title:"Smart forms by business",desc:"Doctor, restaurant, garage, legal — each type of appointment has its own fields."},
-            {icon:"🔔",title:"Automatic reminders",desc:"Your clients get an email reminder 3 days and 1 day before their appointment. Automatically."},
+            {icon:"🔔",title:"Automatic reminders",desc:"You get an email reminder 3 days and 1 day before every appointment. Never forget again."},
             {icon:"📅",title:"Full calendar",desc:"Week, month or list view. Export to Google Calendar or Outlook in one click."},
             {icon:"📊",title:"Dashboard",desc:"Track your activity: appointments per week, top categories, 6-month trend."},
             {icon:"📄",title:"PDF export",desc:"Create a clean, professional PDF schedule from your calendar in one click."},
