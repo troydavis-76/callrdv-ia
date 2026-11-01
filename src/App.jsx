@@ -168,6 +168,15 @@ const CATEGORIES = [
   { value:"perso",       fr:"👤 Personnel",          en:"👤 Personal",             titreFr:"RDV personnel",          titreEn:"Personal appointment" },
   { value:"autre",       fr:"📋 Autre",              en:"📋 Other",                titreFr:"Rendez-vous",            titreEn:"Appointment" },
 ];
+// "2026-11-03" à partir d'une date locale (toISOString décalait d'un jour le soir / en heure de Paris)
+const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+// "mar. 3 nov. à 14:30" / "Tue 3 Nov at 14:30"
+const fmtRdv = (date, heure) => {
+  if (!date) return heure || "";
+  const d = new Date(date + "T12:00:00");
+  const txt = isNaN(d.getTime()) ? date : d.toLocaleDateString(locale(), { weekday:"short", day:"numeric", month:"short" });
+  return heure ? `${txt} ${tr("à","at")} ${heure}` : txt;
+};
 const catLabel = (v) => { const k = CATEGORIES.find(x => x.value === v) || CATEGORIES[CATEGORIES.length - 1]; return tr(k.fr, k.en); };
 
 function detectLang() {
@@ -401,6 +410,17 @@ const CSS = `
   .app-body-home{flex-direction:column !important;overflow-y:auto !important;}
   .app-body-home .app-main{flex:none !important;overflow:visible !important;border-right:none !important;padding:18px 16px !important;}
   .app-body-home .app-side{width:100% !important;overflow:visible !important;border-top:1px solid #e2e8f0;}
+  .pv-left{width:100% !important;border-right:none !important;}
+  .pv-list .pv-right{display:none !important;}
+  .pv-detail .pv-left{display:none !important;}
+  .pv-right{padding:16px !important;}
+  .pv-back{display:block !important;}
+  .cal-head{padding:12px 14px !important;}
+  .cal-tools{width:100%;}
+  .cal-search{flex:1;min-width:0;width:auto !important;}
+  .cal-nav{width:100%;justify-content:space-between;gap:6px !important;}
+  .cal-title{min-width:0 !important;font-size:15px !important;}
+  .cal-list{padding:14px !important;}
   .app-nav{padding:10px 12px !important;}
   .app-nav-name{display:none;}
   .app-nav-right{gap:6px !important;}
@@ -440,8 +460,8 @@ textarea::placeholder{color:#94a3b8;}
 `;
 
 // ── Auth Page ────────────────────────────────────────────────
-function AuthPage({ authHooks }) {
-  const [mode, setMode] = useState("login");
+function AuthPage({ authHooks, initialMode }) {
+  const [mode, setMode] = useState(initialMode === "register" ? "register" : "login");
   const [email, setEmail] = useState(() => localStorage.getItem("callrdv_email") || "");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -865,7 +885,7 @@ function StatsView({ appointments, patients, user }) {
                 <div style={{ width:8, height:8, borderRadius:"50%", background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:600 }}>{rdv.titre||tr("RDV","Appointment")}</div>
-                  <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.personne} · {rdv.date}</div>
+                  <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.personne} · {fmtRdv(rdv.date, rdv.heure)}</div>
                 </div>
               </div>
             ))}
@@ -975,7 +995,8 @@ function exportPDF(appointments, viewMode) {
 
 // ── Vue Agenda Calendrier ────────────────────────────────────
 function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut }) {
-  const [viewMode, setViewMode] = React.useState("semaine"); // semaine | mois | liste
+  // semaine | mois | liste — sur téléphone, la liste est la seule vue lisible
+  const [viewMode, setViewMode] = React.useState(() => (typeof window !== "undefined" && window.innerWidth < 700) ? "liste" : "semaine");
   const [currentDate, setCurrentDate] = React.useState(new Date());
   const [agendaSearch, setAgendaSearch] = React.useState("");
 
@@ -1017,7 +1038,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
   };
 
   const getRdvsForDate = (date) => {
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = isoLocal(date);
     return appointments.filter(r => r.date === dateStr);
   };
 
@@ -1044,10 +1065,11 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", background:"#f0f4f8" }}>
       {/* Calendar Header */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+      <div className="cal-head" style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
+        {viewMode !== "liste" ? (
+        <div className="cal-nav" style={{ display:"flex", alignItems:"center", gap:12 }}>
           <button onClick={()=>navigate(-1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>‹</button>
-          <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", minWidth:200, textAlign:"center" }}>
+          <div className="cal-title" style={{ fontWeight:700, fontSize:18, color:"#1e293b", minWidth:200, textAlign:"center" }}>
             {viewMode==="semaine"
               ? `${weekDays[0].getDate()} – ${weekDays[6].getDate()} ${moisNoms[weekDays[6].getMonth()]} ${weekDays[6].getFullYear()}`
               : `${moisNoms[currentDate.getMonth()]} ${currentDate.getFullYear()}`
@@ -1056,7 +1078,10 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
           <button onClick={()=>navigate(1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>›</button>
           <button onClick={()=>setCurrentDate(new Date())} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>{tr("Aujourd'hui","Today")}</button>
         </div>
-        <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
+        ) : (
+          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>{tr("Mes rendez-vous","My appointments")}</div>
+        )}
+        <div className="cal-tools" style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
           {["semaine","mois","liste"].map(m => (
             <button key={m} onClick={()=>setViewMode(m)}
               style={{ background:viewMode===m?"#1e3a5f":"#f0f4f8", color:viewMode===m?"#fff":"#64748b", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, textTransform:"capitalize" }}>
@@ -1073,6 +1098,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
             placeholder={tr("🔍 Rechercher...","🔍 Search...")}
             value={agendaSearch}
             onChange={e => { setAgendaSearch(e.target.value); if(e.target.value) setViewMode("liste"); }}
+            className="cal-search"
             style={{ fontSize:12, padding:"6px 10px", borderRadius:8, border:"1px solid #e2e8f0", width:120, background:"#fff" }}
           />
         </div>
@@ -1142,39 +1168,55 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
 
       {/* List View */}
       {viewMode==="liste" && (
-        <div id="patients-right-panel" style={{ flex:1, overflowY:"auto", padding:24 }}>
+        <div className="cal-list" style={{ flex:1, overflowY:"auto", padding:24 }}>
           {appointments.length===0 ? (
             <div style={{ textAlign:"center", padding:"60px 0" }}>
               <div style={{ fontSize:48, marginBottom:12 }}>📅</div>
               <div style={{ color:"#94a3b8", fontSize:14 }}>{tr("Aucun RDV enregistré","No appointments yet")}</div>
             </div>
-          ) : appointments.filter(r => !agendaSearch || (r.titre||"").toLowerCase().includes(agendaSearch.toLowerCase()) || (r.personne||"").toLowerCase().includes(agendaSearch.toLowerCase()) || (r.lieu||"").toLowerCase().includes(agendaSearch.toLowerCase())).sort((a,b) => a.date > b.date ? 1 : -1).map((rdv, i) => (
-            <div key={i} className="card" style={{ marginBottom:12, display:"flex", alignItems:"center", gap:16 }}>
-              <div style={{ width:4, height:50, borderRadius:4, background:catColors[rdv.categorie]||"#1e3a5f", flexShrink:0 }}></div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
-                <div style={{ fontSize:12, color:"#64748b" }}>{rdv.personne} · {rdv.date}{rdv.heure ? tr(` à ${rdv.heure}`, ` at ${rdv.heure}`) : ""}</div>
-                {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>📍 {rdv.lieu}</div>}
-                <div style={{ marginTop:6 }}>
-                  <select
-                    value={rdv.statut||"en_attente"}
-                    onChange={e => onUpdateStatut(rdv.id, e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                    style={{ fontSize:11, padding:"2px 8px", borderRadius:20, border:"1px solid #e2e8f0", background: rdv.statut==="confirme"?"#f0fdf4":rdv.statut==="annule"?"#fff5f5":rdv.statut==="reporte"?"#fffbeb":"#f8fafc", color: rdv.statut==="confirme"?"#16a34a":rdv.statut==="annule"?"#ef4444":rdv.statut==="reporte"?"#d97706":"#64748b", cursor:"pointer" }}>
-                    <option value="en_attente">{tr("⏳ En attente","⏳ Pending")}</option>
-                    <option value="confirme">{tr("✅ Confirmé","✅ Confirmed")}</option>
-                    <option value="reporte">{tr("🔄 Reporté","🔄 Postponed")}</option>
-                    <option value="annule">{tr("❌ Annulé","❌ Cancelled")}</option>
-                  </select>
+          ) : (() => {
+            const q = agendaSearch.toLowerCase();
+            const list = appointments.filter(r => !q || (r.titre||"").toLowerCase().includes(q) || (r.personne||"").toLowerCase().includes(q) || (r.lieu||"").toLowerCase().includes(q));
+            const todayIso = isoLocal(new Date());
+            const key = r => `${r.date||""} ${r.heure||""}`;
+            const aVenir = list.filter(r => (r.date||"") >= todayIso).sort((a,b) => key(a) > key(b) ? 1 : -1);
+            const passes = list.filter(r => (r.date||"") < todayIso).sort((a,b) => key(a) < key(b) ? 1 : -1);
+            const carte = (rdv) => (
+              <div key={rdv.id} className="card" onClick={()=>onCalRdv(rdv)} style={{ marginBottom:10, display:"flex", alignItems:"center", gap:12, padding:"14px 16px", cursor:"pointer", opacity:(rdv.date||"") < todayIso ? .65 : 1 }}>
+                <div style={{ width:4, alignSelf:"stretch", minHeight:44, borderRadius:4, background:catColors[rdv.categorie]||"#1e3a5f", flexShrink:0 }}></div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#1e3a5f", marginBottom:3 }}>{(s => s.charAt(0).toUpperCase() + s.slice(1))(fmtRdv(rdv.date, rdv.heure))}</div>
+                  <div style={{ fontWeight:700, fontSize:14, marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.personne}</div>
+                  <div style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.titre||tr("Rendez-vous","Appointment")}{rdv.lieu ? ` · 📍 ${rdv.lieu}` : ""}</div>
+                  <div style={{ marginTop:6 }}>
+                    <select
+                      value={rdv.statut||"en_attente"}
+                      onChange={e => onUpdateStatut(rdv.id, e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                      style={{ width:"auto", fontSize:11, padding:"2px 8px", borderRadius:20, border:"1px solid #e2e8f0", background: rdv.statut==="confirme"?"#f0fdf4":rdv.statut==="annule"?"#fff5f5":rdv.statut==="reporte"?"#fffbeb":"#f8fafc", color: rdv.statut==="confirme"?"#16a34a":rdv.statut==="annule"?"#ef4444":rdv.statut==="reporte"?"#d97706":"#64748b", cursor:"pointer" }}>
+                      <option value="en_attente">{tr("⏳ En attente","⏳ Pending")}</option>
+                      <option value="confirme">{tr("✅ Confirmé","✅ Confirmed")}</option>
+                      <option value="reporte">{tr("🔄 Reporté","🔄 Postponed")}</option>
+                      <option value="annule">{tr("❌ Annulé","❌ Cancelled")}</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:6, flexShrink:0 }}>
+                  <button onClick={(e)=>{e.stopPropagation();onEditRdv(rdv);}} title={tr("Modifier","Edit")} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#1e3a5f" }}>✏️</button>
+                  <button onClick={(e)=>{e.stopPropagation();onDeleteRdv(rdv.id);}} title={tr("Supprimer","Delete")} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#ef4444" }}>🗑️</button>
                 </div>
               </div>
-              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                <button onClick={(e)=>{e.stopPropagation();onEditRdv(rdv);}} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12, color:"#1e3a5f" }}>✏️</button>
-                <button onClick={(e)=>{e.stopPropagation();onDeleteRdv(rdv.id);}} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12, color:"#ef4444" }}>🗑️</button>
-              </div>
-              <button onClick={()=>onCalRdv(rdv)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, color:"#64748b" }}>{tr("📅 Exporter","📅 Export")}</button>
-            </div>
-          ))}
+            );
+            const titre = (txt) => <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.08em", margin:"6px 0 10px" }}>{txt}</div>;
+            if (list.length === 0) return <div style={{ textAlign:"center", color:"#94a3b8", fontSize:14, padding:"40px 0" }}>{tr("Aucun RDV trouvé","No appointments found")}</div>;
+            return (
+              <>
+                {titre(tr(`À VENIR (${aVenir.length})`, `UPCOMING (${aVenir.length})`))}
+                {aVenir.length === 0 ? <div style={{ color:"#94a3b8", fontSize:13, marginBottom:20 }}>{tr("Aucun RDV à venir","No upcoming appointments")}</div> : aVenir.map(carte)}
+                {passes.length > 0 && <div style={{ marginTop:18 }}>{titre(tr(`PASSÉS (${passes.length})`, `PAST (${passes.length})`))}{passes.map(carte)}</div>}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -1332,7 +1374,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
   };
 
   return (
-    <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", height:"100%" }}>
+    <div className={`pv-root ${selected || showAdd ? "pv-detail" : "pv-list"}`} style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", height:"100%" }}>
       {/* Modal nettoyage contacts sales */}
       {confirmClean && (
         <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
@@ -1415,7 +1457,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
         </div>
       )}
       {/* Liste patients */}
-      <div style={{ width:320, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
+      <div className="pv-left" style={{ width:320, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
         <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
           <div style={{ marginBottom:10 }}>
             <input placeholder={tr("🔍 Rechercher un client...","🔍 Search a client...")} value={search} onChange={e=>setSearch(e.target.value)} style={{ width:"100%", fontSize:14, padding:"12px 16px" }} />
@@ -1469,7 +1511,13 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
       </div>
 
       {/* Fiche patient */}
-      <div id="patients-right-panel" style={{ flex:1, overflowY:"auto", padding:24 }}>
+      <div id="patients-right-panel" className="pv-right" style={{ flex:1, overflowY:"auto", padding:24 }}>
+        {(selected || showAdd) && (
+          <button className="pv-back" onClick={()=>{ setSelected(null); setShowAdd(false); }}
+            style={{ display:"none", background:"none", border:"none", color:"#1e3a5f", fontWeight:700, fontSize:15, cursor:"pointer", padding:"4px 0", marginBottom:14 }}>
+            {tr("← Retour aux clients","← Back to clients")}
+          </button>
+        )}
         {showAdd ? (
           <div className="card fade-up" style={{ maxWidth:480 }}>
             <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("➕ Nouveau client","➕ New client")}</div>
@@ -1540,7 +1588,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments }) 
                   <div style={{ width:4, height:48, borderRadius:4, background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:600, fontSize:13, marginBottom:2 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
-                    <div style={{ fontSize:11, color:"#94a3b8" }}>📅 {rdv.date}{rdv.heure?tr(` à ${rdv.heure}`,` at ${rdv.heure}`):""}</div>
+                    <div style={{ fontSize:11, color:"#94a3b8" }}>📅 {fmtRdv(rdv.date, rdv.heure)}</div>
                     {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8" }}>📍 {rdv.lieu}</div>}
                   </div>
                   <div style={{ fontSize:11, background:(catColors[rdv.categorie]||"#94a3b8")+"20", color:catColors[rdv.categorie]||"#94a3b8", padding:"3px 10px", borderRadius:20, fontWeight:600 }}>
@@ -2372,7 +2420,7 @@ For any question: contact@callrdv.com
   );
 }
 
-function LandingPage({ onLogin }) {
+function LandingPage({ onLogin, onSignup }) {
   const [legalType, setLegalType] = React.useState(null);
   const [showContact, setShowContact] = React.useState(false);
   const { t } = useLang();
@@ -2386,6 +2434,8 @@ function LandingPage({ onLogin }) {
     @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
     .lp-body { font-family: "DM Sans", sans-serif; background: #fafaf8; color: #0f2340; overflow-x: hidden; }
     .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 60px; background: rgba(250,250,248,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; }
+    .lp-login-mobile { display: none; background: #fff; color: #0f2340; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    @media(max-width:768px){ .lp-login-mobile { display: inline-block; } }
     .lp-logo { font-family: "Instrument Serif", serif; font-size: 22px; color: #0f2340; display: flex; align-items: center; gap: 10px; }
     .lp-logo span { background: #0f2340; color: #fff; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-family: "DM Mono", monospace; }
     .lp-nav-links { display: flex; align-items: center; gap: 28px; }
@@ -2504,6 +2554,7 @@ function LandingPage({ onLogin }) {
             <a href="#lp-pricing">{t("Tarifs","Pricing")}</a>
             <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter →","Log in →")}</button>
           </div>
+          <button className="lp-login-mobile" onClick={onLogin}>{t("Connexion","Log in")}</button>
           <LangSwitch />
         </div>
       </nav>
@@ -2516,7 +2567,7 @@ function LandingPage({ onLogin }) {
           <h1 className="lp-h1">{t(<>Vos rendez-vous,<br/><em>organisés en secondes</em></>, <>Your appointments,<br/><em>organized in seconds</em></>)}</h1>
           <p className="lp-sub">{t("CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.","CallRDV turns every phone call into a clear, organized appointment. Find your client, fill in the form, and you're done.")}</p>
           <div className="lp-actions">
-            <button className="lp-btn-primary" onClick={onLogin}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <button className="lp-btn-primary" onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
           </div>
         </div>
         <div className="lp-mockup">
@@ -2596,7 +2647,7 @@ function LandingPage({ onLogin }) {
             <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
             <div className="lp-plan-divider"></div>
             <ul>{t(["RDV illimités","Rappels email à vous et à vos clients (J-3 et J-1)","Fiches clients et import de contacts","Agenda semaine / mois / liste","Export PDF et Google Calendar / Outlook"],["Unlimited appointments","Email reminders for you and your clients (3 days and 1 day before)","Client profiles and contact import","Week / month / list calendar","PDF export and Google Calendar / Outlook"]).map(x=><li key={x}>{x}</li>)}</ul>
-            <button className="lp-plan-cta lp-plan-cta-filled" onClick={onLogin}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <button className="lp-plan-cta lp-plan-cta-filled" onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
             <div style={{ fontSize:12, color:"#64748b", textAlign:"center", marginTop:12 }}>{t("10 RDV offerts chaque mois pour essayer, sans carte bancaire.","10 free appointments every month to try it, no credit card.")}</div>
           </div>
         </div>
@@ -2607,7 +2658,7 @@ function LandingPage({ onLogin }) {
         <div className="lp-cta-content">
           <h2 className="lp-cta-title">{t(<>Prêt à simplifier<br/>votre gestion de RDV ?</>, <>Ready to simplify<br/>your appointments?</>)}</h2>
           <p className="lp-cta-sub">{t("Rejoignez CallRDV — gratuit pour commencer, sans carte bancaire.","Join CallRDV — free to start, no credit card needed.")}</p>
-          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onLogin}>{t("Créer mon compte gratuitement →","Create my free account →")}</button>
+          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onSignup}>{t("Créer mon compte gratuitement →","Create my free account →")}</button>
         </div>
       </section>
 
@@ -2645,6 +2696,7 @@ export default function App() {
   const [showPatients, setShowPatients] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [authMode, setAuthMode] = useState("login");
   const [showMetierSetup, setShowMetierSetup] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [editingRdv, setEditingRdv] = useState(null);
@@ -2818,7 +2870,7 @@ export default function App() {
     // Nettoyer l'objet pour ne garder que les champs valides
     const cleanRdv = {
       client_email: clientEmail || null,
-      titre: rdv.titre || "",
+      titre: (rdv.titre || "").trim() || (() => { const k = CATEGORIES.find(x => x.value === (rdv.categorie || "autre")) || CATEGORIES[CATEGORIES.length - 1]; return tr(k.titreFr, k.titreEn); })(),
       personne: rdv.personne || "",
       date: rdv.date || "",
       heure: rdv.heure || "",
@@ -2838,7 +2890,7 @@ export default function App() {
 
     // Notification push si activée
     if (user.push_confirm && user.push_enabled) {
-      sendPushNotif(tr("✅ RDV créé !","✅ Appointment created!"), tr(`${rdv.titre||"Rendez-vous"} avec ${rdv.personne} le ${rdv.date}${rdv.heure ? " à "+rdv.heure : ""}`, `${rdv.titre||"Appointment"} with ${rdv.personne} on ${rdv.date}${rdv.heure ? " at "+rdv.heure : ""}`));
+      sendPushNotif(tr("✅ RDV créé !","✅ Appointment created!"), `${cleanRdv.titre} ${tr("avec","with")} ${rdv.personne} — ${fmtRdv(rdv.date, rdv.heure)}`);
     }
 
     // Ajout automatique du patient si nouveau (avec son email s'il est connu)
@@ -2887,8 +2939,8 @@ export default function App() {
   };
 
   if (!user) {
-    if (showLanding) return <LandingPage onLogin={() => setShowLanding(false)} />;
-    return (<><style>{CSS}</style><AuthPage authHooks={{ signIn, signUp, loading }} /></>);
+    if (showLanding) return <LandingPage onLogin={() => { setAuthMode("login"); setShowLanding(false); }} onSignup={() => { setAuthMode("register"); setShowLanding(false); }} />;
+    return (<><style>{CSS}</style><AuthPage authHooks={{ signIn, signUp, loading }} initialMode={authMode} /></>);
   }
 
   return (
@@ -3277,7 +3329,7 @@ export default function App() {
                 </div>
                 <div style={{ fontSize:12, color:"#0284c7", marginBottom:4 }}>{rdv.personne}</div>
                 <div style={{ fontSize:12, color:"#0369a1", marginBottom:4 }}>
-                  {rdv.date}{rdv.heure ? tr(` à ${rdv.heure}`, ` at ${rdv.heure}`) : ""}
+                  {fmtRdv(rdv.date, rdv.heure)}
                 </div>
                 {rdv.lieu && <div style={{ fontSize:11, color:"#0284c7", fontFamily:"DM Mono", marginBottom:2 }}>{rdv.lieu}</div>}
                 {rdv.adresse && <div style={{ fontSize:11, color:"#1a4a1a", fontFamily:"DM Mono" }}>{rdv.adresse}</div>}
