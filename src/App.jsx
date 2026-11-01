@@ -2611,6 +2611,12 @@ export default function App() {
 
   const handleUpgrade = (key) => {
     if (key==="free") { setPrice(false); return; }
+    // Tant que le lien Stripe 20€ n'est pas renseigné, pas de page de paiement cassée
+    if (!CONFIG.STRIPE_LINK.startsWith("https://")) {
+      alert("Le paiement en ligne de l'abonnement Pro (20€/mois) ouvre très bientôt. En attendant, contactez-nous via le formulaire de contact sur callrdv.com.");
+      setPrice(false);
+      return;
+    }
     // Email pré-rempli pour que le paiement soit relié au bon compte
     const lien = `${CONFIG.STRIPE_LINK}${CONFIG.STRIPE_LINK.includes("?") ? "&" : "?"}prefilled_email=${encodeURIComponent(user.email || "")}`;
     window.open(lien, "_blank");
