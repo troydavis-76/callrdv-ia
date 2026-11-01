@@ -233,8 +233,16 @@ function useAuth() {
   const signUp = async (email, password, name) => {
     setLoading(true);
     const res = await sb.signUp(email, password, name);
-    if (res.error) { setLoading(false); return { error: res.error.message || "Erreur inscription" }; }
-    return await signIn(email, password);
+    const err = res.error?.message || res.error_description || res.msg;
+    if (res.error_code === "weak_password") { setLoading(false); return { error: "Mot de passe trop court (6 caractères minimum)" }; }
+    if (err && !res.id && !res.access_token) { setLoading(false); return { error: err || "Erreur inscription" }; }
+    // Confirmation email désactivée : Supabase renvoie déjà une session
+    if (res.access_token) return await signIn(email, password);
+    setLoading(false);
+    // Email déjà utilisé : Supabase renvoie un utilisateur sans identité et n'envoie rien
+    if (Array.isArray(res.identities) && res.identities.length === 0) return { error: "Un compte existe déjà avec cet email" };
+    // Compte créé : il faut cliquer sur le lien reçu par email
+    return { info: "confirm" };
   };
 
   const signIn = async (email, password) => {
@@ -242,7 +250,9 @@ function useAuth() {
     const res = await sb.signIn(email, password);
     if (res.error || !res.access_token) {
       setLoading(false);
-      return { error: res.error?.message || res.error_description || "Email ou mot de passe incorrect" };
+      const code = res.error_code || res.error;
+      if (code === "email_not_confirmed" || res.msg === "Email not confirmed" || res.error_description === "Email not confirmed") return { error: "Email not confirmed" };
+      return { error: "Email ou mot de passe incorrect" };
     }
     const tk = res.access_token;
     await delay(600);
@@ -325,6 +335,7 @@ function AuthPage({ authHooks }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
@@ -333,10 +344,18 @@ function AuthPage({ authHooks }) {
   const { t } = useLang();
 
   const handle = async () => {
-    setError("");
+    setError(""); setInfo("");
     const res = mode === "login" ? await signIn(email, password) : await signUp(email, password, name);
+    if (res.info === "confirm") {
+      setInfo(t(`✅ Compte créé ! Un email de confirmation a été envoyé à ${email}. Cliquez sur le lien qu'il contient (pensez à regarder dans les spams), puis connectez-vous ici.`,
+                `✅ Account created! A confirmation email was sent to ${email}. Click the link inside (check your spam folder too), then log in here.`));
+      setMode("login"); setPassword("");
+      return;
+    }
     if (res.error) {
-      const traduits = { "Email ou mot de passe incorrect": "Wrong email or password", "Erreur inscription": "Sign-up error" };
+      const traduits = { "Email ou mot de passe incorrect": "Wrong email or password", "Erreur inscription": "Sign-up error", "Un compte existe déjà avec cet email": "An account already exists with this email", "Mot de passe trop court (6 caractères minimum)": "Password too short (6 characters minimum)",
+        "Email not confirmed": "Email not confirmed" };
+      if (res.error === "Email not confirmed") { setError(t("Email pas encore confirmé : cliquez sur le lien reçu par email (regardez aussi dans les spams).", "Email not confirmed yet: click the link in the email we sent you (check spam too).")); return; }
       setError(traduits[res.error] ? t(res.error, traduits[res.error]) : res.error);
     }
   };
@@ -424,6 +443,7 @@ function AuthPage({ authHooks }) {
               <span style={{ fontSize:13, color:"#64748b", cursor:"pointer" }} onClick={()=>setRememberMe(r=>!r)}>{t("Se souvenir de moi","Remember me")}</span>
             </div>
           )}
+          {info && <div style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#166534", borderRadius:10, padding:"12px 14px", fontSize:13, marginTop:12, lineHeight:1.5 }}>{info}</div>}
           {error && <div style={{ color:"#ff6b6b", fontSize:13, marginTop:10, fontFamily:"DM Mono" }}>⚠ {error}</div>}
           <button className="btn btn-primary" onClick={handle} disabled={loading} style={{ width:"100%", marginTop:18, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
             {loading ? <span className="spinner"></span> : (mode==="login" ? t("Se connecter","Log in") : t("Créer mon compte","Create my account"))}
