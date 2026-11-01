@@ -141,6 +141,42 @@ const PLANS = {
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
+// ── Langue FR / EN ───────────────────────────────────────────
+// Choix mémorisé, sinon langue du téléphone (français -> FR, le reste -> EN)
+function detectLang() {
+  try { const s = localStorage.getItem("callrdv_lang"); if (s === "fr" || s === "en") return s; } catch(e) {}
+  const nav = ((typeof navigator !== "undefined" && navigator.language) || "fr").toLowerCase();
+  return nav.startsWith("fr") ? "fr" : "en";
+}
+function useLang() {
+  const [lang, setLangState] = useState(detectLang);
+  useEffect(() => {
+    const h = () => setLangState(detectLang());
+    window.addEventListener("callrdv-lang", h);
+    return () => window.removeEventListener("callrdv-lang", h);
+  }, []);
+  useEffect(() => { try { document.documentElement.lang = lang; } catch(e) {} }, [lang]);
+  const setLang = (l) => {
+    try { localStorage.setItem("callrdv_lang", l); } catch(e) {}
+    window.dispatchEvent(new Event("callrdv-lang"));
+  };
+  const t = (fr, en) => (lang === "en" ? en : fr);
+  return { lang, setLang, t };
+}
+function LangSwitch({ style }) {
+  const { lang, setLang } = useLang();
+  return (
+    <div style={{ display:"inline-flex", border:"1px solid #e2e8f0", borderRadius:8, overflow:"hidden", background:"#fff", flexShrink:0, ...style }}>
+      {["fr","en"].map(l => (
+        <button key={l} onClick={() => setLang(l)} aria-label={l === "fr" ? "Français" : "English"}
+          style={{ padding:"6px 10px", fontSize:12, fontWeight:700, border:"none", cursor:"pointer", background: lang === l ? "#0f2340" : "transparent", color: lang === l ? "#fff" : "#64748b", fontFamily:"DM Mono, monospace" }}>
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function useAuth() {
   const [user, setUser] = useState(null);
 
@@ -294,15 +330,19 @@ function AuthPage({ authHooks }) {
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const { signIn, signUp, loading } = authHooks;
+  const { t } = useLang();
 
   const handle = async () => {
     setError("");
     const res = mode === "login" ? await signIn(email, password) : await signUp(email, password, name);
-    if (res.error) setError(res.error);
+    if (res.error) {
+      const traduits = { "Email ou mot de passe incorrect": "Wrong email or password", "Erreur inscription": "Sign-up error" };
+      setError(traduits[res.error] ? t(res.error, traduits[res.error]) : res.error);
+    }
   };
 
   const handleForgot = async () => {
-    if (!email.trim()) { setError("Entrez votre email d'abord."); return; }
+    if (!email.trim()) { setError(t("Entrez votre email d'abord.", "Enter your email first.")); return; }
     setForgotLoading(true);
     setError("");
     try {
@@ -315,35 +355,36 @@ function AuthPage({ authHooks }) {
         body: JSON.stringify({ email, redirect_to: "https://callrdv.com" })
       });
       if (res.ok) { setForgotSent(true); }
-      else { setError("Email introuvable. Vérifiez l'adresse."); }
-    } catch(e) { setError("Erreur réseau. Réessayez."); }
+      else { setError(t("Email introuvable. Vérifiez l'adresse.", "Email not found. Check the address.")); }
+    } catch(e) { setError(t("Erreur réseau. Réessayez.", "Network error. Try again.")); }
     setForgotLoading(false);
   };
   return (
-    <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',sans-serif", padding:24 }}>
+    <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',sans-serif", padding:24, position:"relative" }}>
+      <LangSwitch style={{ position:"absolute", top:16, right:16 }} />
       <div style={{ width:"100%", maxWidth:420 }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:36 }}>
           <div style={{ width:56, height:56, background:"#1e3a5f", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, margin:"0 auto 14px" }}>📞</div>
           <div style={{ fontWeight:800, fontSize:28, color:"#1e293b", letterSpacing:"-0.03em" }}>CallRDV</div>
-          <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", marginTop:4 }}>PRISE DE RDV AUTOMATIQUE</div>
+          <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", marginTop:4 }}>{t("PRISE DE RDV AUTOMATIQUE", "APPOINTMENT BOOKING MADE EASY")}</div>
         </div>
         <div className="card" style={{ padding:32 }}>
           <div style={{ display:"flex", gap:8, marginBottom:24, background:"#f0f4f8", borderRadius:12, padding:4 }}>
             {["login","register"].map(m => (
               <button key={m} onClick={() => setMode(m)} className="btn" style={{ flex:1, padding:"10px", fontSize:13, borderRadius:10, background:mode===m?"#1e3a5f":"transparent", color:mode===m?"#f0f4f8":"#94a3b8" }}>
-                {m==="login" ? "Connexion" : "Inscription"}
+                {m==="login" ? t("Connexion","Log in") : t("Inscription","Sign up")}
               </button>
             ))}
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {mode === "register" && <input placeholder="Votre prenom" value={name} onChange={e=>setName(e.target.value)} />}
+            {mode === "register" && <input placeholder={t("Votre prénom","Your first name")} value={name} onChange={e=>setName(e.target.value)} />}
             <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-            <input type="password" placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handle()} />
+            <input type="password" placeholder={t("Mot de passe","Password")} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handle()} />
           </div>
           {mode === "login" && !forgotMode && (
             <div style={{ textAlign:"right", marginTop:8 }}>
               <span onClick={()=>{ setForgotMode(true); setError(""); setForgotSent(false); }} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer", fontFamily:"DM Mono" }}>
-                Mot de passe oublié ?
+                {t("Mot de passe oublié ?","Forgot password?")}
               </span>
             </div>
           )}
@@ -354,19 +395,19 @@ function AuthPage({ authHooks }) {
               {forgotSent ? (
                 <div style={{ textAlign:"center" }}>
                   <div style={{ fontSize:32, marginBottom:8 }}>📧</div>
-                  <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:6 }}>Email envoyé !</div>
-                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.</div>
-                  <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>← Retour à la connexion</span>
+                  <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:6 }}>{t("Email envoyé !","Email sent!")}</div>
+                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>{t("Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.","Check your inbox and click the link to reset your password.")}</div>
+                  <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>{t("← Retour à la connexion","← Back to log in")}</span>
                 </div>
               ) : (
                 <>
-                  <div style={{ fontSize:13, color:"#1e293b", marginBottom:12, fontWeight:600 }}>Réinitialiser le mot de passe</div>
-                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>Entrez votre email et nous vous enverrons un lien de réinitialisation.</div>
+                  <div style={{ fontSize:13, color:"#1e293b", marginBottom:12, fontWeight:600 }}>{t("Réinitialiser le mot de passe","Reset your password")}</div>
+                  <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>{t("Entrez votre email et nous vous enverrons un lien de réinitialisation.","Enter your email and we will send you a reset link.")}</div>
                   <button onClick={handleForgot} disabled={forgotLoading} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"11px", cursor:"pointer", fontWeight:700, fontSize:13, opacity:forgotLoading?0.7:1 }}>
-                    {forgotLoading ? "⏳ Envoi..." : "📧 Envoyer le lien"}
+                    {forgotLoading ? t("⏳ Envoi...","⏳ Sending...") : t("📧 Envoyer le lien","📧 Send the link")}
                   </button>
                   <div style={{ textAlign:"center", marginTop:10 }}>
-                    <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>← Retour</span>
+                    <span onClick={()=>setForgotMode(false)} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer" }}>{t("← Retour","← Back")}</span>
                   </div>
                 </>
               )}
@@ -380,17 +421,17 @@ function AuthPage({ authHooks }) {
                 style={{ width:36, height:20, borderRadius:10, background:rememberMe?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
                 <div style={{ position:"absolute", top:2, left:rememberMe?16:2, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left .2s" }}></div>
               </div>
-              <span style={{ fontSize:13, color:"#64748b", cursor:"pointer" }} onClick={()=>setRememberMe(r=>!r)}>Se souvenir de moi</span>
+              <span style={{ fontSize:13, color:"#64748b", cursor:"pointer" }} onClick={()=>setRememberMe(r=>!r)}>{t("Se souvenir de moi","Remember me")}</span>
             </div>
           )}
           {error && <div style={{ color:"#ff6b6b", fontSize:13, marginTop:10, fontFamily:"DM Mono" }}>⚠ {error}</div>}
           <button className="btn btn-primary" onClick={handle} disabled={loading} style={{ width:"100%", marginTop:18, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-            {loading ? <span className="spinner"></span> : (mode==="login" ? "Se connecter" : "Créer mon compte")}
+            {loading ? <span className="spinner"></span> : (mode==="login" ? t("Se connecter","Log in") : t("Créer mon compte","Create my account"))}
           </button>
 
           <div style={{ display:"flex", alignItems:"center", gap:10, margin:"16px 0" }}>
             <div style={{ flex:1, height:1, background:"#e2e8f0" }}></div>
-            <span style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>OU</span>
+            <span style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{t("OU","OR")}</span>
             <div style={{ flex:1, height:1, background:"#e2e8f0" }}></div>
           </div>
 
@@ -401,28 +442,28 @@ function AuthPage({ authHooks }) {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continuer avec Google
+            {t("Continuer avec Google","Continue with Google")}
           </button>
 
           <button onClick={()=>sb.signInWithLinkedIn()} className="btn btn-outline" style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:12, padding:"14px", marginTop:10 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#0A66C2">
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
             </svg>
-            Continuer avec LinkedIn
+            {t("Continuer avec LinkedIn","Continue with LinkedIn")}
           </button>
           <div className="privacy-badge" style={{ marginTop:18 }}>
             <span style={{ fontSize:15 }}>🔒</span>
             <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.6 }}>
-              <span style={{ color:"#0284c7", fontWeight:700 }}>Donnees protegees. </span>
-              Aucun stockage vocal. Conforme RGPD.
+              <span style={{ color:"#0284c7", fontWeight:700 }}>{t("Données protégées. ","Data protected. ")}</span>
+              {t("Aucun stockage vocal. Conforme RGPD.","No voice recording. GDPR compliant.")}
             </div>
           </div>
         </div>
         <div style={{ marginTop:20, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
           {Object.entries(PLANS).map(([k,p]) => (
             <div key={k} style={{ background:"#fff", border:`1px solid ${p.color}30`, borderRadius:12, padding:12, textAlign:"center" }}>
-              <div style={{ fontWeight:700, fontSize:14, color:p.color }}>{p.price===0?"Gratuit":`${p.price}€/m`}</div>
-              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{p.name}</div>
+              <div style={{ fontWeight:700, fontSize:14, color:p.color }}>{p.price===0?t("Gratuit","Free"):`${p.price}€${t("/mois","/mo")}`}</div>
+              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{k==="free"?t("Gratuit","Free"):p.name}</div>
             </div>
           ))}
         </div>
@@ -896,24 +937,24 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
           <button onClick={()=>navigate(1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>›</button>
           <button onClick={()=>setCurrentDate(new Date())} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>Aujourd'hui</button>
         </div>
-        <div style={{ display:"flex", gap:6 }}>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
           {["semaine","mois","liste"].map(m => (
             <button key={m} onClick={()=>setViewMode(m)}
               style={{ background:viewMode===m?"#1e3a5f":"#f0f4f8", color:viewMode===m?"#fff":"#64748b", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, textTransform:"capitalize" }}>
               {m.charAt(0).toUpperCase()+m.slice(1)}
             </button>
           ))}
-          <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>
-            + Nouveau RDV
+          <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:6, whiteSpace:"nowrap" }}>
+            + RDV
           </button>
-          <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 16px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
-            📄 PDF
+          <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
+            📄
           </button>
           <input
-            placeholder="🔍 Rechercher un RDV..."
+            placeholder="🔍 Rechercher..."
             value={agendaSearch}
             onChange={e => { setAgendaSearch(e.target.value); if(e.target.value) setViewMode("liste"); }}
-            style={{ fontSize:13, padding:"6px 14px", borderRadius:8, border:"1px solid #e2e8f0", width:200, background:"#fff" }}
+            style={{ fontSize:12, padding:"6px 10px", borderRadius:8, border:"1px solid #e2e8f0", width:120, background:"#fff" }}
           />
         </div>
       </div>
@@ -1449,8 +1490,8 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
   ];
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div className="card fade-up" style={{ width:"100%", maxWidth:420, padding:32 }}>
+    <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
+      <div className="card fade-up" style={{ width:"100%", maxWidth:420, padding:28, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={{ fontWeight:800, fontSize:20, marginBottom:4, color:"#1e293b" }}>⚙️ Paramètres</div>
         <div style={{ fontSize:13, color:"#94a3b8", marginBottom:24 }}>Configurez vos rappels de rendez-vous</div>
 
@@ -1859,46 +1900,33 @@ function ContactModal({ onClose }) {
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState("");
+  const { t } = useLang();
 
   const handleSend = async () => {
     if (!nom.trim() || !email.trim() || !message.trim()) {
-      setError("Veuillez remplir tous les champs.");
+      setError(t("Veuillez remplir tous les champs.","Please fill in all fields."));
       return;
     }
     setSending(true);
     setError("");
     try {
-      const res = await fetch("https://api.resend.com/emails", {
+      // Envoi via la fonction Supabase "contact" : la clé Resend reste côté serveur
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/contact`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer re_Udoa4JRG_67oApeXEvk2M5RV5FNFXVBNU"
+          "apikey": CONFIG.SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${CONFIG.SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({
-          from: "CallRDV <rappels@callrdv.com>",
-          to: ["Abdoulsalam.sow@outlook.fr"],
-          subject: `📬 Message de ${nom} — CallRDV`,
-          html: `
-            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
-              <h2 style="color:#1e3a5f;">📞 Nouveau message — CallRDV</h2>
-              <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-top:20px;">
-                <p><strong>Nom :</strong> ${nom}</p>
-                <p><strong>Email :</strong> ${email}</p>
-                <p><strong>Message :</strong></p>
-                <p style="white-space:pre-wrap;color:#475569;">${message}</p>
-              </div>
-              <p style="color:#94a3b8;font-size:12px;margin-top:24px;">Envoyé depuis callrdv.com</p>
-            </div>
-          `
-        })
+        body: JSON.stringify({ nom, email, message })
       });
       if (res.ok) {
         setSent(true);
       } else {
-        setError("Erreur lors de l'envoi. Réessayez.");
+        setError(t("Erreur lors de l'envoi. Réessayez.","Sending failed. Try again."));
       }
     } catch(e) {
-      setError("Erreur réseau. Réessayez.");
+      setError(t("Erreur réseau. Réessayez.","Network error. Try again."));
     }
     setSending(false);
   };
@@ -1907,34 +1935,34 @@ function ContactModal({ onClose }) {
     <div style={{ position:"fixed", inset:0, background:"#00000060", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ background:"#fff", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden" }}>
         <div style={{ padding:"24px 32px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>📬 Nous contacter</div>
+          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>{t("📬 Nous contacter","📬 Contact us")}</div>
           <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#94a3b8" }}>✕</button>
         </div>
         <div style={{ padding:"28px 32px" }}>
           {sent ? (
             <div style={{ textAlign:"center", padding:"20px 0" }}>
               <div style={{ fontSize:56, marginBottom:16 }}>✅</div>
-              <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>Message envoyé !</div>
-              <div style={{ fontSize:14, color:"#64748b", marginBottom:24 }}>Nous vous répondrons dans les plus brefs délais.</div>
-              <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700 }}>Fermer</button>
+              <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>{t("Message envoyé !","Message sent!")}</div>
+              <div style={{ fontSize:14, color:"#64748b", marginBottom:24 }}>{t("Nous vous répondrons dans les plus brefs délais.","We will get back to you as soon as possible.")}</div>
+              <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700 }}>{t("Fermer","Close")}</button>
             </div>
           ) : (
             <>
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>VOTRE NOM</div>
-                <input value={nom} onChange={e=>setNom(e.target.value)} placeholder="Nom complet" style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>{t("VOTRE NOM","YOUR NAME")}</div>
+                <input value={nom} onChange={e=>setNom(e.target.value)} placeholder={t("Nom complet","Full name")} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
               </div>
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>VOTRE EMAIL</div>
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>{t("VOTRE EMAIL","YOUR EMAIL")}</div>
                 <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@..." style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
               </div>
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>MESSAGE</div>
-                <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Votre message..." rows={4} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif", resize:"vertical" }} />
+                <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder={t("Votre message...","Your message...")} rows={4} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif", resize:"vertical" }} />
               </div>
               {error && <div style={{ color:"#ef4444", fontSize:13, marginBottom:14 }}>⚠️ {error}</div>}
               <button onClick={handleSend} disabled={sending} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"13px", cursor:"pointer", fontWeight:700, fontSize:14, opacity:sending?0.7:1 }}>
-                {sending ? "⏳ Envoi en cours..." : "📤 Envoyer le message"}
+                {sending ? t("⏳ Envoi en cours...","⏳ Sending...") : t("📤 Envoyer le message","📤 Send message")}
               </button>
             </>
           )}
@@ -2086,6 +2114,7 @@ Pour toute question : contact@callrdv.com
 function LandingPage({ onLogin }) {
   const [legalType, setLegalType] = React.useState(null);
   const [showContact, setShowContact] = React.useState(false);
+  const { t } = useLang();
 
   React.useEffect(() => {
     window.__showLegal = (type) => setLegalType(type);
@@ -2208,11 +2237,14 @@ function LandingPage({ onLogin }) {
       {/* NAV */}
       <nav className="lp-nav">
         <div className="lp-logo">📞 CallRDV</div>
-        <div className="lp-nav-links">
-          <a href="#lp-features">Fonctionnalités</a>
-          <a href="#lp-demo">Démo</a>
-          <a href="#lp-pricing">Tarifs</a>
-          <button className="lp-btn-nav" onClick={onLogin}>Se connecter →</button>
+        <div style={{ display:"flex", alignItems:"center", gap:20 }}>
+          <div className="lp-nav-links">
+            <a href="#lp-features">{t("Fonctionnalités","Features")}</a>
+            <a href="#lp-demo">{t("Démo","Demo")}</a>
+            <a href="#lp-pricing">{t("Tarifs","Pricing")}</a>
+            <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter →","Log in →")}</button>
+          </div>
+          <LangSwitch />
         </div>
       </nav>
 
@@ -2220,12 +2252,12 @@ function LandingPage({ onLogin }) {
       <section className="lp-hero">
         <div className="lp-hero-grid"></div>
         <div className="lp-hero-content">
-          <div className="lp-badge">🟢 Disponible maintenant — offre de lancement</div>
-          <h1 className="lp-h1">Vos rendez-vous,<br/><em>organisés en secondes</em></h1>
-          <p className="lp-sub">CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.</p>
+          <div className="lp-badge">{t("🟢 Disponible maintenant","🟢 Available now")}</div>
+          <h1 className="lp-h1">{t(<>Vos rendez-vous,<br/><em>organisés en secondes</em></>, <>Your appointments,<br/><em>organized in seconds</em></>)}</h1>
+          <p className="lp-sub">{t("CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.","CallRDV turns every phone call into a clear, organized appointment. Find your client, fill in the form, and you're done.")}</p>
           <div className="lp-actions">
-            <button className="lp-btn-primary" onClick={onLogin}>Commencer gratuitement →</button>
-            <a href="#lp-demo" className="lp-btn-secondary">Voir la démo</a>
+            <button className="lp-btn-primary" onClick={onLogin}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <a href="#lp-demo" className="lp-btn-secondary">{t("Voir la démo","Watch the demo")}</a>
           </div>
         </div>
         <div className="lp-mockup">
@@ -2236,21 +2268,21 @@ function LandingPage({ onLogin }) {
             <span className="lp-mockup-title">callrdv.com</span>
           </div>
           <div className="lp-mockup-body">
-            <div className="lp-search">🔍 Rechercher un client...</div>
+            <div className="lp-search">{t("🔍 Rechercher un client...","🔍 Search a client...")}</div>
             <div className="lp-rdv">
               <div className="lp-rdv-dot" style={{background:"#22c55e"}}></div>
-              <div><div className="lp-rdv-title">Mme Dupont — Coupe + couleur</div><div className="lp-rdv-sub">Demain à 10h00</div></div>
-              <div className="lp-rdv-tag" style={{background:"#22c55e20",color:"#16a34a"}}>confirmé</div>
+              <div><div className="lp-rdv-title">{t("Mme Dupont — Coupe + couleur","Mrs Smith — Cut + colour")}</div><div className="lp-rdv-sub">{t("Demain à 10h00","Tomorrow at 10:00 AM")}</div></div>
+              <div className="lp-rdv-tag" style={{background:"#22c55e20",color:"#16a34a"}}>{t("confirmé","confirmed")}</div>
             </div>
             <div className="lp-rdv">
               <div className="lp-rdv-dot" style={{background:"#3b82f6"}}></div>
-              <div><div className="lp-rdv-title">M. Martin — Brushing</div><div className="lp-rdv-sub">Vendredi à 14h30</div></div>
-              <div className="lp-rdv-tag" style={{background:"#3b82f620",color:"#3b82f6"}}>à venir</div>
+              <div><div className="lp-rdv-title">{t("M. Martin — Brushing","Mr Brown — Blow-dry")}</div><div className="lp-rdv-sub">{t("Vendredi à 14h30","Friday at 2:30 PM")}</div></div>
+              <div className="lp-rdv-tag" style={{background:"#3b82f620",color:"#3b82f6"}}>{t("à venir","upcoming")}</div>
             </div>
             <div className="lp-rdv">
               <div className="lp-rdv-dot" style={{background:"#f59e0b"}}></div>
-              <div><div className="lp-rdv-title">Mlle Bernard — Coloration</div><div className="lp-rdv-sub">Samedi à 16h00</div></div>
-              <div className="lp-rdv-tag" style={{background:"#f59e0b20",color:"#f59e0b"}}>à venir</div>
+              <div><div className="lp-rdv-title">{t("Mlle Bernard — Coloration","Ms Taylor — Colouring")}</div><div className="lp-rdv-sub">{t("Samedi à 16h00","Saturday at 4:00 PM")}</div></div>
+              <div className="lp-rdv-tag" style={{background:"#f59e0b20",color:"#f59e0b"}}>{t("à venir","upcoming")}</div>
             </div>
           </div>
         </div>
@@ -2258,25 +2290,32 @@ function LandingPage({ onLogin }) {
 
       {/* STATS */}
       <div className="lp-stats">
-        {[["2min","pour créer un RDV"],["📅","agenda intégré"],["J-3","rappels automatiques"],["100%","conforme RGPD"]].map(([n,l])=>(
+        {(t([["2min","pour créer un RDV"],["📅","agenda intégré"],["J-3","rappels automatiques"],["100%","conforme RGPD"]],[["2min","to create an appointment"],["📅","built-in calendar"],["3 days","automatic reminders"],["100%","GDPR compliant"]])).map(([n,l])=>(
           <div key={l} className="lp-stat"><div className="lp-stat-num">{n}</div><div className="lp-stat-label">{l}</div></div>
         ))}
       </div>
 
       {/* FEATURES */}
       <section className="lp-section" id="lp-features">
-        <div className="lp-label">Fonctionnalités</div>
-        <h2 className="lp-h2">Tout ce qu'il vous faut<br/>pour gérer vos RDV</h2>
-        <p className="lp-section-sub">Une interface pensée pour aller vite. Pas de formation, pas de complexité — juste l'essentiel.</p>
+        <div className="lp-label">{t("Fonctionnalités","Features")}</div>
+        <h2 className="lp-h2">{t(<>Tout ce qu'il vous faut<br/>pour gérer vos RDV</>, <>Everything you need<br/>to manage your appointments</>)}</h2>
+        <p className="lp-section-sub">{t("Une interface pensée pour aller vite. Pas de formation, pas de complexité — juste l'essentiel.","Built for speed. No training, no complexity — just the essentials.")}</p>
         <div className="lp-features-grid">
-          {[
+          {t([
             {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
             {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
             {icon:"🔔",title:"Rappels automatiques",desc:"Vos clients reçoivent un email de rappel 3 jours et 1 jour avant leur RDV. Automatiquement."},
             {icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Exportez vers Google Calendar ou Outlook en un clic."},
             {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
             {icon:"📄",title:"Export PDF",desc:"Générez un planning PDF propre et professionnel en un clic depuis votre agenda."},
-          ].map(({icon,title,desc})=>(
+          ],[
+            {icon:"🔍",title:"Instant client search",desc:"Type your client's name and their profile appears instantly, with their full history."},
+            {icon:"📋",title:"Smart forms by business",desc:"Doctor, restaurant, garage, legal — each type of appointment has its own fields."},
+            {icon:"🔔",title:"Automatic reminders",desc:"Your clients get an email reminder 3 days and 1 day before their appointment. Automatically."},
+            {icon:"📅",title:"Full calendar",desc:"Week, month or list view. Export to Google Calendar or Outlook in one click."},
+            {icon:"📊",title:"Dashboard",desc:"Track your activity: appointments per week, top categories, 6-month trend."},
+            {icon:"📄",title:"PDF export",desc:"Create a clean, professional PDF schedule from your calendar in one click."},
+          ]).map(({icon,title,desc})=>(
             <div key={title} className="lp-feature">
               <div className="lp-feature-icon">{icon}</div>
               <div className="lp-feature-title">{title}</div>
@@ -2289,9 +2328,9 @@ function LandingPage({ onLogin }) {
       {/* VIDEO */}
       <section className="lp-video-section" id="lp-demo">
         <div className="lp-video-inner">
-          <div className="lp-label">Démo</div>
-          <h2 className="lp-h2">Voyez CallRDV en action</h2>
-          <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>De la recherche client à la confirmation du RDV — en moins de 2 minutes.</p>
+          <div className="lp-label">{t("Démo","Demo")}</div>
+          <h2 className="lp-h2">{t("Voyez CallRDV en action","See CallRDV in action")}</h2>
+          <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>{t("De la recherche client à la confirmation du RDV — en moins de 2 minutes.","From client search to confirmed appointment — in under 2 minutes.")}</p>
           <div style={{ marginTop:44, borderRadius:20, overflow:"hidden", boxShadow:"0 24px 64px rgba(15,35,64,0.2)", position:"relative", paddingBottom:"56.25%", height:0 }}>
             <iframe
               src="https://www.youtube.com/embed/9_GsFNca7_g"
@@ -2307,54 +2346,52 @@ function LandingPage({ onLogin }) {
 
       {/* PRICING */}
       <section className="lp-pricing-section" id="lp-pricing">
-        <div className="lp-label">Tarifs</div>
-        <h2 className="lp-h2">Simple et transparent</h2>
-        <p className="lp-section-sub">Commencez gratuitement. Passez au Pro quand vous êtes prêt.</p>
+        <div className="lp-label">{t("Tarifs","Pricing")}</div>
+        <h2 className="lp-h2">{t("Simple et transparent","Simple and transparent")}</h2>
+        <p className="lp-section-sub">{t("Commencez gratuitement. Passez au Pro quand vous êtes prêt.","Start for free. Upgrade to Pro when you're ready.")}</p>
         <div className="lp-pricing-grid">
           <div className="lp-plan">
-            <div className="lp-plan-name">Gratuit</div>
+            <div className="lp-plan-name">{t("Gratuit","Free")}</div>
             <div className="lp-plan-price">0€</div>
-            <div className="lp-plan-period">pour toujours</div>
+            <div className="lp-plan-period">{t("pour toujours","forever")}</div>
             <div className="lp-plan-divider"></div>
-            <ul><li>10 RDV par mois</li><li>Fiches clients de base</li><li>Agenda semaine / mois</li><li>Export Google Calendar</li></ul>
-            <button className="lp-plan-cta lp-plan-cta-outline" onClick={onLogin}>Commencer →</button>
+            <ul>{t(["10 RDV par mois","Fiches clients de base","Agenda semaine / mois","Export Google Calendar"],["10 appointments per month","Basic client profiles","Week / month calendar","Google Calendar export"]).map(x=><li key={x}>{x}</li>)}</ul>
+            <button className="lp-plan-cta lp-plan-cta-outline" onClick={onLogin}>{t("Commencer →","Get started →")}</button>
           </div>
           <div className="lp-plan featured">
-            <div className="lp-plan-badge">🎁 1er mois offert</div>
+            <div className="lp-plan-badge">{t("⭐ Le plus choisi","⭐ Most popular")}</div>
             <div className="lp-plan-name">Pro</div>
             <div className="lp-plan-price">9€</div>
-            <div className="lp-plan-period">par mois · sans engagement</div>
+            <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
             <div className="lp-plan-divider"></div>
-            <ul><li>RDV illimités</li><li>Fiches clients complètes</li><li>Rappels email automatiques</li><li>Export PDF</li><li>Tableau de bord stats</li></ul>
-            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-filled">Essayer 1 mois gratuit →</a>
+            <ul>{t(["RDV illimités","Fiches clients complètes","Rappels email automatiques","Export PDF","Tableau de bord stats"],["Unlimited appointments","Full client profiles","Automatic email reminders","PDF export","Stats dashboard"]).map(x=><li key={x}>{x}</li>)}</ul>
+            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-filled">{t("Passer au Pro →","Go Pro →")}</a>
           </div>
           <div className="lp-plan">
-            <div className="lp-plan-badge" style={{background:"#1e3a5f",color:"#fff"}}>🚀 Offre lancement</div>
             <div className="lp-plan-name">Business</div>
             <div className="lp-plan-price">29€</div>
-            <div className="lp-plan-period">par mois · sans engagement</div>
+            <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
             <div className="lp-plan-divider"></div>
-            <ul><li>Tout le plan Pro</li><li>Multi-utilisateurs</li><li>Import CSV patients</li><li>Support prioritaire</li><li>1er mois offert</li></ul>
-            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-outline">Démarrer →</a>
+            <ul>{t(["Tout le plan Pro","Multi-utilisateurs","Import CSV patients","Support prioritaire"],["Everything in Pro","Multiple users","CSV client import","Priority support"]).map(x=><li key={x}>{x}</li>)}</ul>
+            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-outline">{t("Démarrer →","Get started →")}</a>
           </div>
         </div>
-        <div className="lp-promo-note">⏳ Offres de lancement valables jusqu'au <span>30 avril 2026</span></div>
       </section>
 
       {/* CTA */}
       <section className="lp-cta-section">
         <div className="lp-cta-content">
-          <h2 className="lp-cta-title">Prêt à simplifier<br/>votre gestion de RDV ?</h2>
-          <p className="lp-cta-sub">Rejoignez CallRDV — gratuit pour commencer, sans carte bancaire.</p>
-          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onLogin}>Créer mon compte gratuitement →</button>
+          <h2 className="lp-cta-title">{t(<>Prêt à simplifier<br/>votre gestion de RDV ?</>, <>Ready to simplify<br/>your appointments?</>)}</h2>
+          <p className="lp-cta-sub">{t("Rejoignez CallRDV — gratuit pour commencer, sans carte bancaire.","Join CallRDV — free to start, no credit card needed.")}</p>
+          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onLogin}>{t("Créer mon compte gratuitement →","Create my free account →")}</button>
         </div>
       </section>
 
       {/* FOOTER */}
       <footer className="lp-footer">
         <div className="lp-footer-logo">📞 CallRDV</div>
-        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>Confidentialité</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>CGU</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
-        <div className="lp-footer-copy">© 2026 CallRDV · Conforme RGPD</div>
+        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>{t("Confidentialité","Privacy")}</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>{t("CGU","Terms")}</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
+        <div className="lp-footer-copy">{t("© 2026 CallRDV · Conforme RGPD","© 2026 CallRDV · GDPR compliant")}</div>
       </footer>
     </div>
   );
