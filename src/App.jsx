@@ -2858,6 +2858,26 @@ export default function App() {
     });
   }, []);
 
+  // Petit message en bas de l'écran (ex : « Email envoyé au client »)
+  const [toast, setToast] = useState("");
+  const montrerToast = (txt) => { setToast(txt); setTimeout(() => setToast(""), 5000); };
+
+  // Email au client : RDV enregistré ("nouveau") ou déplacé ("deplace")
+  const notifierClient = async (id, type) => {
+    try {
+      const r = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/notifier-client`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": CONFIG.SUPABASE_ANON_KEY, "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ id, type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (j.sent) montrerToast(type === "nouveau"
+        ? tr(`📧 Email de confirmation envoyé à ${j.to}`, `📧 Confirmation email sent to ${j.to}`)
+        : tr(`📧 ${j.to} a été prévenu du changement`, `📧 ${j.to} has been told about the change`));
+      else if (j.reason === "envoi" || !r.ok) montrerToast(tr("⚠️ L'email au client n'a pas pu partir. Le RDV est bien enregistré.","⚠️ The email to your client could not be sent. The appointment is saved."));
+    } catch { /* l'email n'est pas indispensable : le RDV est enregistré */ }
+  };
+
   // Ouvre « Nouveau rendez-vous » depuis n'importe quel écran (le formulaire s'affiche sur l'Accueil)
   const ouvrirFormulaire = (patient) => {
     if (!canAdd) { setPrice(true); return; }
@@ -3023,6 +3043,8 @@ export default function App() {
       return;
     }
     await sb.addAnalyse(token, user.id, true);
+    // Email de confirmation au client (si on a son email) — sans bloquer l'écran
+    if (clientEmail && saved_res[0].id) notifierClient(saved_res[0].id, "nouveau");
 
     // Notification push si activée
     if (user.push_confirm && user.push_enabled) {
@@ -3167,6 +3189,12 @@ export default function App() {
             </div>
           )}
 
+          {toast && (
+            <div role="status" style={{ position:"fixed", left:"50%", bottom:96, transform:"translateX(-50%)", pointerEvents:"none", background:"#1e293b", color:"#fff", padding:"12px 18px", borderRadius:12, fontSize:13, fontWeight:600, zIndex:500, boxShadow:"0 8px 24px rgba(0,0,0,.2)", maxWidth:"calc(100vw - 32px)", textAlign:"center" }}>
+              {toast}
+            </div>
+          )}
+
           {recoveryToken && <NewPasswordModal token={recoveryToken} onDone={()=>setRecoveryToken(null)} />}
 
           {/* Stripe Success Modal */}
@@ -3259,6 +3287,9 @@ export default function App() {
                     data.notes = document.getElementById("edit-rdv-notes").value;
                     await sb.updateAppointment(token, editingRdv.id, data);
                     setAppts(prev => prev.map(r => r.id === editingRdv.id ? { ...r, ...data } : r));
+                    // Date ou heure changée : on prévient le client
+                    const deplace = (data.date || "") !== (editingRdv.date || "") || (data.heure || "") !== (editingRdv.heure || "");
+                    if (deplace && data.statut !== "annule") notifierClient(editingRdv.id, "deplace");
                     setEditingRdv(null);
                   }} style={{ flex:2 }}>{tr("💾 Sauvegarder","💾 Save")}</button>
                 </div>
