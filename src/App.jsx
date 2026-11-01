@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
-  STRIPE_LINKS: { pro: "https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1", business: "https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" },
+  STRIPE_LINK: "__LIEN_STRIPE_20__", // abonnement unique 20€/mois
 };
 
 // Supabase client leger (sans SDK)
@@ -134,9 +134,9 @@ const sb = {
 };
 
 const PLANS = {
-  free:     { name: "Gratuit",  price: 0,  quota: 10,       color: "#94a3b8", features: ["10 RDV/mois", "Agenda integre", "Export manuel"] },
-  pro:      { name: "Pro",      price: 9,  quota: Infinity, color: "#1e3a5f", features: ["RDV illimites", "Google Calendar", "Outlook", "Rappels email"] },
-  business: { name: "Business", price: 29, quota: Infinity, color: "#3b82f6", features: ["Tout Pro", "Multi-utilisateurs (5)", "Dashboard equipe", "Support prioritaire"] },
+  free:     { name: "Gratuit",  price: 0,  quota: 10,       color: "#94a3b8", features: ["10 RDV par mois", "Toutes les fonctionnalités", "Sans carte bancaire"] },
+  pro:      { name: "Pro",      price: 20, quota: Infinity, color: "#1e3a5f", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"] },
+  business: { name: "Pro",      price: 20, quota: Infinity, color: "#1e3a5f", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"] },
 };
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -459,11 +459,11 @@ function AuthPage({ authHooks }) {
             </div>
           </div>
         </div>
-        <div style={{ marginTop:20, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-          {Object.entries(PLANS).map(([k,p]) => (
+        <div style={{ marginTop:20, display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          {Object.entries(PLANS).filter(([k]) => k !== "business").map(([k,p]) => (
             <div key={k} style={{ background:"#fff", border:`1px solid ${p.color}30`, borderRadius:12, padding:12, textAlign:"center" }}>
               <div style={{ fontWeight:700, fontSize:14, color:p.color }}>{p.price===0?t("Gratuit","Free"):`${p.price}€${t("/mois","/mo")}`}</div>
-              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{k==="free"?t("Gratuit","Free"):p.name}</div>
+              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{k==="free"?t("10 RDV par mois","10 appointments/month"):t("RDV illimités","Unlimited")}</div>
             </div>
           ))}
         </div>
@@ -476,14 +476,13 @@ function AuthPage({ authHooks }) {
 function PricingModal({ currentPlan, onUpgrade, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"#f0f4f8ee", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ width:"100%", maxWidth:800 }} className="fade-up">
+      <div style={{ width:"100%", maxWidth:560, maxHeight:"92vh", overflowY:"auto" }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:28 }}>
-          <div style={{ fontWeight:800, fontSize:26, color:"#1e293b" }}>Choisissez votre plan</div>
+          <div style={{ fontWeight:800, fontSize:26, color:"#1e293b" }}>Un seul prix, tout inclus</div>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16 }}>
-          {Object.entries(PLANS).map(([key, plan]) => (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:16 }}>
+          {Object.entries(PLANS).filter(([key]) => key !== "business").map(([key, plan]) => (
             <div key={key} className="card" style={{ border:`1px solid ${plan.color}40`, position:"relative", transform:key==="pro"?"scale(1.04)":"none" }}>
-              {key==="pro" && <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:"#1e3a5f", color:"#f0f4f8", fontSize:10, fontWeight:700, fontFamily:"DM Mono", padding:"4px 12px", borderRadius:20 }}>POPULAIRE</div>}
               <div style={{ color:plan.color, fontWeight:800, fontSize:22, marginBottom:4 }}>
                 {plan.price===0?"Gratuit":`${plan.price}€`}{plan.price>0&&<span style={{ fontSize:13, fontWeight:400, color:"#94a3b8" }}>/mois</span>}
               </div>
@@ -491,9 +490,9 @@ function PricingModal({ currentPlan, onUpgrade, onClose }) {
               <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:18 }}>
                 {plan.features.map(f => <div key={f} style={{ fontSize:13, color:"#64748b", display:"flex", gap:8 }}><span style={{ color:plan.color }}>✓</span>{f}</div>)}
               </div>
-              {currentPlan===key
+              {(currentPlan===key || (key==="pro" && currentPlan==="business"))
                 ? <div style={{ textAlign:"center", padding:"12px", background:`${plan.color}15`, borderRadius:10, fontSize:13, color:plan.color, fontFamily:"DM Mono" }}>Plan actuel</div>
-                : <button onClick={()=>onUpgrade(key)} style={{ width:"100%", background:plan.color, color:"#f0f4f8", padding:"12px", fontFamily:"'Inter',sans-serif", fontWeight:700, border:"none", cursor:"pointer", borderRadius:10, fontSize:14 }}>{key==="free"?"Rester gratuit":`Passer a ${plan.name}`}</button>
+                : <button onClick={()=>onUpgrade(key)} style={{ width:"100%", background:plan.color, color:"#f0f4f8", padding:"12px", fontFamily:"'Inter',sans-serif", fontWeight:700, border:"none", cursor:"pointer", borderRadius:10, fontSize:14 }}>{key==="free"?"Rester gratuit":`Passer au ${plan.name} — ${plan.price}€/mois`}</button>
               }
             </div>
           ))}
@@ -665,7 +664,7 @@ function StatsView({ appointments, patients, user }) {
 
   const maxCount = Math.max(...last6.map(m => m.count), 1);
 
-  const planInfo = { free:{name:"Gratuit",color:"#64748b"}, pro:{name:"Pro",color:"#3b82f6"}, business:{name:"Business",color:"#7c3aed"} };
+  const planInfo = { free:{name:"Gratuit",color:"#64748b"}, pro:{name:"Pro",color:"#3b82f6"}, business:{name:"Pro",color:"#3b82f6"} };
   const plan = planInfo[user.plan] || planInfo.free;
 
   return (
@@ -734,7 +733,7 @@ function StatsView({ appointments, patients, user }) {
             </div>
             {user.plan==="free" && (
               <div style={{ background:"#f0f4ff", borderRadius:10, padding:14, fontSize:12, color:"#1e3a5f", lineHeight:1.6 }}>
-                💡 Passez en <b>Pro à 9€/mois</b> pour des RDV illimités !
+                💡 Passez en <b>Pro à 20€/mois</b> pour des RDV illimités !
               </div>
             )}
           </div>
@@ -1634,13 +1633,13 @@ function RdvForm({ onSave, onCancel, userMetier }) {
   const [form, setForm] = useState({
     titre: "",
     personne: prefillNom,
-    categorie: window.__prefillCategorie || (userMetier && userMetier !== "autre" ? userMetier : ""),
+    categorie: window.__prefillCategorie || (userMetier && userMetier !== "autre" ? userMetier : "autre"),
+    client_email: prefillPatient?.email || "",
     date: "",
     heure: "",
     lieu: "",
     adresse: "",
     notes: "",
-    categorie: "autre",
   });
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
@@ -1773,7 +1772,7 @@ function RdvForm({ onSave, onCancel, userMetier }) {
                   {matches.map(p => (
                     <div
                       key={p.id}
-                      onMouseDown={(e)=>{ e.preventDefault(); set("personne", p.nom); setShowSuggestions(false); }}
+                      onMouseDown={(e)=>{ e.preventDefault(); set("personne", p.nom); if (p.email) set("client_email", p.email); setShowSuggestions(false); }}
                       style={{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #f1f5f9", fontSize:13, color:"#1e293b" }}
                       onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"}
                       onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
@@ -1802,6 +1801,13 @@ function RdvForm({ onSave, onCancel, userMetier }) {
         <div className="field-label">HEURE</div>
         <input type="time" value={form.heure} onChange={e=>set("heure",e.target.value)}
           style={{ colorScheme:"dark" }} />
+      </div>
+
+      {/* Email du client : rappel automatique */}
+      <div style={{ marginBottom:16 }}>
+        <div className="field-label">EMAIL DU CLIENT</div>
+        <input type="email" inputMode="email" autoComplete="off" placeholder="client@email.com (facultatif)" value={form.client_email} onChange={e=>set("client_email",e.target.value)} />
+        <div style={{ fontSize:11, color:"#94a3b8", marginTop:6 }}>📧 Si vous le renseignez, votre client reçoit un rappel automatique 3 jours et 1 jour avant.</div>
       </div>
 
       {/* Bouton Plus de détails */}
@@ -2056,9 +2062,8 @@ CallRDV permet de :
 Pour utiliser CallRDV, vous devez créer un compte avec une adresse email valide. Vous êtes responsable de la confidentialité de vos identifiants.
 
 5. PLANS ET TARIFS
-• Plan Gratuit : 10 RDV/mois, gratuit
-• Plan Pro : RDV illimités, 9€/mois HT
-• Plan Business : fonctionnalités avancées, 29€/mois HT
+• Gratuit : 10 RDV par mois, toutes les fonctionnalités, sans carte bancaire
+• Pro : RDV illimités, 20€ par mois, sans engagement
 Les prix sont susceptibles d'évoluer avec un préavis de 30 jours.
 
 6. PAIEMENT
@@ -2240,7 +2245,6 @@ function LandingPage({ onLogin }) {
         <div style={{ display:"flex", alignItems:"center", gap:20 }}>
           <div className="lp-nav-links">
             <a href="#lp-features">{t("Fonctionnalités","Features")}</a>
-            <a href="#lp-demo">{t("Démo","Demo")}</a>
             <a href="#lp-pricing">{t("Tarifs","Pricing")}</a>
             <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter →","Log in →")}</button>
           </div>
@@ -2257,7 +2261,6 @@ function LandingPage({ onLogin }) {
           <p className="lp-sub">{t("CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.","CallRDV turns every phone call into a clear, organized appointment. Find your client, fill in the form, and you're done.")}</p>
           <div className="lp-actions">
             <button className="lp-btn-primary" onClick={onLogin}>{t("Commencer gratuitement →","Start for free →")}</button>
-            <a href="#lp-demo" className="lp-btn-secondary">{t("Voir la démo","Watch the demo")}</a>
           </div>
         </div>
         <div className="lp-mockup">
@@ -2325,55 +2328,20 @@ function LandingPage({ onLogin }) {
         </div>
       </section>
 
-      {/* VIDEO */}
-      <section className="lp-video-section" id="lp-demo">
-        <div className="lp-video-inner">
-          <div className="lp-label">{t("Démo","Demo")}</div>
-          <h2 className="lp-h2">{t("Voyez CallRDV en action","See CallRDV in action")}</h2>
-          <p style={{fontSize:15,color:"#64748b",fontWeight:300}}>{t("De la recherche client à la confirmation du RDV — en moins de 2 minutes.","From client search to confirmed appointment — in under 2 minutes.")}</p>
-          <div style={{ marginTop:44, borderRadius:20, overflow:"hidden", boxShadow:"0 24px 64px rgba(15,35,64,0.2)", position:"relative", paddingBottom:"56.25%", height:0 }}>
-            <iframe
-              src="https://www.youtube.com/embed/9_GsFNca7_g"
-              title="CallRDV — Démo"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", borderRadius:20 }}
-            ></iframe>
-          </div>
-        </div>
-      </section>
-
       {/* PRICING */}
       <section className="lp-pricing-section" id="lp-pricing">
         <div className="lp-label">{t("Tarifs","Pricing")}</div>
         <h2 className="lp-h2">{t("Simple et transparent","Simple and transparent")}</h2>
-        <p className="lp-section-sub">{t("Commencez gratuitement. Passez au Pro quand vous êtes prêt.","Start for free. Upgrade to Pro when you're ready.")}</p>
-        <div className="lp-pricing-grid">
-          <div className="lp-plan">
-            <div className="lp-plan-name">{t("Gratuit","Free")}</div>
-            <div className="lp-plan-price">0€</div>
-            <div className="lp-plan-period">{t("pour toujours","forever")}</div>
-            <div className="lp-plan-divider"></div>
-            <ul>{t(["10 RDV par mois","Fiches clients de base","Agenda semaine / mois","Export Google Calendar"],["10 appointments per month","Basic client profiles","Week / month calendar","Google Calendar export"]).map(x=><li key={x}>{x}</li>)}</ul>
-            <button className="lp-plan-cta lp-plan-cta-outline" onClick={onLogin}>{t("Commencer →","Get started →")}</button>
-          </div>
+        <p className="lp-section-sub">{t("Un seul prix, tout inclus. Essayez gratuitement avant de vous abonner.","One price, everything included. Try it for free before subscribing.")}</p>
+        <div className="lp-pricing-grid" style={{ gridTemplateColumns:"1fr", maxWidth:420, marginLeft:"auto", marginRight:"auto" }}>
           <div className="lp-plan featured">
-            <div className="lp-plan-badge">{t("⭐ Le plus choisi","⭐ Most popular")}</div>
-            <div className="lp-plan-name">Pro</div>
-            <div className="lp-plan-price">9€</div>
+            <div className="lp-plan-name">CallRDV Pro</div>
+            <div className="lp-plan-price">20€</div>
             <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
             <div className="lp-plan-divider"></div>
-            <ul>{t(["RDV illimités","Fiches clients complètes","Rappels email automatiques","Export PDF","Tableau de bord stats"],["Unlimited appointments","Full client profiles","Automatic email reminders","PDF export","Stats dashboard"]).map(x=><li key={x}>{x}</li>)}</ul>
-            <a href="https://buy.stripe.com/00w8wPf3R8fkd0meNgcMM00?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-filled">{t("Passer au Pro →","Go Pro →")}</a>
-          </div>
-          <div className="lp-plan">
-            <div className="lp-plan-name">Business</div>
-            <div className="lp-plan-price">29€</div>
-            <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
-            <div className="lp-plan-divider"></div>
-            <ul>{t(["Tout le plan Pro","Multi-utilisateurs","Import CSV patients","Support prioritaire"],["Everything in Pro","Multiple users","CSV client import","Priority support"]).map(x=><li key={x}>{x}</li>)}</ul>
-            <a href="https://buy.stripe.com/eVqdR93l9ans2lIgVocMM01?success_url=https://callrdv.com?success=1" className="lp-plan-cta lp-plan-cta-outline">{t("Démarrer →","Get started →")}</a>
+            <ul>{t(["RDV illimités","Rappels email à vous et à vos clients (J-3 et J-1)","Fiches clients et import de contacts","Agenda semaine / mois / liste","Export PDF et Google Calendar / Outlook"],["Unlimited appointments","Email reminders for you and your clients (3 days and 1 day before)","Client profiles and contact import","Week / month / list calendar","PDF export and Google Calendar / Outlook"]).map(x=><li key={x}>{x}</li>)}</ul>
+            <button className="lp-plan-cta lp-plan-cta-filled" onClick={onLogin}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <div style={{ fontSize:12, color:"#64748b", textAlign:"center", marginTop:12 }}>{t("10 RDV offerts chaque mois pour essayer, sans carte bancaire.","10 free appointments every month to try it, no credit card.")}</div>
           </div>
         </div>
       </section>
@@ -2550,7 +2518,8 @@ export default function App() {
     window.__startWithName = (nom, patient) => {
       if (!canAdd) return;
       window.__prefillNom = nom;
-      window.__prefillPatient = patient || null;
+      // Si le nom tapé correspond à une fiche client, on la reprend (email, téléphone...)
+      window.__prefillPatient = patient || patients.find(x => x.nom && nom && x.nom.toLowerCase() === nom.trim().toLowerCase()) || null;
       setPhase("form");
     };
   }, [patients, canAdd]);
@@ -2578,9 +2547,14 @@ export default function App() {
   }, [user?.id, token]);
 
   const handleSave = async (rdv) => {
+    // Email du client : celui saisi, sinon celui de sa fiche
+    const fiche = rdv.personne ? patients.find(p => p.nom && p.nom.toLowerCase() === rdv.personne.toLowerCase()) : null;
+    const saisi = (rdv.client_email || "").trim();
+    const clientEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saisi) ? saisi : (fiche?.email || "");
     // Sauvegarder dans Supabase
     // Nettoyer l'objet pour ne garder que les champs valides
     const cleanRdv = {
+      client_email: clientEmail || null,
       titre: rdv.titre || "",
       personne: rdv.personne || "",
       date: rdv.date || "",
@@ -2604,12 +2578,17 @@ export default function App() {
       sendPushNotif("✅ RDV créé !", `${rdv.titre||"Rendez-vous"} avec ${rdv.personne} le ${rdv.date}${rdv.heure ? " à "+rdv.heure : ""}`);
     }
 
-    // Ajout automatique du patient si nouveau
+    // Ajout automatique du patient si nouveau (avec son email s'il est connu)
     if (rdv.personne) {
-      const exists = patients.find(p => p.nom.toLowerCase() === rdv.personne.toLowerCase());
+      const exists = fiche;
+      if (exists && clientEmail && !exists.email) {
+        await sb.updatePatient(token, exists.id, { email: clientEmail });
+        setPatients(prev => prev.map(p => p.id === exists.id ? { ...p, email: clientEmail } : p));
+      }
       if (!exists) {
         const newPatient = await sb.addPatient(token, user.id, {
           nom: rdv.personne,
+          email: clientEmail || "",
           categorie: rdv.categorie || "autre",
           notes: rdv.notes || "",
         });
@@ -2631,9 +2610,11 @@ export default function App() {
   };
 
   const handleUpgrade = (key) => {
-    if (key==="free") { updateUser({ plan:"free" }); setPrice(false); return; }
-    window.open(CONFIG.STRIPE_LINKS[key]||"#","_blank");
-    updateUser({ plan:key }); setPrice(false);
+    if (key==="free") { setPrice(false); return; }
+    // Email pré-rempli pour que le paiement soit relié au bon compte
+    const lien = `${CONFIG.STRIPE_LINK}${CONFIG.STRIPE_LINK.includes("?") ? "&" : "?"}prefilled_email=${encodeURIComponent(user.email || "")}`;
+    window.open(lien, "_blank");
+    setPrice(false);
   };
 
   if (!user) {
@@ -2734,7 +2715,7 @@ export default function App() {
                 <div style={{ fontSize:64, marginBottom:16 }}>🎉</div>
                 <div style={{ fontWeight:800, fontSize:22, color:"#1e293b", marginBottom:10 }}>Paiement réussi !</div>
                 <div style={{ fontSize:15, color:"#64748b", lineHeight:1.7, marginBottom:28 }}>
-                  Bienvenue dans le plan <strong>{user?.plan === "business" ? "Business" : "Pro"}</strong> !<br/>
+                  Bienvenue dans le plan <strong>Pro</strong> !<br/>
                   Votre compte a été mis à jour. Profitez de toutes les fonctionnalités sans limite.
                 </div>
                 <button className="btn btn-primary" onClick={()=>{ setStripeSuccess(false); window.history.replaceState({}, "", window.location.pathname); }} style={{ width:"100%", padding:14 }}>
@@ -2912,7 +2893,7 @@ export default function App() {
                   <div style={{ background:"#fff5f5", border:"1px solid #ff6b6b30", borderRadius:14, padding:18, marginBottom:18 }}>
                     <div style={{ fontWeight:700, color:"#ff6b6b", marginBottom:6 }}>Quota mensuel atteint</div>
                     <div style={{ fontSize:13, color:"#7a4a4a", marginBottom:12 }}>Vous avez utilise vos {plan.quota} RDV gratuits ce mois.</div>
-                    <button className="btn btn-primary btn-sm" onClick={()=>setPrice(true)}>Passer en Pro — 9€/mois</button>
+                    <button className="btn btn-primary btn-sm" onClick={()=>setPrice(true)}>Passer en Pro — 20€/mois</button>
                   </div>
                 )}
 
