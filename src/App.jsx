@@ -629,7 +629,7 @@ function AuthPage({ authHooks, initialMode }) {
             <span style={{ fontSize:15 }}>🔒</span>
             <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.6 }}>
               <span style={{ color:"#0284c7", fontWeight:700 }}>{t("Données protégées. ","Data protected. ")}</span>
-              {t("Aucun stockage vocal. Conforme RGPD.","No voice recording. GDPR compliant.")}
+              {t("Aucun enregistrement vocal. Données hébergées en Europe.","No voice recording. Data hosted in Europe.")}
             </div>
           </div>
         </div>
@@ -1001,7 +1001,7 @@ function exportPDF(appointments, viewMode) {
         </thead>
         <tbody>${rows}</tbody>
       </table>`}
-      <div class="footer">CallRDV — ${tr("Conforme RGPD","GDPR compliant")} · callrdv.com</div>
+      <div class="footer">CallRDV · callrdv.com</div>
     </body>
     </html>
   `;
@@ -2060,7 +2060,7 @@ function RdvForm({ onSave, onCancel, userMetier }) {
         <span style={{ fontSize:14 }}>🔒</span>
         <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.5 }}>
           <span style={{ color:"#0284c7", fontWeight:700 }}>{tr("Données protégées — ","Data protected — ")}</span>
-          {tr("Hébergées en Europe, accessibles uniquement depuis votre compte. Conforme RGPD.","Hosted in Europe, only accessible from your account. GDPR compliant.")}
+          {tr("Hébergées en Europe, accessibles uniquement depuis votre compte.","Hosted in Europe, only accessible from your account.")}
         </div>
       </div>
 
@@ -2620,7 +2620,7 @@ function LandingPage({ onLogin, onSignup }) {
 
       {/* STATS */}
       <div className="lp-stats">
-        {(t([["2min","pour créer un RDV"],["📅","agenda intégré"],["J-3","rappels automatiques"],["100%","conforme RGPD"]],[["2min","to create an appointment"],["📅","built-in calendar"],["3 days","automatic reminders"],["100%","GDPR compliant"]])).map(([n,l])=>(
+        {(t([["2min","pour créer un RDV"],["📅","agenda intégré"],["J-3","rappels automatiques"],["🇪🇺","données hébergées en Europe"]],[["2min","to create an appointment"],["📅","built-in calendar"],["3 days","automatic reminders"],["🇪🇺","data hosted in Europe"]])).map(([n,l])=>(
           <div key={l} className="lp-stat"><div className="lp-stat-num">{n}</div><div className="lp-stat-label">{l}</div></div>
         ))}
       </div>
@@ -2634,14 +2634,14 @@ function LandingPage({ onLogin, onSignup }) {
           {t([
             {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
             {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
-            {icon:"🔔",title:"Rappels automatiques",desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email."},
+            {icon:"🔔",title:"Rappels automatiques",desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email. Il confirme ou annule en un clic."},
             {icon:"💬",title:"Partage WhatsApp et SMS",desc:"Sur téléphone, envoyez un RDV à votre client par WhatsApp ou SMS en un clic, avec la date, l'heure et le lieu."},
             {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
             {icon:"📅",title:"Agenda et export PDF",desc:"Vue semaine, mois ou liste. Planning en PDF, export vers Google Calendar ou Outlook."},
           ],[
             {icon:"🔍",title:"Instant client search",desc:"Type your client's name and their profile appears instantly, with their full history."},
             {icon:"📋",title:"Smart forms by business",desc:"Doctor, restaurant, garage, legal — each type of appointment has its own fields."},
-            {icon:"🔔",title:"Automatic reminders",desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email."},
+            {icon:"🔔",title:"Automatic reminders",desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email. They confirm or cancel in one click."},
             {icon:"💬",title:"WhatsApp & SMS sharing",desc:"On your phone, send an appointment to your client by WhatsApp or text in one tap, with date, time and place."},
             {icon:"📊",title:"Dashboard",desc:"Track your activity: appointments per week, top categories, 6-month trend."},
             {icon:"📅",title:"Calendar & PDF export",desc:"Week, month or list view. PDF schedule, export to Google Calendar or Outlook."},
@@ -2686,7 +2686,7 @@ function LandingPage({ onLogin, onSignup }) {
       <footer className="lp-footer">
         <div className="lp-footer-logo">📞 CallRDV</div>
         <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>{t("Confidentialité","Privacy")}</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>{t("CGU","Terms")}</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
-        <div className="lp-footer-copy">{t("© 2026 CallRDV · Conforme RGPD","© 2026 CallRDV · GDPR compliant")}</div>
+        <div className="lp-footer-copy">{t("© 2026 CallRDV · Données hébergées en Europe","© 2026 CallRDV · Data hosted in Europe")}</div>
       </footer>
     </div>
   );
@@ -2698,6 +2698,97 @@ function sendPushNotif(title, body) {
   if (typeof Notification === "undefined") return;
   if (Notification.permission !== "granted") return;
   new Notification(title, { body, icon: "/icon-192.png" });
+}
+
+// ── Page publique : le client confirme ou annule depuis le lien de son email de rappel ──
+function ReponseRdvPage({ id, t }) {
+  const [rdv, setRdv] = useState(null);
+  const [etat, setEtat] = useState("chargement"); // chargement | pret | introuvable | erreur | confirme | annule | demande_annulation
+  const [envoi, setEnvoi] = useState(false);
+  const lg = rdv?.lang || CURRENT_LANG;
+  const L = (fr, en) => lg === "en" ? en : fr;
+  const appel = (action) => fetch(`${CONFIG.SUPABASE_URL}/functions/v1/reponse-rdv`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": CONFIG.SUPABASE_ANON_KEY },
+    body: JSON.stringify(action ? { id, t, action } : { id, t }),
+  }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }));
+
+  useEffect(() => {
+    appel().then(({ status, data }) => {
+      if (status === 200 && data.rdv) { setRdv(data.rdv); setEtat("pret"); }
+      else setEtat(status === 404 ? "introuvable" : "erreur");
+    }).catch(() => setEtat("erreur"));
+  }, []);
+
+  const repondre = async (action) => {
+    setEnvoi(true);
+    try {
+      const { status, data } = await appel(action);
+      if (data.rdv) setRdv(data.rdv);
+      if (status === 200) setEtat(action);
+      else if (data.error === "deja_annule" || data.error === "passe") setEtat("pret");
+      else setEtat("erreur");
+    } catch { setEtat("erreur"); }
+    setEnvoi(false);
+  };
+
+  let dateTxt = "";
+  if (rdv?.date) {
+    const d = new Date(rdv.date + "T12:00:00");
+    dateTxt = isNaN(d.getTime()) ? rdv.date : d.toLocaleDateString(lg === "en" ? "en-GB" : "fr-FR", { weekday:"long", day:"numeric", month:"long" });
+    dateTxt = dateTxt.charAt(0).toUpperCase() + dateTxt.slice(1) + (rdv.heure ? L(" à ", " at ") + rdv.heure : "");
+  }
+  const btn = (bg, color, border) => ({ width:"100%", padding:"14px", borderRadius:10, border:`1px solid ${border}`, background:bg, color, fontSize:15, fontWeight:700, cursor:envoi?"wait":"pointer", opacity:envoi?.6:1, marginTop:10 });
+  const msg = (icone, titre, texte, couleur) => (
+    <div style={{ textAlign:"center", padding:"10px 0" }}>
+      <div style={{ fontSize:40, marginBottom:10 }}>{icone}</div>
+      <div style={{ fontWeight:800, fontSize:18, color:couleur||"#1e293b", marginBottom:8 }}>{titre}</div>
+      {texte && <div style={{ fontSize:14, color:"#64748b", lineHeight:1.6 }}>{texte}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", padding:16, fontFamily:"system-ui, -apple-system, sans-serif" }}>
+      <div style={{ background:"#fff", borderRadius:16, padding:"28px 22px", width:"100%", maxWidth:420, boxShadow:"0 8px 30px rgba(15,35,64,.08)" }}>
+        <div style={{ fontWeight:800, color:"#1e3a5f", fontSize:16, marginBottom:20 }}>📞 CallRDV</div>
+        {etat === "chargement" && msg("⏳", L("Chargement…","Loading…"))}
+        {etat === "introuvable" && msg("🔍", L("Lien non valide","Invalid link"), L("Ce rendez-vous n'existe plus ou le lien est incomplet. Contactez directement votre professionnel.","This appointment no longer exists or the link is incomplete. Please contact your professional directly."))}
+        {etat === "erreur" && msg("⚠️", L("Une erreur est survenue","Something went wrong"), L("Réessayez dans quelques instants, ou contactez directement votre professionnel.","Please try again in a moment, or contact your professional directly."))}
+        {rdv && etat !== "chargement" && etat !== "introuvable" && etat !== "erreur" && (
+          <>
+            <div style={{ background:"#f8fafc", borderRadius:12, padding:"16px", marginBottom:18, fontSize:14, color:"#334155", lineHeight:1.8 }}>
+              <div style={{ fontWeight:800, fontSize:16, color:"#1e293b", marginBottom:4 }}>{rdv.titre || L("Rendez-vous","Appointment")}</div>
+              {rdv.pro && <div>🏢 {rdv.pro}</div>}
+              <div>📅 {dateTxt}</div>
+              {rdv.lieu && <div>📍 {rdv.lieu}</div>}
+              {rdv.personne && <div>👤 {rdv.personne}</div>}
+            </div>
+            {etat === "confirme" && msg("✅", L("Merci, votre RDV est confirmé","Thank you, your appointment is confirmed"), L("Votre professionnel voit votre confirmation.","Your professional can see your confirmation."), "#16a34a")}
+            {etat === "annule" && msg("❌", L("Votre RDV est annulé","Your appointment is cancelled"), L("Votre professionnel a été prévenu.","Your professional has been notified."), "#ef4444")}
+            {etat === "demande_annulation" && (
+              <div>
+                <div style={{ fontWeight:700, fontSize:15, color:"#1e293b", textAlign:"center", marginBottom:6 }}>{L("Vous êtes sûr de vouloir annuler ?","Are you sure you want to cancel?")}</div>
+                <button disabled={envoi} onClick={()=>repondre("annule")} style={btn("#ef4444","#fff","#ef4444")}>{L("Oui, j'annule mon RDV","Yes, cancel my appointment")}</button>
+                <button disabled={envoi} onClick={()=>setEtat("pret")} style={btn("#fff","#475569","#e2e8f0")}>{L("Non, retour","No, go back")}</button>
+              </div>
+            )}
+            {etat === "pret" && (rdv.passe
+              ? msg("🕐", L("Ce rendez-vous est passé","This appointment has passed"), L("Il n'est plus possible de le confirmer ou de l'annuler.","It can no longer be confirmed or cancelled."))
+              : rdv.statut === "annule"
+              ? msg("❌", L("Ce rendez-vous est annulé","This appointment is cancelled"), L("Pour reprendre rendez-vous, contactez directement votre professionnel.","To book again, please contact your professional directly."), "#ef4444")
+              : (
+                <div>
+                  {rdv.statut === "confirme" && <div style={{ textAlign:"center", color:"#16a34a", fontWeight:700, fontSize:14, marginBottom:6 }}>{L("✅ Vous avez déjà confirmé ce RDV","✅ You have already confirmed this appointment")}</div>}
+                  {rdv.statut !== "confirme" && <button disabled={envoi} onClick={()=>repondre("confirme")} style={btn("#16a34a","#fff","#16a34a")}>{L("✅ Je confirme ma venue","✅ I'll be there")}</button>}
+                  <button disabled={envoi} onClick={()=>setEtat("demande_annulation")} style={btn("#fff","#ef4444","#fecaca")}>{L("❌ J'annule mon RDV","❌ Cancel my appointment")}</button>
+                </div>
+              ))}
+          </>
+        )}
+        <div style={{ marginTop:22, fontSize:11, color:"#94a3b8", textAlign:"center" }}>{L("Rappel envoyé via CallRDV — callrdv.com","Reminder sent via CallRDV — callrdv.com")}</div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -2725,6 +2816,11 @@ export default function App() {
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
   const timerRef = useRef(null);
+  // Lien « Confirmer ou annuler mon RDV » reçu par le client dans son email de rappel
+  const [reponseLien] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    return q.get("rdv") && q.get("t") ? { id: q.get("rdv"), t: q.get("t") } : null;
+  });
 
   useEffect(() => {
     if (phase === "calling") { timerRef.current = setInterval(() => setRecTime(t=>t+1), 1000); }
@@ -2957,6 +3053,8 @@ export default function App() {
     window.open(lien, "_blank");
     setPrice(false);
   };
+
+  if (reponseLien) return <ReponseRdvPage id={reponseLien.id} t={reponseLien.t} />;
 
   if (!user) {
     if (showLanding) return <LandingPage onLogin={() => { setAuthMode("login"); setShowLanding(false); }} onSignup={() => { setAuthMode("register"); setShowLanding(false); }} />;
@@ -3372,7 +3470,7 @@ export default function App() {
               <div className="privacy-badge">
                 <span style={{ fontSize:14 }}>🔒</span>
                 <div style={{ fontSize:10, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.5 }}>
-                  {tr("Données hébergées en Europe. Aucun enregistrement vocal. Conforme RGPD.","Data hosted in Europe. No voice recording. GDPR compliant.")}
+                  {tr("Données hébergées en Europe. Aucun enregistrement vocal.","Data hosted in Europe. No voice recording.")}
                 </div>
               </div>
             </div>
