@@ -177,6 +177,29 @@ const fmtRdv = (date, heure) => {
   const txt = isNaN(d.getTime()) ? date : d.toLocaleDateString(locale(), { weekday:"short", day:"numeric", month:"short" });
   return heure ? `${txt} ${tr("à","at")} ${heure}` : txt;
 };
+// Partage d'un RDV (WhatsApp, SMS… via le menu du téléphone ; sinon copie du texte)
+const partagerRdv = async (rdv) => {
+  let dateTxt = rdv.date || "";
+  const d = new Date((rdv.date || "") + "T12:00:00");
+  if (!isNaN(d.getTime())) {
+    dateTxt = d.toLocaleDateString(locale(), { weekday:"long", day:"numeric", month:"long" });
+    dateTxt = dateTxt.charAt(0).toUpperCase() + dateTxt.slice(1);
+  }
+  const lieu = [rdv.lieu, rdv.adresse].filter(Boolean).join(" — ");
+  const lignes = [
+    `📅 ${rdv.titre || tr("Rendez-vous","Appointment")}`,
+    rdv.personne ? `👤 ${rdv.personne}` : null,
+    `🕐 ${dateTxt}${rdv.heure ? tr(" à "," at ") + rdv.heure : ""}`,
+    lieu ? `📍 ${lieu}` : null,
+  ].filter(Boolean);
+  const msg = lignes.join("\n");
+  if (navigator.share) {
+    try { await navigator.share({ text: msg }); } catch (e) { /* partage annulé */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(msg); alert(tr("Texte du RDV copié : collez-le dans WhatsApp ou un SMS.","Appointment text copied: paste it into WhatsApp or a text message.")); }
+  catch (e) { window.prompt(tr("Copiez ce texte :","Copy this text:"), msg); }
+};
 const catLabel = (v) => { const k = CATEGORIES.find(x => x.value === v) || CATEGORIES[CATEGORIES.length - 1]; return tr(k.fr, k.en); };
 
 function detectLang() {
@@ -731,11 +754,7 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
         <div style={{ display:"flex", gap:8, marginBottom:12 }}>
           <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#1e3a5f" }}>{tr("✏️ Modifier","✏️ Edit")}</button>
           <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#ef4444" }}>{tr("🗑️ Supprimer","🗑️ Delete")}</button>
-          <button onClick={()=>{
-            const msg = `${tr("📅 Rappel RDV","📅 Appointment reminder")}\n${rdv.titre||tr("Rendez-vous","Appointment")}\n👤 ${rdv.personne||""}\n📆 ${rdv.date||""}${rdv.heure?tr(" à "," at ")+rdv.heure:""}\n📍 ${rdv.lieu||""}\n\nCallRDV — callrdv.com`;
-            if (navigator.share) { navigator.share({ title:tr("RDV","Appointment"), text:msg }); }
-            else { navigator.clipboard.writeText(msg); alert(tr("Copié !","Copied!")); }
-          }} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#16a34a" }}>
+          <button onClick={()=>partagerRdv(rdv)} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#16a34a" }}>
             {tr("📤 Partager","📤 Share")}
           </button>
         </div>
@@ -1202,6 +1221,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
                   </div>
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:6, flexShrink:0 }}>
+                  <button onClick={(e)=>{e.stopPropagation();partagerRdv(rdv);}} title={tr("Partager (WhatsApp, SMS…)","Share (WhatsApp, SMS…)")} style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#16a34a" }}>📤</button>
                   <button onClick={(e)=>{e.stopPropagation();onEditRdv(rdv);}} title={tr("Modifier","Edit")} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#1e3a5f" }}>✏️</button>
                   <button onClick={(e)=>{e.stopPropagation();onDeleteRdv(rdv.id);}} title={tr("Supprimer","Delete")} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#ef4444" }}>🗑️</button>
                 </div>
@@ -2614,17 +2634,17 @@ function LandingPage({ onLogin, onSignup }) {
           {t([
             {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
             {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
-            {icon:"🔔",title:"Rappels automatiques",desc:"Vous recevez un email de rappel 3 jours et 1 jour avant chaque RDV. Plus aucun oubli."},
-            {icon:"📅",title:"Agenda complet",desc:"Vue semaine, mois ou liste. Exportez vers Google Calendar ou Outlook en un clic."},
+            {icon:"🔔",title:"Rappels automatiques",desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email."},
+            {icon:"💬",title:"Partage WhatsApp et SMS",desc:"Sur téléphone, envoyez un RDV à votre client par WhatsApp ou SMS en un clic, avec la date, l'heure et le lieu."},
             {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
-            {icon:"📄",title:"Export PDF",desc:"Générez un planning PDF propre et professionnel en un clic depuis votre agenda."},
+            {icon:"📅",title:"Agenda et export PDF",desc:"Vue semaine, mois ou liste. Planning en PDF, export vers Google Calendar ou Outlook."},
           ],[
             {icon:"🔍",title:"Instant client search",desc:"Type your client's name and their profile appears instantly, with their full history."},
             {icon:"📋",title:"Smart forms by business",desc:"Doctor, restaurant, garage, legal — each type of appointment has its own fields."},
-            {icon:"🔔",title:"Automatic reminders",desc:"You get an email reminder 3 days and 1 day before every appointment. Never forget again."},
-            {icon:"📅",title:"Full calendar",desc:"Week, month or list view. Export to Google Calendar or Outlook in one click."},
+            {icon:"🔔",title:"Automatic reminders",desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email."},
+            {icon:"💬",title:"WhatsApp & SMS sharing",desc:"On your phone, send an appointment to your client by WhatsApp or text in one tap, with date, time and place."},
             {icon:"📊",title:"Dashboard",desc:"Track your activity: appointments per week, top categories, 6-month trend."},
-            {icon:"📄",title:"PDF export",desc:"Create a clean, professional PDF schedule from your calendar in one click."},
+            {icon:"📅",title:"Calendar & PDF export",desc:"Week, month or list view. PDF schedule, export to Google Calendar or Outlook."},
           ]).map(({icon,title,desc})=>(
             <div key={title} className="lp-feature">
               <div className="lp-feature-icon">{icon}</div>
