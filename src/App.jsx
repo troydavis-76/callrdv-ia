@@ -177,8 +177,8 @@ const fmtRdv = (date, heure) => {
   const txt = isNaN(d.getTime()) ? date : d.toLocaleDateString(locale(), { weekday:"short", day:"numeric", month:"short" });
   return heure ? `${txt} ${tr("à","at")} ${heure}` : txt;
 };
-// Partage d'un RDV (WhatsApp, SMS… via le menu du téléphone ; sinon copie du texte)
-const partagerRdv = async (rdv) => {
+// Texte d'un RDV à envoyer au client
+const texteRdv = (rdv) => {
   let dateTxt = rdv.date || "";
   const d = new Date((rdv.date || "") + "T12:00:00");
   if (!isNaN(d.getTime())) {
@@ -192,7 +192,25 @@ const partagerRdv = async (rdv) => {
     `🕐 ${dateTxt}${rdv.heure ? tr(" à "," at ") + rdv.heure : ""}`,
     lieu ? `📍 ${lieu}` : null,
   ].filter(Boolean);
-  const msg = lignes.join("\n");
+  return lignes.join("\n");
+};
+// Numéro au format international pour WhatsApp (06 12 34 56 78 → 33612345678)
+const telInternational = (raw) => {
+  let n = String(raw || "").replace(/[^\d+]/g, "");
+  if (n.startsWith("+")) n = n.slice(1);
+  else if (n.startsWith("00")) n = n.slice(2);
+  else if (n.startsWith("0") && n.length === 10) n = "33" + n.slice(1);
+  return /^\d{10,15}$/.test(n) ? n : "";
+};
+// Téléphone du client, pris dans sa fiche
+const telClient = (rdv) => {
+  const nom = (rdv.personne || "").trim().toLowerCase();
+  const f = nom ? (window.__patients || []).find(p => (p.nom || "").trim().toLowerCase() === nom) : null;
+  return (f?.telephone || "").trim();
+};
+// Partage d'un RDV (WhatsApp, SMS… via le menu du téléphone ; sinon copie du texte)
+const partagerRdv = async (rdv) => {
+  const msg = texteRdv(rdv);
   if (navigator.share) {
     try { await navigator.share({ text: msg }); } catch (e) { /* partage annulé */ }
     return;
@@ -758,6 +776,19 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
             {tr("📤 Partager","📤 Share")}
           </button>
         </div>
+
+        {(() => {
+          const tel = telClient(rdv);
+          const wa = telInternational(tel);
+          if (!tel) return null;
+          const txt = encodeURIComponent(texteRdv(rdv));
+          return (
+            <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+              {wa && <a href={`https://wa.me/${wa}?text=${txt}`} target="_blank" rel="noopener noreferrer" style={{ flex:1, textAlign:"center", textDecoration:"none", background:"#25d366", border:"1px solid #25d366", borderRadius:8, padding:"12px", fontSize:14, fontWeight:700, color:"#fff" }}>💬 WhatsApp</a>}
+              <a href={`sms:${tel.replace(/[^\d+]/g,"")}?&body=${txt}`} style={{ flex:1, textAlign:"center", textDecoration:"none", background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:8, padding:"12px", fontSize:14, fontWeight:700, color:"#0369a1" }}>✉️ SMS</a>
+            </div>
+          );
+        })()}
 
         {/* Export (replié) */}
         <details style={{ marginTop:4 }}>
@@ -2873,6 +2904,8 @@ export default function App() {
       const j = await r.json().catch(() => ({}));
       if (j.sent) montrerToast(type === "nouveau"
         ? tr(`📧 Email de confirmation envoyé à ${j.to}`, `📧 Confirmation email sent to ${j.to}`)
+        : type === "annule"
+        ? tr(`📧 ${j.to} a été prévenu de l'annulation`, `📧 ${j.to} has been told about the cancellation`)
         : tr(`📧 ${j.to} a été prévenu du changement`, `📧 ${j.to} has been told about the change`));
       else if (j.reason === "envoi" || !r.ok) montrerToast(tr("⚠️ L'email au client n'a pas pu partir. Le RDV est bien enregistré.","⚠️ The email to your client could not be sent. The appointment is saved."));
     } catch { /* l'email n'est pas indispensable : le RDV est enregistré */ }
@@ -2894,9 +2927,22 @@ export default function App() {
     setAppts(prev => prev.filter(r => r.id !== id));
   };
 
+  // Quand le pro annule un RDV à venir : proposer d'envoyer un email au client
+  const proposerEmailAnnulation = (rdv) => {
+    if (!rdv || rdv.statut === "annule") return false;
+    if ((rdv.date || "") < isoLocal(new Date())) return false;
+    const fiche = patients.find(p => p.nom && rdv.personne && p.nom.trim().toLowerCase() === rdv.personne.trim().toLowerCase());
+    if (!rdv.client_email && !fiche?.email) return false;
+    return window.confirm(tr(`Envoyer un email à ${rdv.personne} pour le prévenir que le RDV est annulé ?`, `Send ${rdv.personne} an email to let them know the appointment is cancelled?`));
+  };
+
   const handleUpdateStatut = async (id, statut) => {
+    const avant = appointments.find(r => r.id === id);
+    const prevenir = statut === "annule" && proposerEmailAnnulation(avant);
     await sb.updateAppointment(token, id, { statut });
     setAppts(prev => prev.map(r => r.id === id ? { ...r, statut } : r));
+    setCalRdv(prev => prev && prev.id === id ? { ...prev, statut } : prev);
+    if (prevenir) notifierClient(id, "annule");
   };
 
   // Exposer toggle dark mode
@@ -3285,11 +3331,13 @@ export default function App() {
                     data.client_email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) ? em : null;
                     data.statut = document.getElementById("edit-rdv-statut").value;
                     data.notes = document.getElementById("edit-rdv-notes").value;
+                    const prevenirAnnulation = data.statut === "annule" && proposerEmailAnnulation({ ...editingRdv, ...data, statut: editingRdv.statut });
                     await sb.updateAppointment(token, editingRdv.id, data);
                     setAppts(prev => prev.map(r => r.id === editingRdv.id ? { ...r, ...data } : r));
                     // Date ou heure changée : on prévient le client
                     const deplace = (data.date || "") !== (editingRdv.date || "") || (data.heure || "") !== (editingRdv.heure || "");
-                    if (deplace && data.statut !== "annule") notifierClient(editingRdv.id, "deplace");
+                    if (prevenirAnnulation) notifierClient(editingRdv.id, "annule");
+                    else if (deplace && data.statut !== "annule") notifierClient(editingRdv.id, "deplace");
                     setEditingRdv(null);
                   }} style={{ flex:2 }}>{tr("💾 Sauvegarder","💾 Save")}</button>
                 </div>

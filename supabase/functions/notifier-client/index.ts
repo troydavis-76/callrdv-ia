@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // Email au client juste après une action du pro dans CallRDV :
 //  - type "nouveau" : le RDV vient d'être enregistré
 //  - type "deplace" : la date ou l'heure du RDV a changé
+//  - type "annule"  : le pro a annulé le RDV
 // Appelée par l'app avec le jeton de connexion du pro : on vérifie que le RDV est bien à lui.
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://vcnguzlwyacnlysnsogv.supabase.co";
@@ -23,8 +24,10 @@ const nomExpediteur = (n: unknown) => String(n ?? "").replace(/[<>"\\\r\n,;]/g, 
 
 const TXT = {
   fr: {
-    nouveau: { sujet: "Votre rendez-vous est enregistré", titre: "✅ Votre rendez-vous est enregistré", intro: "Votre rendez-vous est bien enregistré" },
-    deplace: { sujet: "Votre rendez-vous a été déplacé", titre: "🔄 Votre rendez-vous a été déplacé", intro: "Votre rendez-vous a changé. Voici la nouvelle date" },
+    nouveau: { sujet: "Votre rendez-vous est enregistré", titre: "✅ Votre rendez-vous est enregistré", intro: (a: string) => `Votre rendez-vous${a} est bien enregistré :` },
+    deplace: { sujet: "Votre rendez-vous a été déplacé", titre: "🔄 Votre rendez-vous a été déplacé", intro: (a: string) => `Votre rendez-vous${a} a changé. Voici la nouvelle date :` },
+    annule: { sujet: "Votre rendez-vous est annulé", titre: "❌ Votre rendez-vous est annulé", intro: (a: string) => `Nous sommes désolés, votre rendez-vous${a} est annulé :` },
+    reprendre: "Pour reprendre rendez-vous, répondez simplement à cet email ou contactez votre professionnel.",
     rdv: "Rendez-vous", heure: "heure à préciser", a: "à", avec: "avec", bonjour: "Bonjour",
     bouton: "Confirmer ou annuler mon RDV",
     rappel: "Vous recevrez aussi un rappel par email avant le rendez-vous.",
@@ -32,8 +35,10 @@ const TXT = {
     pied: (avec: string) => `Email envoyé${avec} via CallRDV — callrdv.com`,
   },
   en: {
-    nouveau: { sujet: "Your appointment is booked", titre: "✅ Your appointment is booked", intro: "Your appointment is booked" },
-    deplace: { sujet: "Your appointment has been moved", titre: "🔄 Your appointment has been moved", intro: "Your appointment has changed. Here is the new date" },
+    nouveau: { sujet: "Your appointment is booked", titre: "✅ Your appointment is booked", intro: (a: string) => `Your appointment${a} is booked:` },
+    deplace: { sujet: "Your appointment has been moved", titre: "🔄 Your appointment has been moved", intro: (a: string) => `Your appointment${a} has changed. Here is the new date:` },
+    annule: { sujet: "Your appointment is cancelled", titre: "❌ Your appointment is cancelled", intro: (a: string) => `We're sorry, your appointment${a} is cancelled:` },
+    reprendre: "To book again, just reply to this email or contact your professional.",
     rdv: "Appointment", heure: "time to be confirmed", a: "at", avec: "with", bonjour: "Hello",
     bouton: "Confirm or cancel my appointment",
     rappel: "You will also get an email reminder before the appointment.",
@@ -55,7 +60,7 @@ Deno.serve(async (req) => {
   let body: { id?: string; type?: string } = {};
   try { body = await req.json(); } catch { return json({ error: "requete" }, 400); }
   const { id, type } = body;
-  if (!id || !UUID.test(id) || (type !== "nouveau" && type !== "deplace")) return json({ error: "requete" }, 400);
+  if (!id || !UUID.test(id) || (type !== "nouveau" && type !== "deplace" && type !== "annule")) return json({ error: "requete" }, 400);
 
   // 2. Le RDV doit appartenir à ce pro
   const r = await fetch(`${SUPABASE_URL}/rest/v1/appointments?id=eq.${id}&user_id=eq.${user.id}&select=*,profiles(name,email,lang)`, { headers: DB });
@@ -64,7 +69,9 @@ Deno.serve(async (req) => {
   if (!rdv) return json({ error: "introuvable" }, 404);
 
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
-  if (rdv.statut === "annule") return json({ sent: false, reason: "annule" });
+  const annulation = type === "annule";
+  if (annulation && rdv.statut !== "annule") return json({ sent: false, reason: "pas_annule" });
+  if (!annulation && rdv.statut === "annule") return json({ sent: false, reason: "annule" });
   if ((rdv.date || "") < today) return json({ sent: false, reason: "passe" });
 
   // 3. Email du client : celui du RDV, sinon celui de sa fiche
@@ -82,13 +89,13 @@ Deno.serve(async (req) => {
   // 4. Envoi
   const en = rdv.profiles?.lang === "en";
   const L = en ? TXT.en : TXT.fr;
-  const T = L[type as "nouveau" | "deplace"];
+  const T = L[type as "nouveau" | "deplace" | "annule"];
   const pro = nomExpediteur(rdv.profiles?.name);
   const avec = pro ? ` ${L.avec} ${esc(pro)}` : "";
   const d = new Date(rdv.date + "T12:00:00Z");
   const date = isNaN(d.getTime()) ? rdv.date : d.toLocaleDateString(en ? "en-GB" : "fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   const lieu = [rdv.lieu, rdv.adresse].filter(Boolean).join(" — ");
-  const lien = rdv.reponse_token ? `https://callrdv.com/?rdv=${encodeURIComponent(rdv.id)}&t=${encodeURIComponent(rdv.reponse_token)}` : "";
+  const lien = !annulation && rdv.reponse_token ? `https://callrdv.com/?rdv=${encodeURIComponent(rdv.id)}&t=${encodeURIComponent(rdv.reponse_token)}` : "";
   const repondre = emailOk(proEmail);
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -102,13 +109,12 @@ Deno.serve(async (req) => {
       html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;">
         <h2 style="color:#1e3a5f;">${esc(T.titre)}</h2>
         <p>${L.bonjour} ${esc(rdv.personne)},</p>
-        <p>${esc(T.intro)}${avec}${en ? ":" : " :"}</p>
+        <p>${T.intro(avec)}</p>
         <p style="font-size:16px;"><b>${esc(rdv.titre || L.rdv)}</b></p>
         <p>📅 ${esc(date)} ${L.a} ${esc(rdv.heure || L.heure)}</p>
         ${lieu ? `<p>📍 ${esc(lieu)}</p>` : ""}
         ${lien ? `<p style="margin:24px 0;"><a href="${lien}" style="background:#1e3a5f;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold;display:inline-block;">${esc(L.bouton)}</a></p>` : ""}
-        <p>${esc(L.rappel)}</p>
-        ${repondre ? `<p>${esc(L.repondre(pro))}</p>` : ""}
+        ${annulation ? `<p>${esc(L.reprendre)}</p>` : `<p>${esc(L.rappel)}</p>${repondre ? `<p>${esc(L.repondre(pro))}</p>` : ""}`}
         <p style="color:#94a3b8;font-size:12px;margin-top:24px;">${L.pied(avec)}</p>
       </div>`,
     }),
