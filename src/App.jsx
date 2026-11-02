@@ -108,6 +108,23 @@ const sb = {
     });
     return r.json();
   },
+  // Ajout de plusieurs clients en une requête
+  async addPatients(token, userId, list) {
+    const r = await fetch(`${this.url}/rest/v1/patients`, {
+      method: "POST",
+      headers: { ...this.headers(token), "Prefer": "return=representation" },
+      body: JSON.stringify(list.map(p => ({ ...p, user_id: userId }))),
+    });
+    return r.json();
+  },
+  // Suppression de plusieurs clients en une requête (la base ne laisse supprimer que les siens)
+  async deletePatients(token, ids) {
+    const r = await fetch(`${this.url}/rest/v1/patients?id=in.(${ids.join(",")})`, {
+      method: "DELETE",
+      headers: this.headers(token),
+    });
+    return r.ok;
+  },
   async deletePatient(token, patientId) {
     await fetch(`${this.url}/rest/v1/patients?id=eq.${patientId}`, {
       method: "DELETE",
@@ -1285,9 +1302,12 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
   const [confirmDeleteAll, setConfirmDeleteAll] = React.useState(false);
   const [sortBy, setSortBy] = React.useState("nom"); // nom | date | rdv
   const [confirmClean, setConfirmClean] = React.useState(false);
+  const [nettoyage, setNettoyage] = React.useState(false);
 
   const isDirtyContact = (p) => {
     const nom = p.nom || "";
+    // Ligne brute d'un fichier de contacts vCard (.vcf) : "VERSION:2.1", "TEL;CELL:+33…", "FN:…"
+    if (/^(begin|end|version|fn|n|tel|email|adr|org|photo|x-[a-z0-9-]+|item\d*\.[a-z-]+|categories|note|bday|title|url|nickname|rev|uid|label|role|geo|tz|impp|lang|kind|prodid|source|sound|logo)[;:]/i.test(nom)) return true;
     // Contact sale si : que des virgules/chiffres/emails/symboles, ou nom trop court, ou contient des métadonnées Samsung
     if (/^[,;\s\d@.+\-_]+$/.test(nom)) return true;
     if (nom.length < 2) return true;
@@ -1307,11 +1327,22 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
 
   const dirtyContacts = patients.filter(isDirtyContact);
 
-  const handleCleanContacts = async () => {
-    for (const p of dirtyContacts) {
-      await sb.deletePatient(token, p.id);
+  const supprimerParPaquets = async (liste) => {
+    const ids = liste.map(p => p.id).filter(Boolean);
+    const ok = new Set();
+    for (let i = 0; i < ids.length; i += 100) {
+      const paquet = ids.slice(i, i + 100);
+      if (await sb.deletePatients(token, paquet)) paquet.forEach(id => ok.add(id));
     }
-    setPatients(prev => prev.filter(p => !isDirtyContact(p)));
+    return ok;
+  };
+
+  const handleCleanContacts = async () => {
+    setNettoyage(true);
+    const ok = await supprimerParPaquets(dirtyContacts);
+    setNettoyage(false);
+    setPatients(prev => prev.filter(p => !ok.has(p.id)));
+    if (ok.size < dirtyContacts.length) alert(tr("Certains contacts n'ont pas pu être supprimés. Réessayez.","Some contacts could not be deleted. Please try again."));
     setSelected(null);
     setConfirmClean(false);
   };
@@ -1350,69 +1381,112 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
     setSelected(null);
   };
 
+  // Décode les valeurs "QUOTED-PRINTABLE" des vieux fichiers vCard (=C3=A9 → é)
+  const decodeQP = (v) => {
+    try {
+      const bytes = [];
+      const s = v.replace(/=\r?\n/g, "");
+      for (let i = 0; i < s.length; i++) {
+        if (s[i] === "=" && /^[0-9A-Fa-f]{2}$/.test(s.substr(i + 1, 2))) { bytes.push(parseInt(s.substr(i + 1, 2), 16)); i += 2; }
+        else bytes.push(s.charCodeAt(i) & 0xff);
+      }
+      return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+    } catch { return v; }
+  };
+
+  // Fichier vCard (.vcf) → [{ nom, email, telephone }]
+  const lireVCard = (texte) => {
+    // Les lignes qui commencent par un espace continuent la ligne précédente
+    const lignes = texte.replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "").split("\n");
+    const contacts = []; let cur = null; let qpSuite = null;
+    for (let raw of lignes) {
+      if (qpSuite !== null) { raw = qpSuite + raw; qpSuite = null; }
+      if (/ENCODING=QUOTED-PRINTABLE/i.test(raw) && raw.endsWith("=")) { qpSuite = raw.slice(0, -1); continue; }
+      const l = raw.trim();
+      if (/^BEGIN:VCARD/i.test(l)) { cur = { fn:"", n:"", email:"", tel:"" }; continue; }
+      if (/^END:VCARD/i.test(l)) { if (cur) contacts.push(cur); cur = null; continue; }
+      if (!cur) continue;
+      const k = l.indexOf(":"); if (k < 0) continue;
+      const cle = l.slice(0, k); let val = l.slice(k + 1);
+      if (/ENCODING=QUOTED-PRINTABLE/i.test(cle)) val = decodeQP(val);
+      const nomCle = cle.split(";")[0].replace(/^item\d+\./i, "").toUpperCase();
+      if (nomCle === "FN" && !cur.fn) cur.fn = val.replace(/\\,/g, ",").trim();
+      else if (nomCle === "N" && !cur.n) { const [nomFam, prenom] = val.split(";"); cur.n = [prenom, nomFam].filter(Boolean).join(" ").trim(); }
+      else if (nomCle === "EMAIL" && !cur.email) cur.email = val.trim();
+      else if (nomCle === "TEL" && !cur.tel) cur.tel = val.trim();
+    }
+    return contacts.map(x => ({ nom: (x.fn || x.n).trim(), email: x.email, telephone: x.tel }));
+  };
+
+  // Fichier CSV (export Google Contacts, Outlook ou tableur) → [{ nom, email, telephone, notes }]
+  const lireCSV = (texte) => {
+    const parseCSVLine = (line) => {
+      const result = []; let cur = ""; let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') { inQuotes = !inQuotes; }
+        else if ((line[i] === ',' || line[i] === ';') && !inQuotes) { result.push(cur.trim()); cur = ""; }
+        else { cur += line[i]; }
+      }
+      result.push(cur.trim());
+      return result;
+    };
+    const lines = texte.replace(/\r\n/g, "\n").split("\n").filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g,"").trim());
+    return lines.slice(1).map(line => {
+      const vals = parseCSVLine(line);
+      const row = {};
+      headers.forEach((h, idx) => row[h] = (vals[idx]||"").replace(/"/g,"").trim());
+      const firstName = row["First Name"] || row["Given Name"] || row["Prénom"] || row["prenom"] || "";
+      const middleName = row["Middle Name"] || row["Additional Name"] || "";
+      const lastName = row["Last Name"] || row["Family Name"] || row["Nom"] || row["nom"] || "";
+      const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+      return {
+        nom: fullName || row["Name"] || row["name"] || row["Nom complet"] || vals[0] || "",
+        email: row["E-mail Address"] || row["E-mail 1 - Value"] || row["E-mail 2 Address"] || row["email"] || row["Email"] || row["mail"] || "",
+        telephone: row["Mobile Phone"] || row["Phone 1 - Value"] || row["Home Phone"] || row["Primary Phone"] || row["Business Phone"] || row["telephone"] || row["Téléphone"] || row["phone"] || "",
+        notes: row.notes || row.Notes || "",
+      };
+    });
+  };
+
   const handleImportCSV = (e) => {
     const file = e.target.files[0];
+    e.target.value = ""; // pour pouvoir réimporter le même fichier
     if (!file) return;
     setImporting(true);
     const reader = new FileReader();
     reader.onload = async (evt) => {
-      // Parser CSV robuste (gère les virgules dans les champs entre guillemets)
-      const parseCSVLine = (line) => {
-        const result = []; let cur = ""; let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          if (line[i] === '"') { inQuotes = !inQuotes; }
-          else if (line[i] === ',' && !inQuotes) { result.push(cur.trim()); cur = ""; }
-          else { cur += line[i]; }
-        }
-        result.push(cur.trim());
-        return result;
-      };
-      const lines = evt.target.result.split("\n").filter(Boolean);
-      const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g,"").trim());
+      const texte = String(evt.target.result || "");
+      const estVCard = /BEGIN:VCARD/i.test(texte);
+      const lus = estVCard ? lireVCard(texte) : lireCSV(texte);
+      // On écarte les contacts invalides et les doublons (déjà dans la liste, ou deux fois dans le fichier)
+      const dejaLa = new Set(patients.map(p => (p.nom || "").trim().toLowerCase()));
+      const aAjouter = [];
+      for (const x of lus) {
+        const nom = (x.nom || "").replace(/\s+/g, " ").trim();
+        if (!nom || isDirtyContact({ nom })) continue;
+        const cle = nom.toLowerCase();
+        if (dejaLa.has(cle)) continue;
+        dejaLa.add(cle);
+        aAjouter.push({ nom, email: (x.email || "").trim(), telephone: (x.telephone || "").trim(), notes: x.notes || "", categorie: "autre" });
+      }
       let added = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const vals = parseCSVLine(lines[i]);
-        const row = {};
-        headers.forEach((h, idx) => row[h] = (vals[idx]||"").replace(/"/g,"").trim());
-
-        // Support format Google Contacts / Outlook (First Name, Last Name, Mobile Phone...)
-        const firstName = row["First Name"] || row["Prénom"] || row["prenom"] || "";
-        const middleName = row["Middle Name"] || "";
-        const lastName = row["Last Name"] || row["Nom"] || row["nom"] || "";
-        const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
-        const nom = fullName || row["nom"] || row["name"] || row["Name"] || vals[0] || "";
-        if (!nom) continue;
-        // Ignorer les contacts sans vrai nom (que des virgules, chiffres, emails)
-        if (/^[,;\s\d@.+\-_]+$/.test(nom)) continue;
-        if (nom.length < 2) continue;
-        if (nom.length > 50) continue;
-        // Ignorer données encodées base64/vCard
-        if (/^[+\/=]/.test(nom)) continue;
-        if (/^[A-Za-z0-9+/=]{20,}/.test(nom.replace(/\s/g, ""))) continue;
-        if (nom.includes("=20=") || nom.includes("=4") || nom.includes("=6")) continue;
-        if (/[A-Za-z0-9+/]{30,}/.test(nom)) continue;
-        if (/^[\/+][A-Za-z0-9]{10,}/.test(nom)) continue;
-
-        const email = row["E-mail Address"] || row["E-mail 2 Address"] || row["email"] || row["Email"] || row["mail"] || "";
-        const telephone = row["Mobile Phone"] || row["Home Phone"] || row["Primary Phone"] || row["Business Phone"] || row["telephone"] || row["Téléphone"] || row["phone"] || "";
-
-        const exists = patients.find(p => p.nom.toLowerCase() === nom.toLowerCase());
-        if (!exists) {
-          const res = await sb.addPatient(token, user.id, { nom, email, telephone, notes: row.notes||row.Notes||"", categorie:"autre" });
-          if (Array.isArray(res) && res[0]) { setPatients(prev => [...prev, res[0]]); added++; }
-        }
+      for (let i = 0; i < aAjouter.length; i += 100) {
+        const res = await sb.addPatients(token, user.id, aAjouter.slice(i, i + 100));
+        if (Array.isArray(res)) { setPatients(prev => [...prev, ...res]); added += res.length; }
       }
       setImporting(false);
-      alert(tr(`${added} client(s) importé(s) avec succès !`, `${added} client(s) imported successfully!`));
+      const ignores = lus.length - added;
+      if (lus.length === 0) alert(tr("Aucun contact trouvé dans ce fichier. Utilisez un fichier .vcf (contacts du téléphone) ou .csv (Google Contacts, Outlook).","No contacts found in this file. Use a .vcf file (phone contacts) or a .csv file (Google Contacts, Outlook)."));
+      else alert(tr(`${added} client(s) importé(s).${ignores ? ` ${ignores} ignoré(s) : déjà présents, en double ou sans nom valide.` : ""}`, `${added} client(s) imported.${ignores ? ` ${ignores} skipped: already there, duplicated or without a valid name.` : ""}`));
     };
     reader.readAsText(file);
   };
 
   const handleDeleteAll = async () => {
-    for (const p of patients) {
-      await sb.deletePatient(token, p.id);
-    }
-    setPatients([]);
+    const ok = await supprimerParPaquets(patients);
+    setPatients(prev => prev.filter(p => !ok.has(p.id)));
     setSelected(null);
     setConfirmDeleteAll(false);
   };
@@ -1445,8 +1519,8 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
             </div>
             <div style={{ display:"flex", gap:12 }}>
               <button className="btn btn-outline" onClick={()=>setConfirmClean(false)} style={{ flex:1 }}>{tr("Annuler","Cancel")}</button>
-              <button onClick={handleCleanContacts} style={{ flex:2, background:"#f97316", color:"#fff", border:"none", borderRadius:8, padding:"12px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
-                {tr(`🧹 Supprimer ces ${dirtyContacts.length} contacts`, `🧹 Delete these ${dirtyContacts.length} contacts`)}
+              <button onClick={handleCleanContacts} disabled={nettoyage} style={{ flex:2, background:"#f97316", color:"#fff", border:"none", borderRadius:8, padding:"12px", cursor:nettoyage?"wait":"pointer", opacity:nettoyage?.7:1, fontWeight:700, fontSize:14 }}>
+                {nettoyage ? tr("⏳ Nettoyage en cours…","⏳ Cleaning up…") : tr(`🧹 Supprimer ces ${dirtyContacts.length} contacts`, `🧹 Delete these ${dirtyContacts.length} contacts`)}
               </button>
             </div>
           </div>
@@ -1524,9 +1598,9 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
             <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)} style={{ flex:1 }}>{tr("+ Ajouter","+ Add")}</button>
             <label style={{ flex:1 }}>
               <div className="btn btn-outline btn-sm" style={{ textAlign:"center", cursor:"pointer" }}>
-                {importing ? "⏳" : "📥 CSV"}
+                {importing ? "⏳" : tr("📥 Importer","📥 Import")}
               </div>
-              <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display:"none" }} />
+              <input type="file" accept=".csv,.vcf,text/csv,text/vcard,text/x-vcard" onChange={handleImportCSV} style={{ display:"none" }} />
             </label>
             {dirtyContacts.length > 0 && (
               <button className="btn btn-sm" onClick={()=>setConfirmClean(true)} style={{ background:"#fff8f0", border:"1px solid #fed7aa", color:"#f97316", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>
