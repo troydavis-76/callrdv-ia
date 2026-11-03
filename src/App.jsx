@@ -155,8 +155,8 @@ const sb = {
 
 const PLANS = {
   free:     { name: "Gratuit", nameEn: "Free", price: 0,  quota: 10,       color: "#94a3b8", features: ["10 RDV par mois", "Toutes les fonctionnalités", "Sans carte bancaire"], featuresEn: ["10 appointments per month", "All features", "No credit card"] },
-  pro:      { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#1e3a5f", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
-  business: { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#1e3a5f", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
+  pro:      { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#2450E6", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
+  business: { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#2450E6", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
 };
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -235,6 +235,48 @@ const partagerRdv = async (rdv) => {
   try { await navigator.clipboard.writeText(msg); alert(tr("Texte du RDV copié : collez-le dans WhatsApp ou un SMS.","Appointment text copied: paste it into WhatsApp or a text message.")); }
   catch (e) { window.prompt(tr("Copiez ce texte :","Copy this text:"), msg); }
 };
+// Icônes (traits fins, couleur du texte)
+const ICONES = {
+  phone: "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z",
+  home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+  calendar: "M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM16 3v4M8 3v4M3 11h18",
+  plus: "M12 5v14M5 12h14",
+  users: "M13 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 7.5M22 21a7 7 0 0 0-4-6.3",
+  settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1",
+  search: "M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0zM20 20l-3.5-3.5",
+  mail: "M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM3 7l9 6 9-6",
+  whatsapp: "M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.6-5.4A8.4 8.4 0 1 1 21 11.5z",
+  sms: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+  check: "M20 6 9 17l-5-5",
+  back: "M15 18l-6-6 6-6",
+  arrow: "M5 12h14M13 6l6 6-6 6",
+  edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+  trash: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+  share: "M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13",
+  x: "M18 6 6 18M6 6l12 12",
+  logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
+  chart: "M3 3v18h18M7 15l4-4 3 3 5-6",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
+  pin: "M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  download: "M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 10l5 5 5-5M12 15V3",
+  file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6",
+  help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01",
+  mic: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3",
+  stop: "M6 6h12v12H6z",
+};
+const Icon = ({ name, size = 20, color = "currentColor", stroke = 2, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink:0, ...style }}>
+    <path d={ICONES[name] || ""} />
+  </svg>
+);
+// Pastille de statut d'un RDV
+const STATUTS = {
+  en_attente: { cls: "pill-wait", fr: "En attente", en: "Pending" },
+  confirme:   { cls: "pill-ok",   fr: "Confirmé",   en: "Confirmed" },
+  reporte:    { cls: "pill-moved",fr: "Reporté",    en: "Postponed" },
+  annule:     { cls: "pill-ko",   fr: "Annulé",     en: "Cancelled" },
+};
+const StatutPill = ({ statut }) => { const s = STATUTS[statut] || STATUTS.en_attente; return <span className={`pill ${s.cls}`}>{tr(s.fr, s.en)}</span>; };
 const catLabel = (v) => { const k = CATEGORIES.find(x => x.value === v) || CATEGORIES[CATEGORIES.length - 1]; return tr(k.fr, k.en); };
 
 function detectLang() {
@@ -460,31 +502,11 @@ function NewPasswordModal({ token, onDone }) {
 }
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
-:root{--bg:#f0f4f8;--bg2:#fff;--card:#fff;--border:#e2e8f0;--text:#1e293b;--text2:#64748b;--input-bg:#fff;--nav-bg:rgba(255,255,255,0.95);}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root{--accent:#2450E6;--accent-dark:#1A3BB0;--accent-soft:#EEF2FF;--bg:#F5F6F8;--bg2:#fff;--card:#fff;--border:#E2E8F0;--text:#0F172A;--text2:#475569;--input-bg:#fff;--nav-bg:rgba(255,255,255,0.96);}
 *{box-sizing:border-box;margin:0;padding:0;}
-/* Téléphone : la fiche prend toute la largeur, "Mon agenda" passe en dessous */
-@media(max-width:700px){
-  .app-body-home{flex-direction:column !important;overflow-y:auto !important;}
-  .app-body-home .app-main{flex:none !important;overflow:visible !important;border-right:none !important;padding:18px 16px !important;}
-  .app-body-home .app-side{width:100% !important;overflow:visible !important;border-top:1px solid #e2e8f0;}
-  .pv-left{width:100% !important;border-right:none !important;}
-  .pv-list .pv-right{display:none !important;}
-  .pv-detail .pv-left{display:none !important;}
-  .pv-right{padding:16px !important;}
-  .pv-back{display:block !important;}
-  .cal-head{padding:12px 14px !important;}
-  .cal-tools{width:100%;}
-  .cal-search{flex:1;min-width:0;width:auto !important;}
-  .cal-nav{width:100%;justify-content:space-between;gap:6px !important;}
-  .cal-title{min-width:0 !important;font-size:15px !important;}
-  .cal-list{padding:14px !important;}
-  .app-nav{padding:10px 12px !important;}
-  .app-nav-name{display:none;}
-  .app-nav-right{gap:6px !important;}
-  .app-nav-right > *{padding:6px 8px !important;}
-}
-body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;transition:background .3s,color .3s;-webkit-tap-highlight-color:transparent;}
+button,input,select,textarea{font-family:inherit;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
@@ -495,26 +517,75 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 @keyframes formOpen{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
 .fade-up{animation:fadeUp .4s ease both;}
 .form-open{animation:formOpen .35s ease both;}
-.btn{font-family:'Inter',sans-serif;font-weight:600;border:none;cursor:pointer;transition:all .2s;border-radius:10px;}
-.btn-primary{background:#1e3a5f;color:#fff;padding:14px 28px;font-size:15px;}
-.btn-primary:hover{background:#162d4a;transform:translateY(-1px);box-shadow:0 4px 16px #1e3a5f30;}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
-.btn-red{background:#ef4444;color:#fff;padding:14px 28px;font-size:15px;}
-.btn-red:hover{background:#dc2626;transform:translateY(-1px);}
-.btn-outline{background:#fff;color:#1e3a5f;border:1.5px solid #cbd5e1;padding:12px 24px;font-size:14px;}
-.btn-outline:hover{border-color:#1e3a5f;background:#f8faff;}
-.btn-sm{padding:8px 16px;font-size:13px;border-radius:8px;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 4px #00000008;}
-input,select{background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;color:#1e293b;font-family:'Inter',sans-serif;font-size:14px;padding:11px 14px;width:100%;outline:none;transition:border-color .2s;}
-input:focus,select:focus{border-color:#1e3a5f;box-shadow:0 0 0 3px #1e3a5f15;}
+.btn{font-family:inherit;font-weight:700;border:none;cursor:pointer;transition:all .2s;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary{background:var(--accent);color:#fff;padding:14px 24px;font-size:15px;min-height:48px;}
+.btn-primary:hover{background:var(--accent-dark);box-shadow:0 6px 18px rgba(36,80,230,.28);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+.btn-red{background:#DC2626;color:#fff;padding:14px 24px;font-size:15px;min-height:48px;}
+.btn-red:hover{background:#B91C1C;}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);padding:12px 20px;font-size:14px;min-height:46px;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;min-height:38px;}
+.card{background:var(--card);border:none;border-radius:18px;padding:22px;box-shadow:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.05);}
+input,select{background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;padding:12px 14px;width:100%;outline:none;transition:border-color .2s,box-shadow .2s;min-height:48px;}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(36,80,230,.15);}
 input::placeholder{color:#94a3b8;}
-textarea{background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;color:#1e293b;font-family:'Inter',sans-serif;font-size:14px;padding:14px;width:100%;resize:none;outline:none;transition:border-color .2s;line-height:1.6;}
-textarea:focus{border-color:#1e3a5f;box-shadow:0 0 0 3px #1e3a5f15;}
+textarea{background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;padding:14px;width:100%;resize:none;outline:none;transition:border-color .2s;line-height:1.6;}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(36,80,230,.15);}
 textarea::placeholder{color:#94a3b8;}
-.spinner{width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:#1e3a5f;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
-.privacy-badge{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
-.erased-banner{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;animation:slideIn .4s ease;}
-.field-label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:.08em;margin-bottom:6px;font-family:'DM Mono',monospace;}
+.spinner{width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+.privacy-badge{background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.erased-banner{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;animation:slideIn .4s ease;}
+.field-label{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+/* Pastilles de statut */
+.pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap;}
+.pill-ok{color:#15803D;background:#DCFCE7;}
+.pill-wait{color:#B45309;background:#FEF3C7;}
+.pill-ko{color:#B91C1C;background:#FEE2E2;}
+.pill-moved{color:#1D4ED8;background:#DBEAFE;}
+.pill-past{color:#475569;background:#F1F5F9;}
+/* Cases à toucher (jour, heure) */
+.chip{border:1px solid var(--border);background:#fff;border-radius:12px;font-weight:700;color:var(--text);cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--accent);}
+.chip-on{background:var(--accent) !important;border-color:var(--accent) !important;color:#fff !important;}
+.chip-dash{border-style:dashed;background:transparent;color:var(--text2);}
+/* Onglets du haut (ordinateur) */
+.app-tabs{background:#fff;border-bottom:1px solid var(--border);display:flex;gap:4px;padding:0 16px;}
+.app-tab{padding:14px 18px;font-size:14px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);display:flex;align-items:center;gap:8px;border-bottom:3px solid transparent;}
+.app-tab-on{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+/* Barre d'onglets du bas (téléphone) */
+.bottom-nav{display:none;}
+.fab-desktop{display:none !important;}
+.bottom-nav a,.bottom-nav button{-webkit-appearance:none;}
+@media(max-width:700px){
+  .app-tabs{display:none !important;}
+  .fab-desktop{display:none !important;}
+  .bottom-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;position:fixed;left:0;right:0;bottom:0;z-index:150;background:#fff;border-top:1px solid var(--border);padding:6px 8px calc(10px + env(safe-area-inset-bottom));}
+  .bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#64748B;background:none;border:none;padding:6px 0;min-height:48px;cursor:pointer;}
+  .bn-on{color:var(--accent);font-weight:700;}
+  .bn-plus{width:56px;height:56px;border-radius:18px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(36,80,230,.35);margin:-22px auto 0;border:none;cursor:pointer;}
+  .app-root{padding-bottom:84px;}
+  .app-body-home{flex-direction:column !important;overflow-y:auto !important;}
+  .app-body-home .app-main{flex:none !important;overflow:visible !important;border-right:none !important;padding:16px 16px 4px !important;}
+  .app-body-home .app-side{width:100% !important;overflow:visible !important;border-top:none !important;background:transparent !important;padding:4px 16px 16px !important;}
+  .pv-left{width:100% !important;border-right:none !important;}
+  .pv-list .pv-right{display:none !important;}
+  .pv-detail .pv-left{display:none !important;}
+  .pv-right{padding:16px !important;}
+  .pv-back{display:flex !important;}
+  .cal-head{padding:14px 16px !important;}
+  .cal-tools{width:100%;}
+  .cal-search{flex:1;min-width:0;width:auto !important;}
+  .cal-nav{width:100%;justify-content:space-between;gap:6px !important;}
+  .cal-title{min-width:0 !important;font-size:15px !important;}
+  .cal-list{padding:12px 16px 16px !important;}
+  .app-nav{padding:12px 16px !important;}
+  .app-nav-name{display:none;}
+  .app-nav-right{gap:6px !important;}
+  .hide-phone{display:none !important;}
+  .sheet-fond{align-items:flex-end !important;padding:0 !important;}
+  .sheet{max-width:none !important;border-radius:24px 24px 0 0 !important;padding:20px 18px calc(22px + env(safe-area-inset-bottom)) !important;}
+}
 `;
 
 // ── Auth Page ────────────────────────────────────────────────
@@ -568,18 +639,18 @@ function AuthPage({ authHooks, initialMode }) {
     setForgotLoading(false);
   };
   return (
-    <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',sans-serif", padding:24, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"#F5F6F8", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif", padding:24, position:"relative" }}>
       <LangSwitch style={{ position:"absolute", top:16, right:16 }} />
       <div style={{ width:"100%", maxWidth:420 }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <div style={{ width:56, height:56, background:"#1e3a5f", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, margin:"0 auto 14px" }}>📞</div>
+          <div style={{ width:56, height:56, background:"#2450E6", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, margin:"0 auto 14px" }}>📞</div>
           <div style={{ fontWeight:800, fontSize:28, color:"#1e293b", letterSpacing:"-0.03em" }}>CallRDV</div>
-          <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", marginTop:4 }}>{t("PRISE DE RDV AUTOMATIQUE", "APPOINTMENT BOOKING MADE EASY")}</div>
+          <div style={{ fontSize:12, color:"#64748B", fontFamily:"inherit", marginTop:4 }}>{t("PRISE DE RDV AUTOMATIQUE", "APPOINTMENT BOOKING MADE EASY")}</div>
         </div>
         <div className="card" style={{ padding:32 }}>
-          <div style={{ display:"flex", gap:8, marginBottom:24, background:"#f0f4f8", borderRadius:12, padding:4 }}>
+          <div style={{ display:"flex", gap:8, marginBottom:24, background:"#F5F6F8", borderRadius:12, padding:4 }}>
             {["login","register"].map(m => (
-              <button key={m} onClick={() => setMode(m)} className="btn" style={{ flex:1, padding:"10px", fontSize:13, borderRadius:10, background:mode===m?"#1e3a5f":"transparent", color:mode===m?"#f0f4f8":"#94a3b8" }}>
+              <button key={m} onClick={() => setMode(m)} className="btn" style={{ flex:1, padding:"10px", fontSize:13, borderRadius:10, background:mode===m?"#2450E6":"transparent", color:mode===m?"#f0f4f8":"#94a3b8" }}>
                 {m==="login" ? t("Connexion","Log in") : t("Inscription","Sign up")}
               </button>
             ))}
@@ -591,7 +662,7 @@ function AuthPage({ authHooks, initialMode }) {
           </div>
           {mode === "login" && !forgotMode && (
             <div style={{ textAlign:"right", marginTop:8 }}>
-              <span onClick={()=>{ setForgotMode(true); setError(""); setForgotSent(false); }} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer", fontFamily:"DM Mono" }}>
+              <span onClick={()=>{ setForgotMode(true); setError(""); setForgotSent(false); }} style={{ fontSize:12, color:"#4a90d9", cursor:"pointer", fontFamily:"inherit" }}>
                 {t("Mot de passe oublié ?","Forgot password?")}
               </span>
             </div>
@@ -599,7 +670,7 @@ function AuthPage({ authHooks, initialMode }) {
 
           {/* Mode mot de passe oublié */}
           {forgotMode && (
-            <div style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:12, padding:20, marginTop:12 }}>
+            <div style={{ background:"#f0f4ff", border:"1px solid #2450E630", borderRadius:12, padding:20, marginTop:12 }}>
               {forgotSent ? (
                 <div style={{ textAlign:"center" }}>
                   <div style={{ fontSize:32, marginBottom:8 }}>📧</div>
@@ -611,7 +682,7 @@ function AuthPage({ authHooks, initialMode }) {
                 <>
                   <div style={{ fontSize:13, color:"#1e293b", marginBottom:12, fontWeight:600 }}>{t("Réinitialiser le mot de passe","Reset your password")}</div>
                   <div style={{ fontSize:12, color:"#64748b", marginBottom:12 }}>{t("Entrez votre email et nous vous enverrons un lien de réinitialisation.","Enter your email and we will send you a reset link.")}</div>
-                  <button onClick={handleForgot} disabled={forgotLoading} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"11px", cursor:"pointer", fontWeight:700, fontSize:13, opacity:forgotLoading?0.7:1 }}>
+                  <button onClick={handleForgot} disabled={forgotLoading} style={{ width:"100%", background:"#2450E6", color:"#fff", border:"none", borderRadius:8, padding:"11px", cursor:"pointer", fontWeight:700, fontSize:13, opacity:forgotLoading?0.7:1 }}>
                     {forgotLoading ? t("⏳ Envoi...","⏳ Sending...") : t("📧 Envoyer le lien","📧 Send the link")}
                   </button>
                   <div style={{ textAlign:"center", marginTop:10 }}>
@@ -626,21 +697,21 @@ function AuthPage({ authHooks, initialMode }) {
             <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12 }}>
               <div
                 onClick={()=>setRememberMe(r=>!r)}
-                style={{ width:36, height:20, borderRadius:10, background:rememberMe?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
+                style={{ width:36, height:20, borderRadius:10, background:rememberMe?"#2450E6":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
                 <div style={{ position:"absolute", top:2, left:rememberMe?16:2, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left .2s" }}></div>
               </div>
               <span style={{ fontSize:13, color:"#64748b", cursor:"pointer" }} onClick={()=>setRememberMe(r=>!r)}>{t("Se souvenir de moi","Remember me")}</span>
             </div>
           )}
           {info && <div style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", color:"#166534", borderRadius:10, padding:"12px 14px", fontSize:13, marginTop:12, lineHeight:1.5 }}>{info}</div>}
-          {error && <div style={{ color:"#ff6b6b", fontSize:13, marginTop:10, fontFamily:"DM Mono" }}>⚠ {error}</div>}
+          {error && <div style={{ color:"#ff6b6b", fontSize:13, marginTop:10, fontFamily:"inherit" }}>⚠ {error}</div>}
           <button className="btn btn-primary" onClick={handle} disabled={loading} style={{ width:"100%", marginTop:18, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
             {loading ? <span className="spinner"></span> : (mode==="login" ? t("Se connecter","Log in") : t("Créer mon compte","Create my account"))}
           </button>
 
           <div style={{ display:"flex", alignItems:"center", gap:10, margin:"16px 0" }}>
             <div style={{ flex:1, height:1, background:"#e2e8f0" }}></div>
-            <span style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{t("OU","OR")}</span>
+            <span style={{ fontSize:11, color:"#64748B", fontFamily:"inherit" }}>{t("OU","OR")}</span>
             <div style={{ flex:1, height:1, background:"#e2e8f0" }}></div>
           </div>
 
@@ -662,7 +733,7 @@ function AuthPage({ authHooks, initialMode }) {
           </button>
           <div className="privacy-badge" style={{ marginTop:18 }}>
             <span style={{ fontSize:15 }}>🔒</span>
-            <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.6 }}>
+            <div style={{ fontSize:11, color:"#0369a1", fontFamily:"inherit", lineHeight:1.6 }}>
               <span style={{ color:"#0284c7", fontWeight:700 }}>{t("Données protégées. ","Data protected. ")}</span>
               {t("Aucun enregistrement vocal. Données hébergées en Europe.","No voice recording. Data hosted in Europe.")}
             </div>
@@ -672,7 +743,7 @@ function AuthPage({ authHooks, initialMode }) {
           {Object.entries(PLANS).filter(([k]) => k !== "business").map(([k,p]) => (
             <div key={k} style={{ background:"#fff", border:`1px solid ${p.color}30`, borderRadius:12, padding:12, textAlign:"center" }}>
               <div style={{ fontWeight:700, fontSize:14, color:p.color }}>{p.price===0?t("Gratuit","Free"):`${p.price}€${t("/mois","/mo")}`}</div>
-              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{k==="free"?t("10 RDV par mois","10 appointments/month"):t("RDV illimités","Unlimited")}</div>
+              <div style={{ fontSize:11, color:"#64748B", fontFamily:"inherit", marginTop:2 }}>{k==="free"?t("10 RDV par mois","10 appointments/month"):t("RDV illimités","Unlimited")}</div>
             </div>
           ))}
         </div>
@@ -693,15 +764,15 @@ function PricingModal({ currentPlan, onUpgrade, onClose }) {
           {Object.entries(PLANS).filter(([key]) => key !== "business").map(([key, plan]) => (
             <div key={key} className="card" style={{ border:`1px solid ${plan.color}40`, position:"relative", transform:key==="pro"?"scale(1.04)":"none" }}>
               <div style={{ color:plan.color, fontWeight:800, fontSize:22, marginBottom:4 }}>
-                {plan.price===0?tr("Gratuit","Free"):`${plan.price}€`}{plan.price>0&&<span style={{ fontSize:13, fontWeight:400, color:"#94a3b8" }}>{tr("/mois","/month")}</span>}
+                {plan.price===0?tr("Gratuit","Free"):`${plan.price}€`}{plan.price>0&&<span style={{ fontSize:13, fontWeight:400, color:"#64748B" }}>{tr("/mois","/month")}</span>}
               </div>
               <div style={{ fontWeight:700, fontSize:16, marginBottom:14, color:"#1e293b" }}>{tr(plan.name, plan.nameEn)}</div>
               <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:18 }}>
                 {tr(plan.features, plan.featuresEn).map(f => <div key={f} style={{ fontSize:13, color:"#64748b", display:"flex", gap:8 }}><span style={{ color:plan.color }}>✓</span>{f}</div>)}
               </div>
               {(currentPlan===key || (key==="pro" && currentPlan==="business"))
-                ? <div style={{ textAlign:"center", padding:"12px", background:`${plan.color}15`, borderRadius:10, fontSize:13, color:plan.color, fontFamily:"DM Mono" }}>{tr("Plan actuel","Current plan")}</div>
-                : <button onClick={()=>onUpgrade(key)} style={{ width:"100%", background:plan.color, color:"#f0f4f8", padding:"12px", fontFamily:"'Inter',sans-serif", fontWeight:700, border:"none", cursor:"pointer", borderRadius:10, fontSize:14 }}>{key==="free"?tr("Rester gratuit","Stay on Free"):tr(`Passer au ${plan.name} — ${plan.price}€/mois`, `Go ${plan.nameEn} — €${plan.price}/month`)}</button>
+                ? <div style={{ textAlign:"center", padding:"12px", background:`${plan.color}15`, borderRadius:10, fontSize:13, color:plan.color, fontFamily:"inherit" }}>{tr("Plan actuel","Current plan")}</div>
+                : <button onClick={()=>onUpgrade(key)} style={{ width:"100%", background:plan.color, color:"#f0f4f8", padding:"12px", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif", fontWeight:700, border:"none", cursor:"pointer", borderRadius:10, fontSize:14 }}>{key==="free"?tr("Rester gratuit","Stay on Free"):tr(`Passer au ${plan.name} — ${plan.price}€/mois`, `Go ${plan.nameEn} — €${plan.price}/month`)}</button>
               }
             </div>
           ))}
@@ -716,108 +787,81 @@ function PricingModal({ currentPlan, onUpgrade, onClose }) {
 
 // ── Calendar Modal ───────────────────────────────────────────
 function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
-  const catColors = {
-    medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
-    garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
-    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b",
-    restaurant:"#e11d48", autre:"#94a3b8"
-  };
 
+  // Ajout au calendrier Google / Outlook, à la date et l'heure du RDV (1 h par défaut)
   const exportTo = (type) => {
-    const title = encodeURIComponent(rdv.titre);
+    const title = encodeURIComponent(rdv.titre || tr("Rendez-vous","Appointment"));
     const details = encodeURIComponent(`${tr("Avec","With")}: ${rdv.personne}\n${tr("Lieu","Place")}: ${rdv.lieu||""}\n${rdv.notes||""}`);
     const loc = encodeURIComponent(rdv.adresse||rdv.lieu||"");
-    const now = new Date();
-    const start = now.toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
-    const end = new Date(now.getTime()+3600000).toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
-    if (type==="google") window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${loc}&dates=${start}/${end}`,"_blank");
-    else window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&location=${loc}`,"_blank");
+    const debut = new Date(`${rdv.date || isoLocal(new Date())}T${rdv.heure || "09:00"}:00`);
+    const fin = new Date(debut.getTime() + 3600000);
+    const z = (d) => d.toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
+    if (type==="google") window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${loc}&dates=${z(debut)}/${z(fin)}`,"_blank");
+    else window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&location=${loc}&startdt=${debut.toISOString()}&enddt=${fin.toISOString()}`,"_blank");
   };
+  const tel = telClient(rdv);
+  const wa = telInternational(tel);
+  const txt = encodeURIComponent(texteRdv(rdv));
+  const dateLongue = rdv.date ? (s => s.charAt(0).toUpperCase()+s.slice(1))(new Date(rdv.date+"T12:00:00").toLocaleDateString(locale(), { weekday:"long", day:"numeric", month:"long" })) : tr("Sans date","No date");
+  const ligne = (icone, contenu) => (
+    <div style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 0", borderBottom:"1px solid #F1F5F9", fontSize:15 }}>
+      <Icon name={icone} size={18} color="var(--text2)" />{contenu}
+    </div>
+  );
+  const btnAction = { flex:1, minHeight:48, borderRadius:12, border:"1px solid var(--border)", background:"#fff", cursor:"pointer", fontSize:14, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", gap:8, textDecoration:"none", color:"var(--text)" };
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div className="card fade-up" style={{ width:"100%", maxWidth:460, padding:32 }}>
+    <div className="sheet-fond" onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(15,23,42,.5)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div className="card fade-up sheet" role="dialog" aria-label={rdv.titre||tr("Rendez-vous","Appointment")} onClick={e=>e.stopPropagation()} style={{ width:"100%", maxWidth:460, padding:24, maxHeight:"90vh", overflowY:"auto" }}>
 
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"flex-start", gap:14, marginBottom:24 }}>
-          <div style={{ width:48, height:48, borderRadius:12, background:(catColors[rdv.categorie]||"#94a3b8")+"20", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>
-            📋
+        <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:8 }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.01em", marginBottom:6 }}>{rdv.personne}</div>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+              <StatutPill statut={rdv.statut} />
+              <span style={{ fontSize:13, color:"var(--text2)" }}>{catLabel(rdv.categorie||"autre")}</span>
+            </div>
           </div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontWeight:800, fontSize:18, color:"#1e293b", marginBottom:4 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
-            <div style={{ display:"inline-block", background:(catColors[rdv.categorie]||"#94a3b8")+"20", color:catColors[rdv.categorie]||"#94a3b8", padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:600 }}>{catLabel(rdv.categorie||"autre")}</div>
-          </div>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#94a3b8", padding:4 }}>✕</button>
+          <button onClick={onClose} aria-label={tr("Fermer","Close")} style={{ width:40, height:40, borderRadius:12, background:"#F1F5F9", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text)", flexShrink:0 }}><Icon name="x" size={18} /></button>
         </div>
 
-        {/* Infos */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
-          {[
-            { icon:"👤", label:tr("Contact","Contact"), value:rdv.personne },
-            { icon:"📅", label:tr("Date","Date"), value:rdv.date ? new Date(rdv.date+"T12:00:00").toLocaleDateString(locale(), { weekday:"short", day:"numeric", month:"short", year:"numeric" }) : "" },
-            { icon:"🕐", label:tr("Heure","Time"), value:rdv.heure||tr("Non définie","Not set") },
-            { icon:"📍", label:tr("Lieu","Place"), value:rdv.lieu||tr("Non défini","Not set") },
-          ].map(({icon,label,value}) => (
-            <div key={label} style={{ background:"#f8fafc", borderRadius:10, padding:"10px 14px" }}>
-              <div style={{ fontSize:11, color:"#94a3b8", marginBottom:4 }}>{icon} {label}</div>
-              <div style={{ fontSize:13, fontWeight:600, color:"#1e293b" }}>{value||"—"}</div>
-            </div>
-          ))}
+        <div style={{ marginBottom:16 }}>
+          {ligne("file", <span style={{ fontWeight:700 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</span>)}
+          {ligne("calendar", <span>{dateLongue}{rdv.heure ? ` ${tr("à","at")} ${rdv.heure}` : ""}</span>)}
+          {(rdv.lieu || rdv.adresse) && ligne("pin", <span>{[rdv.lieu, rdv.adresse].filter(Boolean).join(" — ")}</span>)}
+          {tel && ligne("phone", <a href={`tel:${tel.replace(/[^\d+]/g,"")}`} style={{ color:"var(--accent)", fontWeight:700, textDecoration:"none" }}>{tel}</a>)}
+          {rdv.notes && <div style={{ background:"#F8FAFC", borderRadius:12, padding:"12px 14px", marginTop:12, fontSize:14, color:"var(--text2)", lineHeight:1.6 }}>{rdv.notes}</div>}
         </div>
 
         {/* Statut */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, fontFamily:"DM Mono" }}>{tr("STATUT","STATUS")}</div>
-          <select
-            value={rdv.statut||"en_attente"}
-            onChange={e => onUpdateStatut && onUpdateStatut(rdv.id, e.target.value)}
-            style={{ width:"100%", padding:"10px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, background:"#fff" }}>
-            <option value="en_attente">{tr("⏳ En attente","⏳ Pending")}</option>
-            <option value="confirme">{tr("✅ Confirmé","✅ Confirmed")}</option>
-            <option value="reporte">{tr("🔄 Reporté","🔄 Postponed")}</option>
-            <option value="annule">{tr("❌ Annulé","❌ Cancelled")}</option>
-          </select>
+        <label htmlFor="detail-statut" className="field-label" style={{ display:"block" }}>{tr("Statut","Status")}</label>
+        <select id="detail-statut" value={rdv.statut||"en_attente"} onChange={e => onUpdateStatut && onUpdateStatut(rdv.id, e.target.value)} style={{ marginBottom:16 }}>
+          <option value="en_attente">{tr("En attente","Pending")}</option>
+          <option value="confirme">{tr("Confirmé","Confirmed")}</option>
+          <option value="reporte">{tr("Reporté","Postponed")}</option>
+          <option value="annule">{tr("Annulé","Cancelled")}</option>
+        </select>
+
+        {/* Envoyer au client */}
+        <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+          {wa && <a href={`https://wa.me/${wa}?text=${txt}`} target="_blank" rel="noopener noreferrer" style={{ ...btnAction, background:"#F0FDF4", borderColor:"#BBF7D0", color:"#14532D" }}><Icon name="whatsapp" size={18} color="#15803D" /> WhatsApp</a>}
+          {tel && <a href={`sms:${tel.replace(/[^\d+]/g,"")}?&body=${txt}`} style={btnAction}><Icon name="sms" size={18} color="var(--accent)" /> SMS</a>}
+          <button onClick={()=>partagerRdv(rdv)} style={btnAction}><Icon name="share" size={18} color="var(--accent)" /> {tr("Partager","Share")}</button>
+        </div>
+        <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+          <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={btnAction}><Icon name="edit" size={18} color="var(--accent)" /> {tr("Modifier","Edit")}</button>
+          <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ ...btnAction, color:"#B91C1C", borderColor:"#FECACA", background:"#FEF2F2" }}><Icon name="trash" size={18} /> {tr("Supprimer","Delete")}</button>
         </div>
 
-        {rdv.notes && (
-          <div style={{ background:"#f8fafc", borderRadius:10, padding:"12px 14px", marginBottom:20, fontSize:13, color:"#475569", lineHeight:1.6 }}>
-            📝 {rdv.notes}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-          <button onClick={()=>{ onEdit && onEdit(rdv); onClose(); }} style={{ flex:1, background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#1e3a5f" }}>{tr("✏️ Modifier","✏️ Edit")}</button>
-          <button onClick={()=>{ onDelete && onDelete(rdv.id); onClose(); }} style={{ flex:1, background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#ef4444" }}>{tr("🗑️ Supprimer","🗑️ Delete")}</button>
-          <button onClick={()=>partagerRdv(rdv)} style={{ flex:1, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px", cursor:"pointer", fontSize:14, fontWeight:600, color:"#16a34a" }}>
-            {tr("📤 Partager","📤 Share")}
-          </button>
-        </div>
-
-        {(() => {
-          const tel = telClient(rdv);
-          const wa = telInternational(tel);
-          if (!tel) return null;
-          const txt = encodeURIComponent(texteRdv(rdv));
-          return (
-            <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-              {wa && <a href={`https://wa.me/${wa}?text=${txt}`} target="_blank" rel="noopener noreferrer" style={{ flex:1, textAlign:"center", textDecoration:"none", background:"#25d366", border:"1px solid #25d366", borderRadius:8, padding:"12px", fontSize:14, fontWeight:700, color:"#fff" }}>💬 WhatsApp</a>}
-              <a href={`sms:${tel.replace(/[^\d+]/g,"")}?&body=${txt}`} style={{ flex:1, textAlign:"center", textDecoration:"none", background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:8, padding:"12px", fontSize:14, fontWeight:700, color:"#0369a1" }}>✉️ SMS</a>
-            </div>
-          );
-        })()}
-
-        {/* Export (replié) */}
-        <details style={{ marginTop:4 }}>
-          <summary style={{ cursor:"pointer", fontSize:12, color:"#94a3b8", padding:"8px 0", textAlign:"center", listStyle:"none" }}>
-            {tr("⚙️ Plus d'options","⚙️ More options")}
+        <details style={{ marginTop:6 }}>
+          <summary style={{ cursor:"pointer", fontSize:13, fontWeight:700, color:"var(--text2)", padding:"10px 0", textAlign:"center", listStyle:"none" }}>
+            {tr("Ajouter à mon calendrier","Add to my calendar")}
           </summary>
-          <div style={{ display:"flex", gap:8, marginTop:8 }}>
-            <button onClick={()=>exportTo("google")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📅 Google Calendar</button>
-            <button onClick={()=>exportTo("outlook")} style={{ flex:1, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px", cursor:"pointer", fontSize:12, color:"#64748b" }}>📆 Outlook</button>
+          <div style={{ display:"flex", gap:8, marginTop:4 }}>
+            <button onClick={()=>exportTo("google")} style={btnAction}>Google Calendar</button>
+            <button onClick={()=>exportTo("outlook")} style={btnAction}>Outlook</button>
           </div>
         </details>
-
       </div>
     </div>
   );
@@ -857,7 +901,7 @@ function StatsView({ appointments, patients, user }) {
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
     garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
-    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+    beaute:"#ec4899", formation:"#10b981", pro:"#2450E6", perso:"#64748b", autre:"#94a3b8"
   };
 
   // Last 6 months RDV count
@@ -875,10 +919,10 @@ function StatsView({ appointments, patients, user }) {
   const plan = planInfo[user.plan] || planInfo.free;
 
   return (
-    <div style={{ flex:1, overflowY:"auto", padding:28, background:"#f0f4f8" }}>
+    <div style={{ flex:1, overflowY:"auto", padding:28, background:"#F5F6F8" }}>
       <div style={{ maxWidth:900, margin:"0 auto" }}>
         <div style={{ fontWeight:800, fontSize:22, color:"#1e293b", marginBottom:4 }}>{tr("📊 Tableau de bord","📊 Dashboard")}</div>
-        <div style={{ fontSize:13, color:"#94a3b8", marginBottom:24 }}>{tr("Vue d'ensemble de votre activité","An overview of your activity")}</div>
+        <div style={{ fontSize:13, color:"#64748B", marginBottom:24 }}>{tr("Vue d'ensemble de votre activité","An overview of your activity")}</div>
 
         {/* KPI Cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
@@ -891,7 +935,7 @@ function StatsView({ appointments, patients, user }) {
             <div key={label} className="card" style={{ padding:20 }}>
               <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
               <div style={{ fontSize:32, fontWeight:800, color, marginBottom:4 }}>{value}</div>
-              <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono" }}>{label}</div>
+              <div style={{ fontSize:12, color:"#64748B", fontFamily:"inherit" }}>{label}</div>
             </div>
           ))}
         </div>
@@ -903,9 +947,9 @@ function StatsView({ appointments, patients, user }) {
             <div style={{ display:"flex", alignItems:"flex-end", gap:10, height:120 }}>
               {last6.map(({label,count}) => (
                 <div key={label} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                  <div style={{ fontSize:11, color:"#1e3a5f", fontWeight:700 }}>{count||""}</div>
-                  <div style={{ width:"100%", background:"#1e3a5f", borderRadius:"4px 4px 0 0", height: count === 0 ? 4 : `${Math.round((count/maxCount)*100)}px`, transition:"height .3s", opacity: count===0?0.2:1 }}></div>
-                  <div style={{ fontSize:10, color:"#94a3b8", fontFamily:"DM Mono" }}>{label}</div>
+                  <div style={{ fontSize:11, color:"#2450E6", fontWeight:700 }}>{count||""}</div>
+                  <div style={{ width:"100%", background:"#2450E6", borderRadius:"4px 4px 0 0", height: count === 0 ? 4 : `${Math.round((count/maxCount)*100)}px`, transition:"height .3s", opacity: count===0?0.2:1 }}></div>
+                  <div style={{ fontSize:10, color:"#64748B", fontFamily:"inherit" }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -915,12 +959,12 @@ function StatsView({ appointments, patients, user }) {
           <div className="card" style={{ padding:24 }}>
             <div style={{ fontWeight:700, fontSize:15, marginBottom:20 }}>{tr("🏆 Top catégories","🏆 Top categories")}</div>
             {topCats.length === 0 ? (
-              <div style={{ color:"#94a3b8", fontSize:13 }}>{tr("Aucun RDV encore","No appointments yet")}</div>
+              <div style={{ color:"#64748B", fontSize:13 }}>{tr("Aucun RDV encore","No appointments yet")}</div>
             ) : topCats.map(([cat, count]) => (
               <div key={cat} style={{ marginBottom:14 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{catLabel(cat)}</span>
-                  <span style={{ fontSize:13, color:"#94a3b8" }}>{count} {tr("RDV","appt.")}</span>
+                  <span style={{ fontSize:13, color:"#64748B" }}>{count} {tr("RDV","appt.")}</span>
                 </div>
                 <div style={{ height:6, background:"#f1f5f9", borderRadius:3 }}>
                   <div style={{ height:6, background:catColors[cat]||"#94a3b8", borderRadius:3, width:`${Math.round((count/appointments.length)*100)}%`, transition:"width .3s" }}></div>
@@ -936,10 +980,10 @@ function StatsView({ appointments, patients, user }) {
             <div style={{ fontWeight:700, fontSize:15, marginBottom:16 }}>{tr("💳 Mon plan","💳 My plan")}</div>
             <div style={{ background:`${plan.color}15`, border:`1px solid ${plan.color}30`, borderRadius:12, padding:16, textAlign:"center", marginBottom:16 }}>
               <div style={{ fontSize:24, fontWeight:800, color:plan.color }}>{plan.name}</div>
-              <div style={{ fontSize:12, color:"#94a3b8", marginTop:4 }}>{user.plan==="free"?tr(`${user.usage||0}/10 RDV utilisés ce mois`,`${user.usage||0}/10 appointments used this month`):tr("RDV illimités","Unlimited appointments")}</div>
+              <div style={{ fontSize:12, color:"#64748B", marginTop:4 }}>{user.plan==="free"?tr(`${user.usage||0}/10 RDV utilisés ce mois`,`${user.usage||0}/10 appointments used this month`):tr("RDV illimités","Unlimited appointments")}</div>
             </div>
             {user.plan==="free" && (
-              <div style={{ background:"#f0f4ff", borderRadius:10, padding:14, fontSize:12, color:"#1e3a5f", lineHeight:1.6 }}>
+              <div style={{ background:"#f0f4ff", borderRadius:10, padding:14, fontSize:12, color:"#2450E6", lineHeight:1.6 }}>
                 {tr(<>💡 Passez en <b>Pro à 20€/mois</b> pour des RDV illimités !</>, <>💡 Go <b>Pro for €20/month</b> for unlimited appointments!</>)}
               </div>
             )}
@@ -952,11 +996,11 @@ function StatsView({ appointments, patients, user }) {
                 <div style={{ width:8, height:8, borderRadius:"50%", background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:600 }}>{rdv.titre||tr("RDV","Appointment")}</div>
-                  <div style={{ fontSize:11, color:"#94a3b8" }}>{rdv.personne} · {fmtRdv(rdv.date, rdv.heure)}</div>
+                  <div style={{ fontSize:11, color:"#64748B" }}>{rdv.personne} · {fmtRdv(rdv.date, rdv.heure)}</div>
                 </div>
               </div>
             ))}
-            {appointments.length === 0 && <div style={{ color:"#94a3b8", fontSize:13 }}>{tr("Aucun RDV encore","No appointments yet")}</div>}
+            {appointments.length === 0 && <div style={{ color:"#64748B", fontSize:13 }}>{tr("Aucun RDV encore","No appointments yet")}</div>}
           </div>
         </div>
       </div>
@@ -985,7 +1029,7 @@ function exportPDF(appointments, viewMode) {
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
     garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
-    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+    beaute:"#ec4899", formation:"#10b981", pro:"#2450E6", perso:"#64748b", autre:"#94a3b8"
   };
 
   const title = viewMode === "semaine" ? tr("Planning de la semaine","This week's schedule") : viewMode === "mois" ? tr(`Planning de ${moisNoms[today.getMonth()]} ${today.getFullYear()}`, `${moisNoms[today.getMonth()]} ${today.getFullYear()} schedule`) : tr("Tous les rendez-vous","All appointments");
@@ -1011,16 +1055,16 @@ function exportPDF(appointments, viewMode) {
       <title>CallRDV — ${title}</title>
       <style>
         body { font-family: Arial, sans-serif; color: #1e293b; margin: 0; padding: 32px; }
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #1e3a5f; }
-        .logo { font-size: 22px; font-weight: 800; color: #1e3a5f; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #2450E6; }
+        .logo { font-size: 22px; font-weight: 800; color: #2450E6; }
         .subtitle { font-size: 13px; color: #94a3b8; margin-top: 4px; }
         .title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
         .date { font-size: 12px; color: #94a3b8; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #1e3a5f; color: #fff; padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+        th { background: #2450E6; color: #fff; padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
         tr:hover td { background: #f8faff; }
         .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
-        .badge { display: inline-block; background: #f0f4ff; color: #1e3a5f; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .badge { display: inline-block; background: #f0f4ff; color: #2450E6; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
       </style>
     </head>
     <body>
@@ -1063,6 +1107,7 @@ function exportPDF(appointments, viewMode) {
 // ── Vue Agenda Calendrier ────────────────────────────────────
 function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut }) {
   // semaine | mois | liste — sur téléphone, la liste est la seule vue lisible
+  const [voirRecherche, setVoirRecherche] = React.useState(false);
   const [viewMode, setViewMode] = React.useState(() => (typeof window !== "undefined" && window.innerWidth < 700) ? "liste" : "semaine");
   const [currentDate, setCurrentDate] = React.useState(new Date());
   const [agendaSearch, setAgendaSearch] = React.useState("");
@@ -1126,49 +1171,49 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
     garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
-    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+    beaute:"#ec4899", formation:"#10b981", pro:"#2450E6", perso:"#64748b", autre:"#94a3b8"
   };
 
   return (
-    <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", background:"#f0f4f8" }}>
-      {/* Calendar Header */}
-      <div className="cal-head" style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
-        {viewMode !== "liste" ? (
-        <div className="cal-nav" style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <button onClick={()=>navigate(-1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>‹</button>
-          <div className="cal-title" style={{ fontWeight:700, fontSize:18, color:"#1e293b", minWidth:200, textAlign:"center" }}>
+    <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", background:"#F5F6F8" }}>
+      {/* En-tête */}
+      <div className="cal-head" style={{ background:"#F5F6F8", padding:"20px 24px 12px", display:"flex", flexDirection:"column", gap:12 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+          <h1 style={{ fontWeight:800, fontSize:24, letterSpacing:"-0.02em" }}>{tr("Mes rendez-vous","My appointments")}</h1>
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={()=>setVoirRecherche(v=>!v)} aria-label={tr("Rechercher","Search")} title={tr("Rechercher","Search")} style={{ width:42, height:42, borderRadius:12, background:"#fff", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text)" }}><Icon name="search" size={18} /></button>
+            <button onClick={()=>exportPDF(appointments, viewMode === "passes" ? "liste" : viewMode)} aria-label={tr("Exporter en PDF","Export to PDF")} title={tr("Exporter en PDF","Export to PDF")} style={{ width:42, height:42, borderRadius:12, background:"#fff", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text)" }}><Icon name="download" size={18} /></button>
+          </div>
+        </div>
+        {(voirRecherche || agendaSearch) && (
+          <div style={{ position:"relative" }}>
+            <Icon name="search" size={18} color="#64748B" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
+            <input autoFocus placeholder={tr("Client, titre, lieu…","Client, title, place…")} value={agendaSearch}
+              onChange={e => { setAgendaSearch(e.target.value); if (e.target.value && (viewMode==="semaine"||viewMode==="mois")) setViewMode("liste"); }}
+              style={{ paddingLeft:42 }} />
+          </div>
+        )}
+        <div role="tablist" style={{ display:"grid", gridTemplateColumns:"repeat(4, minmax(0,1fr))", background:"#E9ECF1", borderRadius:12, padding:4, gap:4, maxWidth:520 }}>
+          {[["liste",tr("À venir","Upcoming")],["passes",tr("Passés","Past")],["semaine",tr("Semaine","Week")],["mois",tr("Mois","Month")]].map(([m,label]) => (
+            <button key={m} role="tab" aria-selected={viewMode===m} onClick={()=>setViewMode(m)}
+              style={{ height:38, borderRadius:9, border:"none", cursor:"pointer", background:viewMode===m?"#fff":"transparent", color:viewMode===m?"var(--text)":"var(--text2)", fontWeight:viewMode===m?800:600, fontSize:13, boxShadow:viewMode===m?"0 1px 2px rgba(15,23,42,.08)":"none" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {(viewMode === "semaine" || viewMode === "mois") && (
+        <div className="cal-nav" style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <button onClick={()=>navigate(-1)} aria-label={tr("Précédent","Previous")} style={{ width:40, height:40, background:"#fff", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="back" size={18} /></button>
+          <div className="cal-title" style={{ fontWeight:800, fontSize:16, minWidth:200, textAlign:"center", flex:1 }}>
             {viewMode==="semaine"
               ? `${weekDays[0].getDate()} – ${weekDays[6].getDate()} ${moisNoms[weekDays[6].getMonth()]} ${weekDays[6].getFullYear()}`
               : `${moisNoms[currentDate.getMonth()]} ${currentDate.getFullYear()}`
             }
           </div>
-          <button onClick={()=>navigate(1)} style={{ background:"#f0f4f8", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:16 }}>›</button>
-          <button onClick={()=>setCurrentDate(new Date())} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:8 }}>{tr("Aujourd'hui","Today")}</button>
+          <button onClick={()=>navigate(1)} aria-label={tr("Suivant","Next")} style={{ width:40, height:40, background:"#fff", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transform:"scaleX(-1)" }}><Icon name="back" size={18} /></button>
+          <button onClick={()=>setCurrentDate(new Date())} className="btn btn-outline btn-sm">{tr("Aujourd'hui","Today")}</button>
         </div>
-        ) : (
-          <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>{tr("Mes rendez-vous","My appointments")}</div>
         )}
-        <div className="cal-tools" style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
-          {["semaine","mois","liste"].map(m => (
-            <button key={m} onClick={()=>setViewMode(m)}
-              style={{ background:viewMode===m?"#1e3a5f":"#f0f4f8", color:viewMode===m?"#fff":"#64748b", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600, textTransform:"capitalize" }}>
-              {({ semaine:tr("Semaine","Week"), mois:tr("Mois","Month"), liste:tr("Liste","List") })[m]}
-            </button>
-          ))}
-          <button onClick={onNewCall} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontWeight:600, marginLeft:6, whiteSpace:"nowrap" }}>
-            {tr("+ RDV","+ New")}
-          </button>
-          <button onClick={()=>exportPDF(appointments, viewMode)} style={{ background:"#f0f4f8", color:"#1e3a5f", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontWeight:600 }}>
-            📄
-          </button>
-          <input
-            placeholder={tr("🔍 Rechercher...","🔍 Search...")}
-            value={agendaSearch}
-            onChange={e => { setAgendaSearch(e.target.value); if(e.target.value) setViewMode("liste"); }}
-            className="cal-search"
-            style={{ fontSize:12, padding:"6px 10px", borderRadius:8, border:"1px solid #e2e8f0", width:120, background:"#fff" }}
-          />
-        </div>
       </div>
 
       {/* Week View */}
@@ -1177,8 +1222,8 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
             {weekDays.map((day, i) => (
               <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid #e2e8f0":"none" }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontWeight:600, marginBottom:4 }}>{jours[i]}</div>
-                <div style={{ width:32, height:32, borderRadius:"50%", background:isToday(day)?"#1e3a5f":"transparent", color:isToday(day)?"#fff":"#1e293b", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontWeight:700, fontSize:15 }}>
+                <div style={{ fontSize:11, color:"#64748B", fontWeight:600, marginBottom:4 }}>{jours[i]}</div>
+                <div style={{ width:32, height:32, borderRadius:"50%", background:isToday(day)?"#2450E6":"transparent", color:isToday(day)?"#fff":"#1e293b", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontWeight:700, fontSize:15 }}>
                   {day.getDate()}
                 </div>
               </div>
@@ -1191,7 +1236,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
                 <div key={i} style={{ borderRight:i<6?"1px solid #e2e8f0":"none", borderBottom:"1px solid #e2e8f0", padding:8, background:isToday(day)?"#f8faff":"#fff", minHeight:120 }}>
                   {rdvs.map((rdv, j) => (
                     <div key={j} onClick={()=>onCalRdv(rdv)}
-                      style={{ background:catColors[rdv.categorie]||"#1e3a5f", color:"#fff", borderRadius:6, padding:"4px 8px", marginBottom:4, cursor:"pointer", fontSize:11, fontWeight:600, lineHeight:1.4 }}>
+                      style={{ background:catColors[rdv.categorie]||"#2450E6", color:"#fff", borderRadius:6, padding:"4px 8px", marginBottom:4, cursor:"pointer", fontSize:11, fontWeight:600, lineHeight:1.4 }}>
                       {rdv.heure && <span style={{ opacity:.8 }}>{rdv.heure} </span>}
                       {rdv.titre||rdv.personne}
                     </div>
@@ -1208,7 +1253,7 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
         <div style={{ flex:1, overflowY:"auto", background:"#fff" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", borderBottom:"1px solid #e2e8f0" }}>
             {jours.map(j => (
-              <div key={j} style={{ padding:"10px 8px", textAlign:"center", fontSize:11, fontWeight:600, color:"#94a3b8" }}>{j}</div>
+              <div key={j} style={{ padding:"10px 8px", textAlign:"center", fontSize:11, fontWeight:600, color:"#64748B" }}>{j}</div>
             ))}
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)" }}>
@@ -1216,16 +1261,16 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
               const rdvs = getRdvsForDate(date);
               return (
                 <div key={i} style={{ minHeight:90, borderRight:(i+1)%7!==0?"1px solid #e2e8f0":"none", borderBottom:"1px solid #e2e8f0", padding:6, background:isToday(date)?"#f8faff":currentMonth?"#fff":"#f8f9fa" }}>
-                  <div style={{ width:24, height:24, borderRadius:"50%", background:isToday(date)?"#1e3a5f":"transparent", color:isToday(date)?"#fff":currentMonth?"#1e293b":"#cbd5e1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:isToday(date)?700:400, marginBottom:4 }}>
+                  <div style={{ width:24, height:24, borderRadius:"50%", background:isToday(date)?"#2450E6":"transparent", color:isToday(date)?"#fff":currentMonth?"#1e293b":"#cbd5e1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:isToday(date)?700:400, marginBottom:4 }}>
                     {date.getDate()}
                   </div>
                   {rdvs.slice(0,2).map((rdv, j) => (
                     <div key={j} onClick={()=>onCalRdv(rdv)}
-                      style={{ background:catColors[rdv.categorie]||"#1e3a5f", color:"#fff", borderRadius:4, padding:"2px 6px", marginBottom:2, cursor:"pointer", fontSize:10, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                      style={{ background:catColors[rdv.categorie]||"#2450E6", color:"#fff", borderRadius:4, padding:"2px 6px", marginBottom:2, cursor:"pointer", fontSize:10, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                       {rdv.titre||rdv.personne}
                     </div>
                   ))}
-                  {rdvs.length > 2 && <div style={{ fontSize:10, color:"#94a3b8", paddingLeft:4 }}>+{rdvs.length-2}</div>}
+                  {rdvs.length > 2 && <div style={{ fontSize:10, color:"#64748B", paddingLeft:4 }}>+{rdvs.length-2}</div>}
                 </div>
               );
             })}
@@ -1233,56 +1278,64 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
         </div>
       )}
 
-      {/* List View */}
-      {viewMode==="liste" && (
-        <div className="cal-list" style={{ flex:1, overflowY:"auto", padding:24 }}>
-          {appointments.length===0 ? (
-            <div style={{ textAlign:"center", padding:"60px 0" }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>📅</div>
-              <div style={{ color:"#94a3b8", fontSize:14 }}>{tr("Aucun RDV enregistré","No appointments yet")}</div>
-            </div>
-          ) : (() => {
+      {/* Liste : à venir ou passés, regroupés par jour */}
+      {(viewMode==="liste" || viewMode==="passes") && (
+        <div className="cal-list" style={{ flex:1, overflowY:"auto", padding:"8px 24px 24px" }}>
+          {(() => {
             const q = agendaSearch.toLowerCase();
             const list = appointments.filter(r => !q || (r.titre||"").toLowerCase().includes(q) || (r.personne||"").toLowerCase().includes(q) || (r.lieu||"").toLowerCase().includes(q));
             const todayIso = isoLocal(new Date());
             const key = r => `${r.date||""} ${r.heure||""}`;
-            const aVenir = list.filter(r => (r.date||"") >= todayIso).sort((a,b) => key(a) > key(b) ? 1 : -1);
-            const passes = list.filter(r => (r.date||"") < todayIso).sort((a,b) => key(a) < key(b) ? 1 : -1);
-            const carte = (rdv) => (
-              <div key={rdv.id} className="card" onClick={()=>onCalRdv(rdv)} style={{ marginBottom:10, display:"flex", alignItems:"center", gap:12, padding:"14px 16px", cursor:"pointer", opacity:(rdv.date||"") < todayIso ? .65 : 1 }}>
-                <div style={{ width:4, alignSelf:"stretch", minHeight:44, borderRadius:4, background:catColors[rdv.categorie]||"#1e3a5f", flexShrink:0 }}></div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"#1e3a5f", marginBottom:3 }}>{(s => s.charAt(0).toUpperCase() + s.slice(1))(fmtRdv(rdv.date, rdv.heure))}</div>
-                  <div style={{ fontWeight:700, fontSize:14, marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.personne}</div>
-                  <div style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.titre||tr("Rendez-vous","Appointment")}{rdv.lieu ? ` · 📍 ${rdv.lieu}` : ""}</div>
-                  <div style={{ marginTop:6 }}>
-                    <select
-                      value={rdv.statut||"en_attente"}
-                      onChange={e => onUpdateStatut(rdv.id, e.target.value)}
-                      onClick={e => e.stopPropagation()}
-                      style={{ width:"auto", fontSize:11, padding:"2px 8px", borderRadius:20, border:"1px solid #e2e8f0", background: rdv.statut==="confirme"?"#f0fdf4":rdv.statut==="annule"?"#fff5f5":rdv.statut==="reporte"?"#fffbeb":"#f8fafc", color: rdv.statut==="confirme"?"#16a34a":rdv.statut==="annule"?"#ef4444":rdv.statut==="reporte"?"#d97706":"#64748b", cursor:"pointer" }}>
-                      <option value="en_attente">{tr("⏳ En attente","⏳ Pending")}</option>
-                      <option value="confirme">{tr("✅ Confirmé","✅ Confirmed")}</option>
-                      <option value="reporte">{tr("🔄 Reporté","🔄 Postponed")}</option>
-                      <option value="annule">{tr("❌ Annulé","❌ Cancelled")}</option>
-                    </select>
-                  </div>
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:6, flexShrink:0 }}>
-                  <button onClick={(e)=>{e.stopPropagation();partagerRdv(rdv);}} title={tr("Partager (WhatsApp, SMS…)","Share (WhatsApp, SMS…)")} style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#16a34a" }}>📤</button>
-                  <button onClick={(e)=>{e.stopPropagation();onEditRdv(rdv);}} title={tr("Modifier","Edit")} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#1e3a5f" }}>✏️</button>
-                  <button onClick={(e)=>{e.stopPropagation();onDeleteRdv(rdv.id);}} title={tr("Supprimer","Delete")} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:13, color:"#ef4444" }}>🗑️</button>
-                </div>
+            const passes = viewMode === "passes";
+            const choisis = passes
+              ? list.filter(r => (r.date||"") < todayIso).sort((a,b) => key(a) < key(b) ? 1 : -1)
+              : list.filter(r => (r.date||"") >= todayIso).sort((a,b) => key(a) > key(b) ? 1 : -1);
+            if (choisis.length === 0) return (
+              <div className="card" style={{ textAlign:"center", padding:"36px 20px", maxWidth:720 }}>
+                <span style={{ width:52, height:52, borderRadius:14, background:"var(--accent-soft)", display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}><Icon name="calendar" size={24} color="var(--accent)" /></span>
+                <div style={{ fontWeight:800, fontSize:16, marginBottom:4 }}>{q ? tr("Aucun RDV trouvé","No appointments found") : passes ? tr("Aucun RDV passé","No past appointments") : tr("Aucun RDV à venir","No upcoming appointments")}</div>
+                {!passes && !q && <button className="btn btn-primary btn-sm" onClick={onNewCall} style={{ marginTop:10 }}><Icon name="plus" size={16} stroke={2.6} /> {tr("Nouveau RDV","New appointment")}</button>}
               </div>
             );
-            const titre = (txt) => <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.08em", margin:"6px 0 10px" }}>{txt}</div>;
-            if (list.length === 0) return <div style={{ textAlign:"center", color:"#94a3b8", fontSize:14, padding:"40px 0" }}>{tr("Aucun RDV trouvé","No appointments found")}</div>;
+            const libelleJour = (iso) => {
+              const d = new Date((iso||"") + "T12:00:00");
+              if (isNaN(d.getTime())) return iso || tr("Sans date","No date");
+              const txt = d.toLocaleDateString(locale(), { weekday:"long", day:"numeric", month:"short" });
+              const dem = new Date(); dem.setDate(dem.getDate()+1);
+              if (iso === todayIso) return `${tr("Aujourd'hui","Today")} · ${txt}`;
+              if (iso === isoLocal(dem)) return `${tr("Demain","Tomorrow")} · ${txt}`;
+              return txt.charAt(0).toUpperCase() + txt.slice(1);
+            };
+            const groupes = [];
+            choisis.forEach(r => { const g = groupes[groupes.length-1]; if (g && g.date === r.date) g.rdvs.push(r); else groupes.push({ date: r.date, rdvs: [r] }); });
             return (
-              <>
-                {titre(tr(`À VENIR (${aVenir.length})`, `UPCOMING (${aVenir.length})`))}
-                {aVenir.length === 0 ? <div style={{ color:"#94a3b8", fontSize:13, marginBottom:20 }}>{tr("Aucun RDV à venir","No upcoming appointments")}</div> : aVenir.map(carte)}
-                {passes.length > 0 && <div style={{ marginTop:18 }}>{titre(tr(`PASSÉS (${passes.length})`, `PAST (${passes.length})`))}{passes.map(carte)}</div>}
-              </>
+              <div style={{ maxWidth:720 }}>
+                {groupes.map(g => (
+                  <section key={g.date || "x"} style={{ marginBottom:6 }}>
+                    <h2 style={{ fontSize:12, fontWeight:800, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", margin:"14px 0 8px" }}>{libelleJour(g.date)}</h2>
+                    {g.rdvs.map(rdv => {
+                      const tel = telClient(rdv); const wa = telInternational(tel);
+                      return (
+                        <div key={rdv.id} className="card" style={{ marginBottom:10, padding:14, display:"flex", gap:12, alignItems:"center", opacity: passes ? .8 : 1 }}>
+                          <button onClick={()=>onCalRdv(rdv)} style={{ flex:1, minWidth:0, display:"flex", gap:12, alignItems:"flex-start", background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left", font:"inherit", color:"inherit" }}>
+                            <span style={{ width:54, flexShrink:0, fontSize:15, fontWeight:800, paddingTop:1 }}>{rdv.heure || "—"}</span>
+                            <span style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", gap:5 }}>
+                              <span style={{ fontSize:15, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.personne}</span>
+                              <span style={{ fontSize:13, color:"var(--text2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.titre||tr("Rendez-vous","Appointment")}{rdv.lieu ? ` · ${rdv.lieu}` : ""}</span>
+                              <span><StatutPill statut={rdv.statut} /></span>
+                            </span>
+                          </button>
+                          {wa ? (
+                            <a href={`https://wa.me/${wa}?text=${encodeURIComponent(texteRdv(rdv))}`} target="_blank" rel="noopener noreferrer" aria-label={tr("Envoyer sur WhatsApp","Send on WhatsApp")} title="WhatsApp" style={{ width:44, height:44, borderRadius:12, border:"1px solid #BBF7D0", background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#15803D" }}><Icon name="whatsapp" size={20} /></a>
+                          ) : (
+                            <button onClick={()=>partagerRdv(rdv)} aria-label={tr("Partager","Share")} title={tr("Partager (WhatsApp, SMS…)","Share (WhatsApp, SMS…)")} style={{ width:44, height:44, borderRadius:12, border:"1px solid var(--border)", background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", color:"var(--text)" }}><Icon name="share" size={19} /></button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </section>
+                ))}
+              </div>
             );
           })()}
         </div>
@@ -1360,7 +1413,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
   const catColors = {
     medical:"#3b82f6", dentiste:"#06b6d4", kine:"#8b5cf6", veterinaire:"#f59e0b",
     garage:"#6b7280", travaux:"#f97316", juridique:"#7c3aed", banque:"#0891b2",
-    beaute:"#ec4899", formation:"#10b981", pro:"#1e3a5f", perso:"#64748b", autre:"#94a3b8"
+    beaute:"#ec4899", formation:"#10b981", pro:"#2450E6", perso:"#64748b", autre:"#94a3b8"
   };
 
   const getPatientRdvs = (nom) => appointments.filter(r => r.personne?.toLowerCase() === nom.toLowerCase());
@@ -1550,13 +1603,13 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
       {editingPatient && (
         <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div className="card fade-up" style={{ width:"100%", maxWidth:480, padding:32, maxHeight:"90vh", overflowY:"auto" }}>
-            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("✏️ Modifier la fiche client","✏️ Edit client")}</div>
+            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("Modifier la fiche client","Edit client")}</div>
             {[
-              { key:"nom", label:tr("NOM COMPLET *","FULL NAME *"), placeholder:tr("Nom complet","Full name"), type:"text" },
+              { key:"nom", label:tr("Nom complet *","Full name *"), placeholder:tr("Nom complet","Full name"), type:"text" },
               { key:"email", label:"EMAIL", placeholder:"email@...", type:"email" },
-              { key:"telephone", label:tr("TÉLÉPHONE","PHONE"), placeholder:tr("06...","Phone number"), type:"text" },
-              { key:"date_naissance", label:tr("DATE DE NAISSANCE","DATE OF BIRTH"), placeholder:tr("JJ/MM/AAAA","DD/MM/YYYY"), type:"text" },
-              { key:"adresse", label:tr("ADRESSE COMPLÈTE","FULL ADDRESS"), placeholder:tr("12 rue de la Paix, 75001 Paris","12 High Street, London"), type:"text" },
+              { key:"telephone", label:tr("Téléphone","Phone"), placeholder:tr("06...","Phone number"), type:"text" },
+              { key:"date_naissance", label:tr("Date de naissance","Date of birth"), placeholder:tr("JJ/MM/AAAA","DD/MM/YYYY"), type:"text" },
+              { key:"adresse", label:tr("Adresse complète","Full address"), placeholder:tr("12 rue de la Paix, 75001 Paris","12 High Street, London"), type:"text" },
             ].map(field => (
               <div key={field.key} style={{ marginBottom:14 }}>
                 <div className="field-label">{field.label}</div>
@@ -1564,7 +1617,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
               </div>
             ))}
             <div style={{ marginBottom:20 }}>
-              <div className="field-label">NOTES</div>
+              <div className="field-label">Notes</div>
               <textarea rows={3} placeholder={tr("Informations importantes...","Important information...")} defaultValue={editingPatient.notes||""} id="edit-notes" />
             </div>
             <div style={{ display:"flex", gap:10 }}>
@@ -1581,77 +1634,84 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
           </div>
         </div>
       )}
-      {/* Liste patients */}
-      <div className="pv-left" style={{ width:320, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
-        <div style={{ padding:"16px", borderBottom:"1px solid #e2e8f0", background:"#fff" }}>
-          <div style={{ marginBottom:10 }}>
-            <input placeholder={tr("🔍 Rechercher un client...","🔍 Search a client...")} value={search} onChange={e=>setSearch(e.target.value)} style={{ width:"100%", fontSize:14, padding:"12px 16px" }} />
+      {/* Liste des clients */}
+      <div className="pv-left" style={{ width:340, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", height:"100%", overflow:"hidden", background:"#F5F6F8" }}>
+        <div style={{ padding:"20px 16px 12px", display:"flex", flexDirection:"column", gap:10 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <h1 style={{ fontWeight:800, fontSize:24, letterSpacing:"-0.02em" }}>{tr("Clients","Clients")}</h1>
+            <span style={{ fontSize:13, color:"var(--text2)", fontWeight:600 }}>{patients.length}</span>
           </div>
-          <div style={{ display:"flex", gap:8, marginBottom:12, alignItems:"center" }}>
-            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{ fontSize:12, padding:"8px 12px", borderRadius:8, border:"1px solid var(--border)", background:"var(--input-bg)", color:"var(--text)", cursor:"pointer", flex:1 }}>
-              <option value="nom">{tr("Tri : A → Z","Sort: A → Z")}</option>
-              <option value="rdv">{tr("Tri : Plus de RDV","Sort: Most appointments")}</option>
-              <option value="date">{tr("Tri : Plus récents","Sort: Most recent")}</option>
-            </select>
+          <div style={{ position:"relative" }}>
+            <Icon name="search" size={18} color="#64748B" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
+            <input placeholder={tr("Rechercher un client…","Search a client…")} value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft:42 }} />
           </div>
           <div style={{ display:"flex", gap:8 }}>
-            <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)} style={{ flex:1 }}>{tr("+ Ajouter","+ Add")}</button>
-            <label style={{ flex:1 }}>
-              <div className="btn btn-outline btn-sm" style={{ textAlign:"center", cursor:"pointer" }}>
-                {importing ? "⏳" : tr("📥 Importer","📥 Import")}
-              </div>
+            <button className="btn btn-primary btn-sm" onClick={()=>setShowAdd(true)} style={{ flex:1 }}><Icon name="plus" size={16} stroke={2.6} /> {tr("Ajouter","Add")}</button>
+            <label style={{ flex:1, display:"flex" }}>
+              <span className="btn btn-outline btn-sm" style={{ flex:1, cursor:"pointer" }}>
+                {importing ? <span className="spinner" style={{ width:16, height:16 }} /> : <><Icon name="download" size={16} /> {tr("Importer","Import")}</>}
+              </span>
               <input type="file" accept=".csv,.vcf,text/csv,text/vcard,text/x-vcard" onChange={handleImportCSV} style={{ display:"none" }} />
             </label>
-            {dirtyContacts.length > 0 && (
-              <button className="btn btn-sm" onClick={()=>setConfirmClean(true)} style={{ background:"#fff8f0", border:"1px solid #fed7aa", color:"#f97316", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>
-                🧹 {dirtyContacts.length}
-              </button>
-            )}
-            <button className="btn btn-sm" onClick={()=>setConfirmDeleteAll(true)} style={{ background:"#fff5f5", border:"1px solid #fecaca", color:"#ef4444", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:12 }}>{tr("🗑️ Tout","🗑️ All")}</button>
+            <select aria-label={tr("Trier","Sort")} value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{ flex:1, fontSize:13, minHeight:38, padding:"6px 10px", borderRadius:10 }}>
+              <option value="nom">{tr("A → Z","A → Z")}</option>
+              <option value="rdv">{tr("Plus de RDV","Most appts")}</option>
+              <option value="date">{tr("Récents","Recent")}</option>
+            </select>
           </div>
+          {dirtyContacts.length > 0 && (
+            <button onClick={()=>setConfirmClean(true)} style={{ background:"#FFF7ED", border:"1px solid #FED7AA", color:"#9A3412", borderRadius:12, padding:"10px 12px", cursor:"pointer", fontSize:13, fontWeight:700, textAlign:"left" }}>
+              {tr(`${dirtyContacts.length} contact(s) mal formé(s) — nettoyer`, `${dirtyContacts.length} badly formatted contact(s) — clean up`)}
+            </button>
+          )}
         </div>
-        <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
+        <div style={{ flex:1, overflowY:"auto", minHeight:0, padding:"0 16px 12px" }}>
           {filtered.length === 0 ? (
-            <div style={{ textAlign:"center", padding:"40px 20px" }}>
-              <div style={{ fontSize:36, marginBottom:8 }}>👥</div>
-              <div style={{ color:"#94a3b8", fontSize:13 }}>{tr("Aucun client trouvé","No clients found")}</div>
-              <div style={{ color:"#cbd5e1", fontSize:11, marginTop:4 }}>{tr("Ils s'ajoutent automatiquement à chaque RDV","They are added automatically with each appointment")}</div>
+            <div className="card" style={{ textAlign:"center", padding:"30px 18px" }}>
+              <span style={{ width:48, height:48, borderRadius:14, background:"var(--accent-soft)", display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}><Icon name="users" size={22} color="var(--accent)" /></span>
+              <div style={{ fontWeight:700, fontSize:15 }}>{tr("Aucun client trouvé","No clients found")}</div>
+              <div style={{ color:"var(--text2)", fontSize:13, marginTop:4 }}>{tr("Ils s'ajoutent automatiquement à chaque RDV.","They are added automatically with each appointment.")}</div>
             </div>
-          ) : filtered.map(p => (
-            <div key={p.id} onClick={()=>{ setSelected(p); setTimeout(()=>{ document.getElementById("patients-right-panel")?.scrollTo({top:0,behavior:"smooth"}); window.scrollTo({top:0,behavior:"smooth"}); }, 50); }}
-              style={{ padding:"14px 16px", borderBottom:"1px solid #f1f5f9", cursor:"pointer", background:selected?.id===p.id?"#f0f4ff":"#fff", display:"flex", alignItems:"center", gap:12, transition:"background .15s" }}>
-              <div style={{ width:38, height:38, borderRadius:"50%", background:catColors[p.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:15, flexShrink:0 }}>
-                {p.nom[0]?.toUpperCase()}
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontWeight:600, fontSize:13, color:"#1e293b", marginBottom:2 }}>{p.nom}</div>
-                <div style={{ fontSize:11, color:"#94a3b8" }}>{getPatientRdvs(p.nom).length} {tr("RDV","appt.")}</div>
-              </div>
+          ) : (
+            <div className="card" style={{ padding:"4px 0" }}>
+              {filtered.map((p, i) => (
+                <button key={p.id} onClick={()=>{ setSelected(p); setTimeout(()=>{ document.getElementById("patients-right-panel")?.scrollTo({top:0,behavior:"smooth"}); window.scrollTo({top:0,behavior:"smooth"}); }, 50); }}
+                  style={{ width:"100%", padding:"12px 14px", border:"none", borderTop: i ? "1px solid #F1F5F9" : "none", cursor:"pointer", background:selected?.id===p.id?"var(--accent-soft)":"transparent", display:"flex", alignItems:"center", gap:12, textAlign:"left", font:"inherit", color:"inherit" }}>
+                  <span style={{ width:40, height:40, borderRadius:"50%", background:"var(--accent-soft)", color:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, flexShrink:0 }}>
+                    {p.nom[0]?.toUpperCase()}
+                  </span>
+                  <span style={{ flex:1, minWidth:0 }}>
+                    <span style={{ display:"block", fontWeight:700, fontSize:15, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.nom}</span>
+                    <span style={{ display:"block", fontSize:13, color:"var(--text2)" }}>{p.telephone || `${getPatientRdvs(p.nom).length} ${tr("RDV","appt.")}`}</span>
+                  </span>
+                  <Icon name="back" size={16} color="#94A3B8" style={{ transform:"scaleX(-1)" }} />
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-        <div style={{ padding:"12px 16px", borderTop:"1px solid #e2e8f0", background:"#f8fafc" }}>
-          <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>{tr(`${patients.length} client(s) au total`, `${patients.length} client(s) in total`)}</div>
+          )}
+          {patients.length > 0 && (
+            <button onClick={()=>setConfirmDeleteAll(true)} style={{ display:"block", margin:"14px auto 0", background:"none", border:"none", color:"#B91C1C", fontSize:13, fontWeight:600, cursor:"pointer", padding:10 }}>{tr("Supprimer tous les clients","Delete all clients")}</button>
+          )}
         </div>
       </div>
 
-      {/* Fiche patient */}
+      {/* Fiche client */}
       <div id="patients-right-panel" className="pv-right" style={{ flex:1, overflowY:"auto", padding:24 }}>
         {(selected || showAdd) && (
           <button className="pv-back" onClick={()=>{ setSelected(null); setShowAdd(false); }}
-            style={{ display:"none", background:"none", border:"none", color:"#1e3a5f", fontWeight:700, fontSize:15, cursor:"pointer", padding:"4px 0", marginBottom:14 }}>
-            {tr("← Retour aux clients","← Back to clients")}
+            style={{ display:"none", alignItems:"center", gap:6, background:"none", border:"none", color:"var(--accent)", fontWeight:700, fontSize:15, cursor:"pointer", padding:"8px 0", marginBottom:10 }}>
+            <Icon name="back" size={18} stroke={2.4} /> {tr("Clients","Clients")}
           </button>
         )}
         {showAdd ? (
           <div className="card fade-up" style={{ maxWidth:480 }}>
-            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("➕ Nouveau client","➕ New client")}</div>
-            <div style={{ marginBottom:14 }}><div className="field-label">{tr("NOM *","NAME *")}</div><input placeholder={tr("Nom complet","Full name")} value={form.nom} onChange={e=>setForm(p=>({...p,nom:e.target.value}))} /></div>
+            <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("Nouveau client","New client")}</div>
+            <div style={{ marginBottom:14 }}><div className="field-label">{tr("Nom *","Name *")}</div><input placeholder={tr("Nom complet","Full name")} value={form.nom} onChange={e=>setForm(p=>({...p,nom:e.target.value}))} /></div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
-              <div><div className="field-label">EMAIL</div><input type="email" placeholder="email@..." value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} /></div>
-              <div><div className="field-label">{tr("TÉLÉPHONE","PHONE")}</div><input placeholder={tr("06...","Phone number")} value={form.telephone} onChange={e=>setForm(p=>({...p,telephone:e.target.value}))} /></div>
+              <div><div className="field-label">Email</div><input type="email" placeholder="email@..." value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} /></div>
+              <div><div className="field-label">{tr("Téléphone","Phone")}</div><input placeholder={tr("06...","Phone number")} value={form.telephone} onChange={e=>setForm(p=>({...p,telephone:e.target.value}))} /></div>
             </div>
-            <div style={{ marginBottom:14 }}><div className="field-label">NOTES</div><textarea rows={3} placeholder={tr("Informations importantes...","Important information...")} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} /></div>
+            <div style={{ marginBottom:14 }}><div className="field-label">Notes</div><textarea rows={3} placeholder={tr("Informations importantes...","Important information...")} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} /></div>
             <div style={{ display:"flex", gap:10 }}>
               <button className="btn btn-outline" onClick={()=>setShowAdd(false)} style={{ flex:1 }}>{tr("Annuler","Cancel")}</button>
               <button className="btn btn-primary" onClick={handleAdd} style={{ flex:2 }}>{tr("Ajouter le client","Add client")}</button>
@@ -1659,81 +1719,87 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
           </div>
         ) : selected ? (
           <div className="fade-up" id="fiche-patient">
-            {/* Header fiche */}
-            <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
-              <div style={{ width:56, height:56, borderRadius:"50%", background:catColors[selected.categorie]||"#94a3b8", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:22, flexShrink:0 }}>
+            {/* En-tête de la fiche */}
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:18 }}>
+              <span style={{ width:60, height:60, borderRadius:"50%", background:"var(--accent-soft)", color:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:24, flexShrink:0 }}>
                 {selected.nom[0]?.toUpperCase()}
+              </span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <h1 style={{ fontWeight:800, fontSize:24, letterSpacing:"-0.02em", overflowWrap:"anywhere" }}>{selected.nom}</h1>
+                <div style={{ fontSize:13, color:"var(--text2)" }}>{tr("Client depuis","Client since")} {new Date(selected.created_at).toLocaleDateString(locale(), { month:"short", year:"numeric" })} · {getPatientRdvs(selected.nom).length} {tr("RDV","appt.")}</div>
               </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight:800, fontSize:22, color:"#1e293b" }}>{selected.nom}</div>
-                <div style={{ fontSize:12, color:"#94a3b8" }}>{tr("Client depuis","Client since")} {new Date(selected.created_at).toLocaleDateString(locale())} · {getPatientRdvs(selected.nom).length} {tr("RDV","appt.")}</div>
-              </div>
-              <div style={{ display:"flex", gap:8 }}>
-                <button onClick={()=>setEditingPatient(selected)} style={{ background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#1e3a5f", fontWeight:600 }}>{tr("✏️ Modifier","✏️ Edit")}</button>
-                <button onClick={()=>handleDelete(selected.id)} style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:12, color:"#ef4444", fontWeight:600 }}>🗑️</button>
-              </div>
+              <button onClick={()=>setEditingPatient(selected)} className="btn btn-outline btn-sm"><Icon name="edit" size={16} /> <span className="hide-phone">{tr("Modifier","Edit")}</span></button>
             </div>
 
+            {/* Contacter le client */}
+            {(() => {
+              const tel = (selected.telephone||"").trim(); const wa = telInternational(tel); const mail = (selected.email||"").trim();
+              const tuile = (actif) => ({ height:68, borderRadius:14, background: actif ? "#fff" : "#F8FAFC", border:"1px solid var(--border)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:6, textDecoration:"none", color: actif ? "var(--text)" : "#94A3B8", fontSize:12, fontWeight:700, pointerEvents: actif ? "auto" : "none" });
+              return (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4, minmax(0,1fr))", gap:8, marginBottom:12 }}>
+                  <a href={tel ? `tel:${tel.replace(/[^\d+]/g,"")}` : undefined} aria-disabled={!tel} style={tuile(!!tel)}><Icon name="phone" size={20} color={tel ? "var(--accent)" : "#94A3B8"} />{tr("Appeler","Call")}</a>
+                  <a href={wa ? `https://wa.me/${wa}` : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!wa} style={{ ...tuile(!!wa), ...(wa ? { background:"#F0FDF4", borderColor:"#BBF7D0", color:"#14532D" } : {}) }}><Icon name="whatsapp" size={20} color={wa ? "#15803D" : "#94A3B8"} />WhatsApp</a>
+                  <a href={tel ? `sms:${tel.replace(/[^\d+]/g,"")}` : undefined} aria-disabled={!tel} style={tuile(!!tel)}><Icon name="sms" size={20} color={tel ? "var(--accent)" : "#94A3B8"} />SMS</a>
+                  <a href={mail ? `mailto:${mail}` : undefined} aria-disabled={!mail} style={tuile(!!mail)}><Icon name="mail" size={20} color={mail ? "var(--accent)" : "#94A3B8"} />Email</a>
+                </div>
+              );
+            })()}
+
             {onNewRdv && (
-              <button className="btn btn-primary" onClick={()=>onNewRdv(selected)} style={{ width:"100%", padding:"14px", fontSize:15, marginBottom:16 }}>
-                {tr("📅 Prendre un RDV pour ce client","📅 Book an appointment for this client")}
+              <button className="btn btn-primary" onClick={()=>onNewRdv(selected)} style={{ width:"100%", minHeight:54, fontSize:16, marginBottom:16 }}>
+                <Icon name="calendar" size={20} color="#fff" /> {tr("Prendre un RDV","Book an appointment")}
               </button>
             )}
 
             {/* Coordonnées */}
-            <div className="card" style={{ marginBottom:16 }}>
-              <div className="field-label" style={{ marginBottom:14 }}>{tr("COORDONNÉES","CONTACT DETAILS")}</div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-                {[
-                  { icon:"📧", label:"Email", value:selected.email },
-                  { icon:"📞", label:tr("Téléphone","Phone"), value:selected.telephone },
-                  { icon:"🎂", label:tr("Date de naissance","Date of birth"), value:selected.date_naissance },
-                  { icon:"📍", label:tr("Adresse","Address"), value:selected.adresse },
-                ].map(({icon,label,value}) => (
-                  <div key={label} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                    <span style={{ fontSize:18, marginTop:1 }}>{icon}</span>
-                    <div>
-                      <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:2 }}>{label}</div>
-                      <div style={{ fontSize:13, fontWeight:600, color: value ? "#1e293b" : "#cbd5e1" }}>{value || tr("Non renseigné","Not provided")}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="card" style={{ padding:"4px 18px", marginBottom:16 }}>
+              {[
+                { label:tr("Téléphone","Phone"), value:selected.telephone },
+                { label:"Email", value:selected.email },
+                { label:tr("Adresse","Address"), value:selected.adresse },
+                { label:tr("Date de naissance","Date of birth"), value:selected.date_naissance },
+              ].filter((x, i) => x.value || i < 2).map(({label,value}, i) => (
+                <div key={label} style={{ display:"flex", justifyContent:"space-between", gap:12, padding:"13px 0", borderTop: i ? "1px solid #F1F5F9" : "none", fontSize:14 }}>
+                  <span style={{ color:"var(--text2)" }}>{label}</span>
+                  <span style={{ fontWeight:700, color: value ? "var(--text)" : "#94A3B8", textAlign:"right", overflowWrap:"anywhere" }}>{value || tr("Non renseigné","Not provided")}</span>
+                </div>
+              ))}
             </div>
 
             {/* Notes */}
             {selected.notes && (
               <div className="card" style={{ marginBottom:16 }}>
-                <div className="field-label" style={{ marginBottom:8 }}>📝 NOTES</div>
-                <div style={{ fontSize:13, color:"#475569", lineHeight:1.7 }}>{selected.notes}</div>
+                <h2 style={{ fontSize:15, fontWeight:800, marginBottom:8 }}>{tr("Notes","Notes")}</h2>
+                <div style={{ fontSize:14, color:"var(--text2)", lineHeight:1.7 }}>{selected.notes}</div>
               </div>
             )}
 
-            {/* Historique RDV */}
-            <div className="card">
-              <div className="field-label" style={{ marginBottom:12 }}>{tr("📅 HISTORIQUE DES RDV","📅 APPOINTMENT HISTORY")}</div>
+            {/* Historique */}
+            <h2 style={{ fontSize:16, fontWeight:800, margin:"4px 0 8px" }}>{tr("Historique","History")}</h2>
+            <div className="card" style={{ padding:"4px 18px" }}>
               {getPatientRdvs(selected.nom).length === 0 ? (
-                <div style={{ color:"#94a3b8", fontSize:13, padding:"20px 0", textAlign:"center" }}>{tr("Aucun RDV enregistré pour ce client","No appointments for this client yet")}</div>
-              ) : getPatientRdvs(selected.nom).sort((a,b) => b.date > a.date ? 1 : -1).map((rdv,i) => (
-                <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"12px 0", borderBottom:"1px solid #f1f5f9" }}>
-                  <div style={{ width:4, height:48, borderRadius:4, background:catColors[rdv.categorie]||"#94a3b8", flexShrink:0 }}></div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600, fontSize:13, marginBottom:2 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
-                    <div style={{ fontSize:11, color:"#94a3b8" }}>📅 {fmtRdv(rdv.date, rdv.heure)}</div>
-                    {rdv.lieu && <div style={{ fontSize:11, color:"#94a3b8" }}>📍 {rdv.lieu}</div>}
+                <div style={{ color:"var(--text2)", fontSize:14, padding:"18px 0", textAlign:"center" }}>{tr("Aucun RDV pour ce client","No appointments for this client yet")}</div>
+              ) : [...getPatientRdvs(selected.nom)].sort((a,b) => `${b.date} ${b.heure||""}` > `${a.date} ${a.heure||""}` ? 1 : -1).map((rdv,i) => {
+                const passe = (rdv.date||"") < isoLocal(new Date());
+                return (
+                  <div key={rdv.id || i} style={{ display:"flex", gap:12, alignItems:"center", padding:"12px 0", borderTop: i ? "1px solid #F1F5F9" : "none" }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:700, fontSize:14 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
+                      <div style={{ fontSize:13, color:"var(--text2)" }}>{fmtRdv(rdv.date, rdv.heure)}</div>
+                    </div>
+                    {rdv.statut === "annule" ? <StatutPill statut="annule" /> : passe ? <span className="pill pill-past">{tr("Passé","Past")}</span> : <StatutPill statut={rdv.statut} />}
                   </div>
-                  <div style={{ fontSize:11, background:(catColors[rdv.categorie]||"#94a3b8")+"20", color:catColors[rdv.categorie]||"#94a3b8", padding:"3px 10px", borderRadius:20, fontWeight:600 }}>
-                    {catLabel(rdv.categorie||"autre")}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
+            <button onClick={()=>handleDelete(selected.id)} style={{ display:"block", margin:"18px auto 0", background:"none", border:"none", color:"#B91C1C", fontSize:14, fontWeight:600, cursor:"pointer", padding:10 }}>{tr("Supprimer ce client","Delete this client")}</button>
           </div>
         ) : (
           <div style={{ textAlign:"center", padding:"80px 40px" }}>
-            <div style={{ fontSize:56, marginBottom:16 }}>👥</div>
+            <span style={{ width:64, height:64, borderRadius:18, background:"var(--accent-soft)", display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}><Icon name="users" size={28} color="var(--accent)" /></span>
             <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>{tr("Vos clients","Your clients")}</div>
-            <div style={{ color:"#94a3b8", fontSize:14, lineHeight:1.7 }}>{tr(<>Sélectionnez un client pour voir sa fiche,<br/>ou ajoutez-en un manuellement.<br/><br/>💡 Ils s'ajoutent automatiquement à chaque nouveau RDV !</>, <>Select a client to see their profile,<br/>or add one manually.<br/><br/>💡 They are added automatically with each new appointment!</>)}</div>
+            <div style={{ color:"#64748B", fontSize:14, lineHeight:1.7 }}>{tr(<>Sélectionnez un client pour voir sa fiche,<br/>ou ajoutez-en un manuellement.<br/><br/>Ils s'ajoutent automatiquement à chaque nouveau RDV.</>, <>Select a client to see their profile,<br/>or add one manually.<br/><br/>They are added automatically with each new appointment.</>)}</div>
           </div>
         )}
       </div>
@@ -1742,7 +1808,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
 }
 
 // ── Paramètres Modal ─────────────────────────────────────────
-function SettingsModal({ user, onSave, onClose, sb, token }) {
+function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide }) {
   const [rappels, setRappels] = React.useState(user.rappels || ["j-1","j-3"]);
   const [pushEnabled, setPushEnabled] = React.useState(user.push_enabled || false);
   const [pushJ3, setPushJ3] = React.useState(user.push_j3 !== false);
@@ -1790,7 +1856,7 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
 
   const toggle = (value, onClick) => (
     <div onClick={onClick}
-      style={{ width:44, height:24, borderRadius:12, background:value?"#1e3a5f":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
+      style={{ width:44, height:24, borderRadius:12, background:value?"#2450E6":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
       <div style={{ position:"absolute", top:3, left:value?20:3, width:18, height:18, borderRadius:"50%", background:"#fff", transition:"left .2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }}></div>
     </div>
   );
@@ -1799,31 +1865,37 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"#00000040", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
       <div className="card fade-up" style={{ width:"100%", maxWidth:420, padding:28, maxHeight:"90vh", overflowY:"auto" }}>
-        <div style={{ fontWeight:800, fontSize:20, marginBottom:4, color:"#1e293b" }}>{tr("⚙️ Paramètres","⚙️ Settings")}</div>
-        <div style={{ fontSize:13, color:"#94a3b8", marginBottom:24 }}>{tr("Configurez vos rappels de rendez-vous","Set up your appointment reminders")}</div>
+        <div style={{ fontWeight:800, fontSize:20, marginBottom:4, color:"#1e293b" }}>{tr("Réglages","Settings")}</div>
+        <div style={{ fontSize:13, color:"#64748B", marginBottom:24 }}>{tr("Configurez vos rappels de rendez-vous","Set up your appointment reminders")}</div>
 
         {/* Langue */}
-        <div style={{ marginBottom:20 }}>
-          <div className="field-label">{tr("LANGUE","LANGUAGE")}</div>
-          <div style={{ marginTop:8 }}><LangSwitch /></div>
+        <div style={{ marginBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+          <div className="field-label" style={{ marginBottom:0 }}>{tr("Langue","Language")}</div>
+          <LangSwitch />
         </div>
 
+        {onRevoirGuide && (
+          <button onClick={onRevoirGuide} className="btn btn-outline btn-sm" style={{ width:"100%", marginBottom:20 }}>
+            <Icon name="help" size={16} /> {tr("Revoir le guide de démarrage","Replay the getting-started tour")}
+          </button>
+        )}
+
         <div style={{ marginBottom:20 }}>
-          <div className="field-label">{tr("EMAIL POUR LES RAPPELS","EMAIL FOR REMINDERS")}</div>
+          <div className="field-label">{tr("Email pour les rappels","Email for reminders")}</div>
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={tr("votre@email.com","your@email.com")} />
-          <div style={{ fontSize:11, color:"#94a3b8", marginTop:6 }}>{tr("Vos rappels seront envoyés à cette adresse","Your reminders will be sent to this address")}</div>
+          <div style={{ fontSize:11, color:"#64748B", marginTop:6 }}>{tr("Vos rappels seront envoyés à cette adresse","Your reminders will be sent to this address")}</div>
         </div>
 
         <div style={{ marginBottom:24 }}>
-          <div className="field-label">{tr("QUAND ENVOYER LES RAPPELS","WHEN TO SEND REMINDERS")}</div>
-          <div style={{ fontSize:11, color:"#94a3b8", marginTop:4 }}>{tr("Pour vous, et pour vos clients dont l'email est renseigné.","For you, and for your clients whose email is provided.")}</div>
+          <div className="field-label">{tr("Quand envoyer les rappels","When to send reminders")}</div>
+          <div style={{ fontSize:11, color:"#64748B", marginTop:4 }}>{tr("Pour vous, et pour vos clients dont l'email est renseigné.","For you, and for your clients whose email is provided.")}</div>
           <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:8 }}>
             {options.map(opt => (
               <div key={opt.value} onClick={()=>toggleRappel(opt.value)}
-                style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 16px", borderRadius:10, border:`1.5px solid ${rappels.includes(opt.value)?"#1e3a5f":"#e2e8f0"}`, background:rappels.includes(opt.value)?"#f0f4ff":"#fff", cursor:"pointer", transition:"all .2s" }}>
+                style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 16px", borderRadius:10, border:`1.5px solid ${rappels.includes(opt.value)?"#2450E6":"#e2e8f0"}`, background:rappels.includes(opt.value)?"#f0f4ff":"#fff", cursor:"pointer", transition:"all .2s" }}>
                 <span style={{ fontSize:20 }}>{opt.icon}</span>
-                <span style={{ fontWeight:600, fontSize:14, color:rappels.includes(opt.value)?"#1e3a5f":"#475569" }}>{opt.label}</span>
-                <div style={{ marginLeft:"auto", width:20, height:20, borderRadius:"50%", border:`2px solid ${rappels.includes(opt.value)?"#1e3a5f":"#cbd5e1"}`, background:rappels.includes(opt.value)?"#1e3a5f":"transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <span style={{ fontWeight:600, fontSize:14, color:rappels.includes(opt.value)?"#2450E6":"#475569" }}>{opt.label}</span>
+                <div style={{ marginLeft:"auto", width:20, height:20, borderRadius:"50%", border:`2px solid ${rappels.includes(opt.value)?"#2450E6":"#cbd5e1"}`, background:rappels.includes(opt.value)?"#2450E6":"transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
                   {rappels.includes(opt.value) && <span style={{ color:"#fff", fontSize:12 }}>✓</span>}
                 </div>
               </div>
@@ -1855,7 +1927,7 @@ function SettingsModal({ user, onSave, onClose, sb, token }) {
           )}
 
           {notifPermission !== "granted" && notifPermission !== "denied" && (
-            <button onClick={requestPushPermission} style={{ width:"100%", background:"#f0f4ff", border:"1px solid #1e3a5f30", borderRadius:10, padding:"12px 16px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#1e3a5f", marginBottom:14, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <button onClick={requestPushPermission} style={{ width:"100%", background:"#f0f4ff", border:"1px solid #2450E630", borderRadius:10, padding:"12px 16px", cursor:"pointer", fontSize:13, fontWeight:600, color:"#2450E6", marginBottom:14, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
               {tr("🔔 Activer les notifications push","🔔 Enable push notifications")}
             </button>
           )}
@@ -1974,168 +2046,188 @@ function RdvForm({ onSave, onCancel, userMetier }) {
   // Champs dynamiques par catégorie
   const champsSpecifiques = {
     medical: [
-      { key:"telephone", label:tr("TÉLÉPHONE","PHONE"), placeholder:tr("06...","Phone number"), type:"text" },
-      { key:"motif", label:tr("MOTIF DE CONSULTATION","REASON FOR VISIT"), placeholder:tr("Douleur, contrôle, renouvellement...","Pain, check-up, prescription renewal..."), type:"text" },
-      { key:"medecin", label:tr("MÉDECIN / SPÉCIALISTE","DOCTOR / SPECIALIST"), placeholder:tr("Dr. Martin, Cardiologue...","Dr Smith, cardiologist..."), type:"text" },
+      { key:"telephone", label:tr("Téléphone","Phone"), placeholder:tr("06...","Phone number"), type:"text" },
+      { key:"motif", label:tr("Motif de consultation","Reason for visit"), placeholder:tr("Douleur, contrôle, renouvellement...","Pain, check-up, prescription renewal..."), type:"text" },
+      { key:"medecin", label:tr("Médecin / spécialiste","Doctor / specialist"), placeholder:tr("Dr. Martin, Cardiologue...","Dr Smith, cardiologist..."), type:"text" },
     ],
     restaurant: [
-      { key:"nb_personnes", label:tr("NOMBRE DE PERSONNES","NUMBER OF GUESTS"), placeholder:"2", type:"number" },
-      { key:"heure_arrivee", label:tr("HEURE D'ARRIVÉE","ARRIVAL TIME"), placeholder:tr("20h00","8:00 PM"), type:"text" },
-      { key:"demandes", label:tr("DEMANDES SPÉCIALES","SPECIAL REQUESTS"), placeholder:tr("Table en terrasse, anniversaire, allergie...","Terrace table, birthday, allergy..."), type:"text" },
+      { key:"nb_personnes", label:tr("Nombre de personnes","Number of guests"), placeholder:"2", type:"number" },
+      { key:"heure_arrivee", label:tr("Heure d'arrivée","Arrival time"), placeholder:tr("20h00","8:00 PM"), type:"text" },
+      { key:"demandes", label:tr("Demandes spéciales","Special requests"), placeholder:tr("Table en terrasse, anniversaire, allergie...","Terrace table, birthday, allergy..."), type:"text" },
     ],
     garage: [
-      { key:"vehicule", label:tr("MARQUE / MODÈLE","MAKE / MODEL"), placeholder:tr("Renault Clio, Peugeot 308...","Ford Focus, VW Golf..."), type:"text" },
-      { key:"immat", label:tr("IMMATRICULATION","REGISTRATION"), placeholder:tr("AB-123-CD","AB12 CDE"), type:"text" },
-      { key:"intervention", label:tr("TYPE D'INTERVENTION","TYPE OF WORK"), placeholder:tr("Révision, freins, courroie...","Service, brakes, timing belt..."), type:"text" },
+      { key:"vehicule", label:tr("Marque / modèle","Make / model"), placeholder:tr("Renault Clio, Peugeot 308...","Ford Focus, VW Golf..."), type:"text" },
+      { key:"immat", label:tr("Immatriculation","Registration"), placeholder:tr("AB-123-CD","AB12 CDE"), type:"text" },
+      { key:"intervention", label:tr("Type d'intervention","Type of work"), placeholder:tr("Révision, freins, courroie...","Service, brakes, timing belt..."), type:"text" },
     ],
     juridique: [
-      { key:"type_dossier", label:tr("TYPE DE DOSSIER","TYPE OF CASE"), placeholder:tr("Succession, divorce, immobilier...","Probate, divorce, property..."), type:"text" },
-      { key:"documents", label:tr("DOCUMENTS À APPORTER","DOCUMENTS TO BRING"), placeholder:tr("CNI, contrat, acte...","ID, contract, deed..."), type:"text" },
+      { key:"type_dossier", label:tr("Type de dossier","Type of case"), placeholder:tr("Succession, divorce, immobilier...","Probate, divorce, property..."), type:"text" },
+      { key:"documents", label:tr("Documents à apporter","Documents to bring"), placeholder:tr("CNI, contrat, acte...","ID, contract, deed..."), type:"text" },
     ],
     travaux: [
-      { key:"type_travaux", label:tr("TYPE DE TRAVAUX","TYPE OF WORK"), placeholder:tr("Plomberie, électricité, peinture...","Plumbing, electrics, painting..."), type:"text" },
-      { key:"acces", label:tr("ACCÈS / DIGICODE","ACCESS / DOOR CODE"), placeholder:tr("Code d'accès, étage, interphone...","Door code, floor, intercom..."), type:"text" },
+      { key:"type_travaux", label:tr("Type de travaux","Type of work"), placeholder:tr("Plomberie, électricité, peinture...","Plumbing, electrics, painting..."), type:"text" },
+      { key:"acces", label:tr("Accès / digicode","Access / door code"), placeholder:tr("Code d'accès, étage, interphone...","Door code, floor, intercom..."), type:"text" },
     ],
     beaute: [
-      { key:"prestation", label:tr("PRESTATION","SERVICE"), placeholder:tr("Coupe, couleur, brushing...","Cut, colour, blow-dry..."), type:"text" },
-      { key:"coiffeur", label:tr("PRÉFÉRENCE COIFFEUR","PREFERRED STYLIST"), placeholder:tr("Nom du coiffeur souhaité","Preferred stylist's name"), type:"text" },
+      { key:"prestation", label:tr("Prestation","Service"), placeholder:tr("Coupe, couleur, brushing...","Cut, colour, blow-dry..."), type:"text" },
+      { key:"coiffeur", label:tr("Préférence coiffeur","Preferred stylist"), placeholder:tr("Nom du coiffeur souhaité","Preferred stylist's name"), type:"text" },
     ],
     banque: [
-      { key:"type_rdv", label:tr("TYPE DE RDV","TYPE OF APPOINTMENT"), placeholder:tr("Crédit, investissement, compte...","Loan, investment, account..."), type:"text" },
-      { key:"documents", label:tr("DOCUMENTS À APPORTER","DOCUMENTS TO BRING"), placeholder:tr("Bulletins de salaire, avis d'imposition...","Payslips, tax return..."), type:"text" },
+      { key:"type_rdv", label:tr("Type de rdv","Type of appointment"), placeholder:tr("Crédit, investissement, compte...","Loan, investment, account..."), type:"text" },
+      { key:"documents", label:tr("Documents à apporter","Documents to bring"), placeholder:tr("Bulletins de salaire, avis d'imposition...","Payslips, tax return..."), type:"text" },
     ],
     veterinaire: [
-      { key:"animal", label:tr("NOM DE L'ANIMAL","PET'S NAME"), placeholder:tr("Rex, Mimi...","Max, Bella..."), type:"text" },
-      { key:"espece", label:tr("ESPÈCE / RACE","SPECIES / BREED"), placeholder:tr("Chien Labrador, Chat Siamois...","Labrador dog, Siamese cat..."), type:"text" },
-      { key:"motif_veto", label:tr("MOTIF","REASON"), placeholder:tr("Vaccination, contrôle, urgence...","Vaccination, check-up, emergency..."), type:"text" },
+      { key:"animal", label:tr("Nom de l'animal","Pet's name"), placeholder:tr("Rex, Mimi...","Max, Bella..."), type:"text" },
+      { key:"espece", label:tr("Espèce / race","Species / breed"), placeholder:tr("Chien Labrador, Chat Siamois...","Labrador dog, Siamese cat..."), type:"text" },
+      { key:"motif_veto", label:tr("Motif","Reason"), placeholder:tr("Vaccination, contrôle, urgence...","Vaccination, check-up, emergency..."), type:"text" },
     ],
   };
 
   const champs = champsSpecifiques[form.categorie] || [];
 
+  // Cases à toucher : 3 prochains jours et heures courantes
+  const joursRapides = [0,1,2].map(n => { const d = new Date(); d.setDate(d.getDate()+n); return { iso: isoLocal(d), haut: n===0 ? tr("Auj.","Today") : n===1 ? tr("Dem.","Tom.") : d.toLocaleDateString(locale(), { weekday:"short" }).replace(".",""), num: d.getDate() }; });
+  const heuresRapides = ["09:00","10:00","11:00","14:00","15:00","16:00","17:00"];
+  const autreDate = form.date && !joursRapides.some(j => j.iso === form.date);
+  const autreHeure = form.heure && !heuresRapides.includes(form.heure);
+  const [voirDate, setVoirDate] = useState(false);
+  const [voirHeure, setVoirHeure] = useState(false);
+  const micBtn = (sp) => (
+    <button type="button" title={tr("Dicter","Dictate")} aria-label={tr("Dicter","Dictate")} onClick={sp.listening ? sp.stop : sp.start}
+      style={{ position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", width:40, height:40, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: sp.listening ? "#DC2626" : "#64748B" }}>
+      <Icon name={sp.listening ? "stop" : "mic"} size={18} />
+    </button>
+  );
+
   return (
     <div className="form-open" style={{ maxWidth:560 }}>
-      {/* Header */}
-      <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:28 }}>
-        <div style={{ width:48, height:48, background:"#1e3a5f20", border:"1px solid #1e3a5f40", borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>📋</div>
-        <div>
-          <div style={{ fontWeight:800, fontSize:22, letterSpacing:"-0.02em" }}>{tr("Nouveau rendez-vous","New appointment")}</div>
-          <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{tr("Remplissez les détails de votre appel","Fill in the details of your call")}</div>
-        </div>
+      {/* En-tête */}
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:22 }}>
+        <button type="button" onClick={onCancel} aria-label={tr("Retour","Back")} style={{ width:42, height:42, borderRadius:12, background:"#fff", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text)", flexShrink:0 }}><Icon name="back" size={20} stroke={2.2} /></button>
+        <h1 style={{ fontWeight:800, fontSize:22, letterSpacing:"-0.02em" }}>{tr("Nouveau rendez-vous","New appointment")}</h1>
       </div>
 
       {/* Nom du client */}
-      <div style={{ marginBottom:16 }}>
-        <div>
-          <div className="field-label">{tr("NOM DU CLIENT *","CLIENT NAME *")}</div>
-          <div style={{ position:"relative" }}>
-            <input
-              placeholder={tr("Ex : Mme Durand","e.g. Mrs Smith")}
-              autoFocus={!form.personne}
-              autoCapitalize="words"
-              value={form.personne}
-              onChange={e=>{ set("personne",e.target.value); setShowSuggestions(true); }}
-              onFocus={()=>setShowSuggestions(true)}
-              onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
-              style={{ paddingRight:42 }}
-              autoComplete="off"
-            />
-            {showSuggestions && form.personne && (() => {
-              const allPatients = window.__patients || [];
-              const matches = allPatients.filter(p => p.nom && p.nom.toLowerCase().includes(form.personne.toLowerCase()) && p.nom.toLowerCase() !== form.personne.toLowerCase()).slice(0, 6);
-              if (matches.length === 0) return null;
-              return (
-                <div style={{ position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1px solid #e2e8f0", borderRadius:"0 0 10px 10px", zIndex:50, maxHeight:200, overflowY:"auto", boxShadow:"0 4px 16px rgba(0,0,0,0.08)" }}>
-                  {matches.map(p => (
-                    <div
-                      key={p.id}
-                      onMouseDown={(e)=>{ e.preventDefault(); set("personne", p.nom); if (p.email) set("client_email", p.email); setShowSuggestions(false); }}
-                      style={{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #f1f5f9", fontSize:13, color:"#1e293b" }}
-                      onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"}
-                      onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
-                      <div style={{ fontWeight:600 }}>{p.nom}</div>
-                      {p.telephone && <div style={{ fontSize:11, color:"#94a3b8" }}>📞 {p.telephone}</div>}
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-            <button type="button" title={tr("Dicter le nom","Dictate the name")} onClick={speechPersonne.listening ? speechPersonne.stop : speechPersonne.start}
-              style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color: speechPersonne.listening ? "#ff4444" : "#1e3a5f" }}>
-              {speechPersonne.listening ? "⏹" : "🎤"}
-            </button>
-          </div>
+      <div style={{ marginBottom:18 }}>
+        <label htmlFor="rdv-nom" className="field-label" style={{ display:"block" }}>{tr("Nom du client *","Client name *")}</label>
+        <div style={{ position:"relative" }}>
+          <input
+            id="rdv-nom"
+            placeholder={tr("Ex : Mme Durand","e.g. Mrs Smith")}
+            autoFocus={!form.personne}
+            autoCapitalize="words"
+            value={form.personne}
+            onChange={e=>{ set("personne",e.target.value); setShowSuggestions(true); }}
+            onFocus={()=>setShowSuggestions(true)}
+            onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
+            style={{ paddingRight:48, fontSize:16, fontWeight:600, height:52 }}
+            autoComplete="off"
+          />
+          {showSuggestions && form.personne && (() => {
+            const allPatients = window.__patients || [];
+            const matches = allPatients.filter(p => p.nom && p.nom.toLowerCase().includes(form.personne.toLowerCase()) && p.nom.toLowerCase() !== form.personne.toLowerCase()).slice(0, 6);
+            if (matches.length === 0) return null;
+            return (
+              <div style={{ position:"absolute", top:"calc(100% + 6px)", left:0, right:0, background:"#fff", border:"1px solid #E2E8F0", borderRadius:14, zIndex:50, maxHeight:220, overflowY:"auto", boxShadow:"0 12px 30px rgba(15,23,42,.12)" }}>
+                {matches.map(p => (
+                  <div
+                    key={p.id}
+                    onMouseDown={(e)=>{ e.preventDefault(); set("personne", p.nom); if (p.email) set("client_email", p.email); setShowSuggestions(false); }}
+                    style={{ padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid #F1F5F9", fontSize:14 }}
+                    onMouseEnter={e=>e.currentTarget.style.background="#EEF2FF"}
+                    onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+                    <div style={{ fontWeight:700 }}>{p.nom}</div>
+                    {p.telephone && <div style={{ fontSize:12, color:"var(--text2)" }}>{p.telephone}</div>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+          {micBtn(speechPersonne)}
         </div>
       </div>
 
-      {/* Categorie */}
-      <div style={{ marginBottom:20 }}>
-        <div className="field-label">{tr("TYPE DE RDV","APPOINTMENT TYPE")}</div>
-        <select value={form.categorie} onChange={e=>handleCategorie(e.target.value)}
-          style={{ appearance:"none", WebkitAppearance:"none", backgroundImage:"url('data:image/svg+xml;utf8,<svg fill=\"%23c8f542\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M7 10l5 5 5-5z\"/></svg>')", backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", backgroundSize:20, paddingRight:40 }}>
+      {/* Jour */}
+      <fieldset style={{ border:"none", marginBottom:18 }}>
+        <legend className="field-label">{tr("Jour *","Day *")}</legend>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4, minmax(0,1fr))", gap:8 }}>
+          {joursRapides.map(j => (
+            <button key={j.iso} type="button" aria-pressed={form.date===j.iso} onClick={()=>{ set("date", j.iso); setVoirDate(false); }} className={`chip ${form.date===j.iso ? "chip-on" : ""}`} style={{ height:64, fontSize:12, color: form.date===j.iso ? "#fff" : "var(--text2)", textTransform:"capitalize" }}>
+              {j.haut}<br/><span style={{ fontSize:18, fontWeight:800, color: form.date===j.iso ? "#fff" : "var(--text)" }}>{j.num}</span>
+            </button>
+          ))}
+          <button type="button" aria-pressed={!!autreDate} onClick={()=>setVoirDate(v=>!v)} className={`chip ${autreDate ? "chip-on" : "chip-dash"}`} style={{ height:64, fontSize:12, lineHeight:1.3 }}>
+            {autreDate ? <>{new Date(form.date+"T12:00:00").toLocaleDateString(locale(), { day:"numeric", month:"short" })}</> : <>{tr("Autre","Other")}<br/>{tr("date","date")}</>}
+          </button>
+        </div>
+        {(voirDate || autreDate) && <input type="date" aria-label={tr("Choisir une date","Pick a date")} value={form.date} onChange={e=>set("date",e.target.value)} style={{ marginTop:10 }} />}
+      </fieldset>
+
+      {/* Heure */}
+      <fieldset style={{ border:"none", marginBottom:18 }}>
+        <legend className="field-label">{tr("Heure","Time")}</legend>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4, minmax(0,1fr))", gap:8 }}>
+          {heuresRapides.map(h => (
+            <button key={h} type="button" aria-pressed={form.heure===h} onClick={()=>{ set("heure", form.heure===h ? "" : h); setVoirHeure(false); }} className={`chip ${form.heure===h ? "chip-on" : ""}`} style={{ height:46, fontSize:14 }}>{h}</button>
+          ))}
+          <button type="button" aria-pressed={!!autreHeure} onClick={()=>setVoirHeure(v=>!v)} className={`chip ${autreHeure ? "chip-on" : "chip-dash"}`} style={{ height:46, fontSize:13 }}>{autreHeure ? form.heure : tr("Autre","Other")}</button>
+        </div>
+        {(voirHeure || autreHeure) && <input type="time" aria-label={tr("Choisir une heure","Pick a time")} value={form.heure} onChange={e=>set("heure",e.target.value)} style={{ marginTop:10 }} />}
+      </fieldset>
+
+      {/* Type de RDV */}
+      <div style={{ marginBottom:18 }}>
+        <label htmlFor="rdv-type" className="field-label" style={{ display:"block" }}>{tr("Type de RDV","Appointment type")}</label>
+        <select id="rdv-type" value={form.categorie} onChange={e=>handleCategorie(e.target.value)}>
           {categories.map(cat => (
             <option key={cat.value} value={cat.value}>{cat.label}</option>
           ))}
         </select>
       </div>
 
-      {/* Titre */}
-      <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("TITRE DU RDV","TITLE")}</div>
-        <input placeholder={tr("Ex: Consultation Dr. Martin, Révision Renault...","e.g. Dr Smith check-up, Ford service...")} value={form.titre} onChange={e=>set("titre",e.target.value)} />
-      </div>
-
-      {/* Date + Heure */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
-        <div>
-          <div className="field-label">{tr("DATE *","DATE *")}</div>
-          <input type="date" value={form.date} onChange={e=>set("date",e.target.value)}
-            style={{ colorScheme:"dark" }} />
-        </div>
-        <div>
-          <div className="field-label">{tr("HEURE","TIME")}</div>
-          <input type="time" value={form.heure} onChange={e=>set("heure",e.target.value)}
-            style={{ colorScheme:"dark" }} />
-        </div>
-      </div>
-
       {/* Email du client : rappel automatique */}
-      <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("EMAIL DU CLIENT","CLIENT EMAIL")}</div>
-        <input type="email" inputMode="email" autoComplete="off" placeholder={tr("client@email.com (facultatif)","client@email.com (optional)")} value={form.client_email} onChange={e=>set("client_email",e.target.value)} />
-        <div style={{ fontSize:11, color:"#94a3b8", marginTop:6 }}>{tr("📧 Si vous le renseignez, votre client reçoit un rappel automatique avant son RDV.","📧 If you fill it in, your client gets an automatic reminder before the appointment.")}</div>
+      <div style={{ marginBottom:18 }}>
+        <label htmlFor="rdv-email" className="field-label" style={{ display:"block" }}>{tr("Email du client","Client email")}</label>
+        <input id="rdv-email" type="email" inputMode="email" autoComplete="off" placeholder={tr("client@email.com (facultatif)","client@email.com (optional)")} value={form.client_email} onChange={e=>set("client_email",e.target.value)} />
+        <div style={{ display:"flex", gap:8, alignItems:"flex-start", fontSize:13, color:"var(--text2)", marginTop:8, lineHeight:1.45 }}>
+          <Icon name="mail" size={16} color="var(--accent)" style={{ marginTop:1 }} />
+          <span>{tr("Le client reçoit une confirmation tout de suite, puis un rappel 3 jours et 1 jour avant.","Your client gets a confirmation right away, then a reminder 3 days and 1 day before.")}</span>
+        </div>
       </div>
 
       {/* Bouton Plus de détails */}
       <div style={{ marginBottom:showMore?20:16 }}>
-        <button type="button" onClick={()=>setShowMore(s=>!s)} style={{ background:"transparent", border:"1px dashed #cbd5e1", borderRadius:10, padding:"10px 16px", width:"100%", cursor:"pointer", color:"#64748b", fontSize:13, fontWeight:600, fontFamily:"Inter, sans-serif" }}>
-          {showMore ? tr("− Moins de détails","− Fewer details") : tr("+ Plus de détails (lieu, adresse, notes...)","+ More details (place, address, notes...)")}
+        <button type="button" onClick={()=>setShowMore(s=>!s)} style={{ background:"transparent", border:"1px dashed #CBD5E1", borderRadius:12, padding:"12px 16px", width:"100%", cursor:"pointer", color:"var(--text2)", fontSize:14, fontWeight:700, minHeight:46 }}>
+          {showMore ? tr("− Moins de détails","− Fewer details") : tr("+ Plus de détails (titre, lieu, notes…)","+ More details (title, place, notes…)")}
         </button>
       </div>
 
       {showMore && <>
 
+      {/* Titre */}
+      <div style={{ marginBottom:16 }}>
+        <label htmlFor="rdv-titre" className="field-label" style={{ display:"block" }}>{tr("Titre du RDV","Title")}</label>
+        <input id="rdv-titre" placeholder={tr("Rempli automatiquement si vide","Filled in automatically if empty")} value={form.titre} onChange={e=>set("titre",e.target.value)} />
+      </div>
+
       {/* Lieu + Adresse */}
       <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("LIEU","PLACE")}</div>
+        <div className="field-label">{tr("Lieu","Place")}</div>
         <div style={{ position:"relative" }}>
           <input placeholder={tr("Ex: Cabinet médical, Garage Renault, Domicile...","e.g. Clinic, garage, client's home...")} value={form.lieu} onChange={e=>set("lieu",e.target.value)} style={{ paddingRight:42 }} />
-          <button onClick={speechLieu.listening ? speechLieu.stop : speechLieu.start}
-            style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color: speechLieu.listening ? "#ff4444" : "#1e3a5f" }}>
-            {speechLieu.listening ? "⏹" : "🎤"}
-          </button>
+          {micBtn(speechLieu)}
         </div>
       </div>
       <div style={{ marginBottom:16 }}>
-        <div className="field-label">{tr("ADRESSE COMPLÈTE","FULL ADDRESS")}</div>
+        <div className="field-label">{tr("Adresse complète","Full address")}</div>
         <input placeholder={tr("Ex: 12 rue de la Paix, 75001 Paris...","e.g. 12 High Street, London...")} value={form.adresse} onChange={e=>set("adresse",e.target.value)} />
       </div>
 
       {/* Champs dynamiques par catégorie */}
       {champs.length > 0 && (
         <div style={{ background:"#f8faff", border:"1px solid #e2e8f0", borderRadius:12, padding:16, marginBottom:20 }}>
-          <div style={{ fontSize:11, color:"#1e3a5f", fontFamily:"DM Mono", fontWeight:700, marginBottom:14 }}>
-            {tr("✨ INFORMATIONS SPÉCIFIQUES","✨ SPECIFIC DETAILS")}
+          <div style={{ fontSize:11, color:"#2450E6", fontFamily:"inherit", fontWeight:700, marginBottom:14 }}>
+            {tr("Informations spécifiques","Specific details")}
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
             {champs.map(champ => (
@@ -2155,16 +2247,16 @@ function RdvForm({ onSave, onCancel, userMetier }) {
 
       {/* Notes */}
       <div style={{ marginBottom:24 }}>
-        <div className="field-label">{tr("NOTES / INFORMATIONS COMPLÉMENTAIRES","NOTES / EXTRA INFORMATION")}</div>
+        <div className="field-label">{tr("Notes","Notes")}</div>
         <div style={{ position:"relative" }}>
           <textarea rows={3} placeholder={tr("Documents à apporter, motif de la visite, informations importantes...","Documents to bring, reason for the visit, important information...")} value={form.notes} onChange={e=>set("notes",e.target.value)} style={{ paddingRight:48 }} />
-          <button onClick={speechNotes.listening ? speechNotes.stop : speechNotes.start}
-            style={{ position:"absolute", right:10, top:12, background:"none", border:"none", cursor:"pointer", fontSize:20, color: speechNotes.listening ? "#ff4444" : "#1e3a5f" }}>
-            {speechNotes.listening ? "⏹" : "🎤"}
+          <button type="button" aria-label={tr("Dicter","Dictate")} onClick={speechNotes.listening ? speechNotes.stop : speechNotes.start}
+            style={{ position:"absolute", right:6, top:6, width:40, height:40, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color: speechNotes.listening ? "#DC2626" : "#64748B" }}>
+            <Icon name={speechNotes.listening ? "stop" : "mic"} size={18} />
           </button>
         </div>
         {speechNotes.listening && (
-          <div style={{ fontSize:11, color:"#ff4444", fontFamily:"DM Mono", marginTop:6, display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ fontSize:11, color:"#ff4444", fontFamily:"inherit", marginTop:6, display:"flex", alignItems:"center", gap:6 }}>
             <span style={{ animation:"blink 1s infinite", display:"inline-block" }}>●</span> {tr("Parlez maintenant...","Speak now...")}
           </div>
         )}
@@ -2172,8 +2264,8 @@ function RdvForm({ onSave, onCancel, userMetier }) {
 
       {/* Privacy badge */}
       <div className="privacy-badge" style={{ marginBottom:20 }}>
-        <span style={{ fontSize:14 }}>🔒</span>
-        <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.5 }}>
+        <Icon name="check" size={16} color="#16A34A" />
+        <div style={{ fontSize:11, color:"#0369a1", fontFamily:"inherit", lineHeight:1.5 }}>
           <span style={{ color:"#0284c7", fontWeight:700 }}>{tr("Données protégées — ","Data protected — ")}</span>
           {tr("Hébergées en Europe, accessibles uniquement depuis votre compte.","Hosted in Europe, only accessible from your account.")}
         </div>
@@ -2181,15 +2273,16 @@ function RdvForm({ onSave, onCancel, userMetier }) {
 
       </>}
 
-      {/* Buttons */}
+      {/* Boutons */}
       <div style={{ display:"flex", gap:10 }}>
         <button className="btn btn-outline" onClick={onCancel} style={{ flex:1 }}>{tr("Annuler","Cancel")}</button>
-        <button className="btn btn-primary" onClick={()=>isValid&&onSave({ ...form, confirmedAt:new Date().toLocaleTimeString(locale()) })}
-          disabled={!isValid} style={{ flex:2, padding:"15px" }}>
-          {tr("✓ Enregistrer le RDV","✓ Save appointment")}
+        <button id="rdv-enregistrer" className="btn btn-primary" onClick={()=>isValid&&onSave({ ...form, confirmedAt:new Date().toLocaleTimeString(locale()) })}
+          disabled={!isValid} style={{ flex:2.4, padding:"14px 12px", minHeight:54 }}>
+          <Icon name="check" size={18} color="#fff" stroke={2.6} />
+          {isValid ? `${tr("Enregistrer","Save")} · ${fmtRdv(form.date, form.heure)}` : tr("Enregistrer le RDV","Save appointment")}
         </button>
       </div>
-      {!isValid && <div style={{ fontSize:11, color:"#ff9a3c", fontFamily:"DM Mono", marginTop:10, textAlign:"center" }}>{tr("⚠ Le nom du client et la date sont obligatoires","⚠ Client name and date are required")}</div>}
+      {!isValid && <div style={{ fontSize:13, color:"#B45309", marginTop:10, textAlign:"center" }}>{tr("Le nom du client et le jour sont obligatoires","Client name and day are required")}</div>}
     </div>
   );
 }
@@ -2238,7 +2331,7 @@ function ContactModal({ onClose }) {
       <div style={{ background:"#fff", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden" }}>
         <div style={{ padding:"24px 32px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>{t("📬 Nous contacter","📬 Contact us")}</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#94a3b8" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#64748B" }}>✕</button>
         </div>
         <div style={{ padding:"28px 32px" }}>
           {sent ? (
@@ -2246,24 +2339,24 @@ function ContactModal({ onClose }) {
               <div style={{ fontSize:56, marginBottom:16 }}>✅</div>
               <div style={{ fontWeight:700, fontSize:18, color:"#1e293b", marginBottom:8 }}>{t("Message envoyé !","Message sent!")}</div>
               <div style={{ fontSize:14, color:"#64748b", marginBottom:24 }}>{t("Nous vous répondrons dans les plus brefs délais.","We will get back to you as soon as possible.")}</div>
-              <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700 }}>{t("Fermer","Close")}</button>
+              <button onClick={onClose} style={{ background:"#2450E6", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700 }}>{t("Fermer","Close")}</button>
             </div>
           ) : (
             <>
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>{t("VOTRE NOM","YOUR NAME")}</div>
+                <div style={{ fontSize:11, color:"#64748B", fontFamily:"inherit", marginBottom:6 }}>{t("VOTRE NOM","YOUR NAME")}</div>
                 <input value={nom} onChange={e=>setNom(e.target.value)} placeholder={t("Nom complet","Full name")} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
               </div>
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>{t("VOTRE EMAIL","YOUR EMAIL")}</div>
+                <div style={{ fontSize:11, color:"#64748B", fontFamily:"inherit", marginBottom:6 }}>{t("VOTRE EMAIL","YOUR EMAIL")}</div>
                 <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@..." style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif" }} />
               </div>
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", marginBottom:6 }}>MESSAGE</div>
+                <div style={{ fontSize:11, color:"#64748B", fontFamily:"inherit", marginBottom:6 }}>MESSAGE</div>
                 <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder={t("Votre message...","Your message...")} rows={4} style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14, fontFamily:"DM Sans, sans-serif", resize:"vertical" }} />
               </div>
               {error && <div style={{ color:"#ef4444", fontSize:13, marginBottom:14 }}>⚠️ {error}</div>}
-              <button onClick={handleSend} disabled={sending} style={{ width:"100%", background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"13px", cursor:"pointer", fontWeight:700, fontSize:14, opacity:sending?0.7:1 }}>
+              <button onClick={handleSend} disabled={sending} style={{ width:"100%", background:"#2450E6", color:"#fff", border:"none", borderRadius:10, padding:"13px", cursor:"pointer", fontWeight:700, fontSize:14, opacity:sending?0.7:1 }}>
                 {sending ? t("⏳ Envoi en cours...","⏳ Sending...") : t("📤 Envoyer le message","📤 Send message")}
               </button>
             </>
@@ -2540,13 +2633,13 @@ For any question: contact@callrdv.com
       <div style={{ background:"#fff", borderRadius:20, width:"100%", maxWidth:680, maxHeight:"85vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
         <div style={{ padding:"24px 32px", borderBottom:"1px solid #e2e8f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ fontWeight:800, fontSize:18, color:"#1e293b" }}>📄 {title}</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#94a3b8" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#64748B" }}>✕</button>
         </div>
         <div style={{ padding:"24px 32px", overflowY:"auto", flex:1 }}>
           <pre style={{ fontFamily:"DM Sans, sans-serif", fontSize:13, color:"#475569", lineHeight:1.8, whiteSpace:"pre-wrap" }}>{content}</pre>
         </div>
         <div style={{ padding:"16px 32px", borderTop:"1px solid #e2e8f0", textAlign:"center" }}>
-          <button onClick={onClose} style={{ background:"#1e3a5f", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
+          <button onClick={onClose} style={{ background:"#2450E6", color:"#fff", border:"none", borderRadius:10, padding:"12px 32px", cursor:"pointer", fontWeight:700, fontSize:14 }}>
             {en ? "Close" : "Fermer"}
           </button>
         </div>
@@ -2816,6 +2909,82 @@ function sendPushNotif(title, body) {
 }
 
 // ── Page publique : le client confirme ou annule depuis le lien de son email de rappel ──
+// ── Guide de première connexion : 4 bulles qui montrent l'essentiel ──
+function GuideBienvenue({ onFin, onCreer }) {
+  const [etape, setEtape] = useState(0);
+  const [rect, setRect] = useState(null);
+  const [vw, setVw] = useState(window.innerWidth);
+  const tel = vw < 700;
+  const etapes = [
+    { cible: "#carte-recherche", titre: tr("Un client vous appelle ?","A client is calling?"), texte: tr("Tapez son nom ici pendant l'appel. Si vous le connaissez déjà, sa fiche s'ouvre avec son numéro et son email.","Type their name here during the call. If you already know them, their record opens with their phone number and email.") },
+    { cible: tel ? "#bn-plus" : "#btn-nouveau-pc", titre: tr("Créez un RDV à tout moment","Create an appointment anytime"), texte: tr("Ce bouton ouvre directement un nouveau rendez-vous, depuis n'importe quel écran.","This button opens a new appointment straight away, from any screen.") },
+    { cible: tel ? "#bn-agenda" : "#onglet-agenda", titre: tr("Vos clients sont prévenus","Your clients are kept informed"), texte: tr("S'il a un email, votre client reçoit une confirmation, puis un rappel 3 jours et 1 jour avant. Dans Mes RDV, le statut passe à « Confirmé » quand il répond.","If they have an email, your client gets a confirmation, then a reminder 3 days and 1 day before. In Appointments, the status switches to \"Confirmed\" when they reply.") },
+    { cible: null, titre: tr("C'est parti !","You're all set!"), texte: tr("Vous avez 10 RDV gratuits par mois. Créez votre premier rendez-vous en 30 secondes.","You have 10 free appointments a month. Create your first one in 30 seconds.") },
+  ];
+  const e = etapes[etape];
+  const dernier = etape === etapes.length - 1;
+
+  useEffect(() => {
+    const mesurer = () => {
+      setVw(window.innerWidth);
+      const el = e.cible ? document.querySelector(e.cible) : null;
+      if (!el) { setRect(null); return; }
+      const r = el.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > window.innerHeight) { el.scrollIntoView({ block: "center" }); }
+      const r2 = el.getBoundingClientRect();
+      setRect({ top: r2.top, left: r2.left, width: r2.width, height: r2.height });
+    };
+    mesurer();
+    const t = setTimeout(mesurer, 120);
+    window.addEventListener("resize", mesurer);
+    return () => { clearTimeout(t); window.removeEventListener("resize", mesurer); };
+  }, [etape, e.cible]);
+
+  useEffect(() => {
+    const echap = (ev) => { if (ev.key === "Escape") onFin(); };
+    window.addEventListener("keydown", echap);
+    return () => window.removeEventListener("keydown", echap);
+  }, [onFin]);
+
+  const marge = 8;
+  const largeurBulle = Math.min(380, window.innerWidth - 32);
+  let bulle = { left: (window.innerWidth - largeurBulle) / 2, top: Math.max(24, window.innerHeight / 2 - 140) };
+  if (rect) {
+    const enHaut = rect.top + rect.height / 2 < window.innerHeight / 2;
+    const left = Math.min(Math.max(16, rect.left + rect.width / 2 - largeurBulle / 2), window.innerWidth - largeurBulle - 16);
+    bulle = enHaut ? { left, top: rect.top + rect.height + marge + 14 } : { left, bottom: window.innerHeight - rect.top + marge + 14 };
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:500 }}>
+      {rect ? (
+        <div aria-hidden="true" style={{ position:"fixed", top:rect.top - marge, left:rect.left - marge, width:rect.width + marge*2, height:rect.height + marge*2, borderRadius:20, boxShadow:"0 0 0 9999px rgba(15,23,42,.62)", border:"3px solid #fff", transition:"all .3s ease", pointerEvents:"none" }} />
+      ) : (
+        <div aria-hidden="true" style={{ position:"fixed", inset:0, background:"rgba(15,23,42,.62)" }} />
+      )}
+      <div role="dialog" aria-modal="true" aria-labelledby="guide-titre" style={{ position:"fixed", width:largeurBulle, ...bulle, background:"#fff", borderRadius:20, padding:20, boxShadow:"0 20px 50px rgba(15,23,42,.3)", display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <span style={{ fontSize:12, fontWeight:800, color:"var(--accent)", textTransform:"uppercase", letterSpacing:"0.06em" }}>{tr(`Étape ${etape+1} sur ${etapes.length}`, `Step ${etape+1} of ${etapes.length}`)}</span>
+          <button onClick={onFin} style={{ border:"none", background:"none", fontSize:13, fontWeight:700, color:"var(--text2)", cursor:"pointer", padding:"8px 4px", minHeight:44 }}>{tr("Passer le guide","Skip the tour")}</button>
+        </div>
+        <h2 id="guide-titre" style={{ fontSize:19, fontWeight:800, letterSpacing:"-0.01em" }}>{e.titre}</h2>
+        <p style={{ fontSize:14, lineHeight:1.55, color:"#334155" }}>{e.texte}</p>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:6, gap:10 }}>
+          <div style={{ display:"flex", gap:6 }} aria-hidden="true">
+            {etapes.map((_, k) => <span key={k} style={{ width: k===etape ? 22 : 8, height:8, borderRadius:999, background: k===etape ? "var(--accent)" : "#CBD5E1", transition:"all .2s" }} />)}
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            {etape > 0 && <button onClick={()=>setEtape(etape-1)} className="btn btn-outline btn-sm" style={{ minHeight:46 }}>{tr("Retour","Back")}</button>}
+            {dernier
+              ? <button autoFocus onClick={onCreer} className="btn btn-primary" style={{ minHeight:46, padding:"0 16px", whiteSpace:"nowrap" }}>{tr("Créer mon 1er RDV","Create my first one")}</button>
+              : <button autoFocus onClick={()=>setEtape(etape+1)} className="btn btn-primary" style={{ minHeight:46, padding:"0 22px" }}>{tr("Suivant","Next")}</button>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReponseRdvPage({ id, t }) {
   const [rdv, setRdv] = useState(null);
   const [etat, setEtat] = useState("chargement"); // chargement | pret | introuvable | erreur | confirme | annule | demande_annulation
@@ -2863,9 +3032,9 @@ function ReponseRdvPage({ id, t }) {
   );
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f0f4f8", display:"flex", alignItems:"center", justifyContent:"center", padding:16, fontFamily:"system-ui, -apple-system, sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:"#F5F6F8", display:"flex", alignItems:"center", justifyContent:"center", padding:16, fontFamily:"system-ui, -apple-system, sans-serif" }}>
       <div style={{ background:"#fff", borderRadius:16, padding:"28px 22px", width:"100%", maxWidth:420, boxShadow:"0 8px 30px rgba(15,35,64,.08)" }}>
-        <div style={{ fontWeight:800, color:"#1e3a5f", fontSize:16, marginBottom:20 }}>📞 CallRDV</div>
+        <div style={{ fontWeight:800, color:"#2450E6", fontSize:16, marginBottom:20 }}>📞 CallRDV</div>
         {etat === "chargement" && msg("⏳", L("Chargement…","Loading…"))}
         {etat === "introuvable" && msg("🔍", L("Lien non valide","Invalid link"), L("Ce rendez-vous n'existe plus ou le lien est incomplet. Contactez directement votre professionnel.","This appointment no longer exists or the link is incomplete. Please contact your professional directly."))}
         {etat === "erreur" && msg("⚠️", L("Une erreur est survenue","Something went wrong"), L("Réessayez dans quelques instants, ou contactez directement votre professionnel.","Please try again in a moment, or contact your professional directly."))}
@@ -2900,7 +3069,7 @@ function ReponseRdvPage({ id, t }) {
               ))}
           </>
         )}
-        <div style={{ marginTop:22, fontSize:11, color:"#94a3b8", textAlign:"center" }}>{L("Rappel envoyé via CallRDV — callrdv.com","Reminder sent via CallRDV — callrdv.com")}</div>
+        <div style={{ marginTop:22, fontSize:11, color:"#64748B", textAlign:"center" }}>{L("Rappel envoyé via CallRDV — callrdv.com","Reminder sent via CallRDV — callrdv.com")}</div>
       </div>
     </div>
   );
@@ -2963,6 +3132,19 @@ export default function App() {
     });
   }, []);
 
+  // Guide de première connexion (une fois par appareil, peut être revu depuis les Réglages)
+  const [guide, setGuide] = useState(false);
+  const guideLance = useRef(false);
+  const guideVu = () => { try { return localStorage.getItem("callrdv_guide_vu") === "1"; } catch { return true; } };
+  const finirGuide = () => { try { localStorage.setItem("callrdv_guide_vu", "1"); } catch {} setGuide(false); };
+
+  // Navigation entre les écrans principaux
+  const ongletActif = showAgenda ? "agenda" : showPatients ? "patients" : showStats ? "stats" : "home";
+  const allerA = (tab) => {
+    setShowAgenda(tab === "agenda"); setShowPatients(tab === "patients"); setShowStats(tab === "stats");
+    window.scrollTo(0, 0);
+  };
+
   // Petit message en bas de l'écran (ex : « Email envoyé au client »)
   const [toast, setToast] = useState("");
   const montrerToast = (txt) => { setToast(txt); setTimeout(() => setToast(""), 5000); };
@@ -2994,6 +3176,14 @@ export default function App() {
     setPhase("form");
     window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    if (guideLance.current || !user || showMetierSetup || recoveryToken || stripeSuccess) return;
+    if (phase !== "idle" || showAgenda || showPatients || showStats || guideVu()) return;
+    // petit délai : laisse la fenêtre "métier" s'afficher d'abord si c'est un nouveau compte
+    const t = setTimeout(() => { guideLance.current = true; setGuide(true); }, 900);
+    return () => clearTimeout(t);
+  }, [user, showMetierSetup, recoveryToken, stripeSuccess, phase, showAgenda, showPatients, showStats]);
 
   const handleDeleteRdv = async (id) => {
     if (!window.confirm(tr("Supprimer ce rendez-vous ?","Delete this appointment?"))) return;
@@ -3226,42 +3416,50 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} />}
+      {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} onRevoirGuide={()=>{ setShowSettings(false); allerA("home"); setPhase("idle"); setTimeout(()=>setGuide(true), 250); }} />}
       {showPricing && <PricingModal currentPlan={user.plan} onUpgrade={handleUpgrade} onClose={()=>setPrice(false)} />}
+      {guide && <GuideBienvenue onFin={finirGuide} onCreer={()=>{ finirGuide(); ouvrirFormulaire(); }} />}
       {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} onEdit={setEditingRdv} onDelete={handleDeleteRdv} onUpdateStatut={handleUpdateStatut} />}
 
-      <div style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'Inter',sans-serif", color:"var(--text)", display:"flex", flexDirection:"column", transition:"background .3s,color .3s" }}>
+      <div className="app-root" style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif", color:"var(--text)", display:"flex", flexDirection:"column", transition:"background .3s,color .3s" }}>
 
         {/* NAV */}
-        <nav className="app-nav" style={{ padding:"14px 24px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:32, height:32, background:"#1e3a5f", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>📞</div>
-            <span className="app-nav-name" style={{ fontWeight:800, fontSize:16 }}>CallRDV</span>
-          </div>
-          <div className="app-nav-right" style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"6px 14px", fontSize:11, color:"#94a3b8", fontFamily:"DM Mono" }}>
-              {plan.quota===Infinity ? tr("✨ Illimité","✨ Unlimited") : tr(`${plan.quota-(user.usage||0)} RDV restants`, `${plan.quota-(user.usage||0)} left`)}
-            </div>
-            <div onClick={()=>setPrice(true)} style={{ background:"#fff", border:`1px solid ${plan.color}40`, borderRadius:10, padding:"6px 14px", fontSize:11, color:plan.color, fontFamily:"DM Mono", cursor:"pointer", fontWeight:700 }}>
-              {tr(plan.name, plan.nameEn).toUpperCase()}{user.plan==="free"&&<span style={{ color:"#1e3a5f", marginLeft:6 }}>↑</span>}
-            </div>
-            <button onClick={()=>setShowSettings(true)} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title={tr("Paramètres","Settings")}>⚙️</button>
-            <button onClick={signOut} style={{ background:"none", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:14 }} title={tr("Se déconnecter","Log out")}>
-              ↪️
+        <nav className="app-nav" style={{ padding:"12px 24px", background:"#fff", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+          <button onClick={()=>allerA("home")} style={{ display:"flex", alignItems:"center", gap:10, background:"none", border:"none", cursor:"pointer", padding:0, color:"var(--text)" }} aria-label={tr("Accueil","Home")}>
+            <span style={{ width:36, height:36, background:"var(--accent)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="phone" size={18} color="#fff" /></span>
+            <span style={{ fontWeight:800, fontSize:18, letterSpacing:"-0.02em" }}>CallRDV</span>
+          </button>
+          <div className="app-nav-right" style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <button onClick={()=>setPrice(true)} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:999, padding:"7px 12px", fontSize:12, fontWeight:700, color: plan.quota===Infinity ? "#15803D" : "var(--text2)", cursor:"pointer", whiteSpace:"nowrap" }}>
+              {plan.quota===Infinity ? "Pro" : tr(`${Math.max(0,plan.quota-(user.usage||0))} RDV restants`, `${Math.max(0,plan.quota-(user.usage||0))} left`)}
+              {user.plan==="free" && <span style={{ color:"var(--accent)", marginLeft:6 }}>{tr("· Passer Pro","· Go Pro")}</span>}
             </button>
-            <div style={{ width:28, height:28, background:"#1e3a5f", color:"#fff", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700 }}>{user.name?.[0]?.toUpperCase()||"?"}</div>
+            <button className="hide-phone" onClick={()=>setShowSettings(true)} title={tr("Paramètres","Settings")} aria-label={tr("Paramètres","Settings")} style={{ width:40, height:40, background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text)" }}><Icon name="settings" size={18} /></button>
+            <button onClick={signOut} title={tr("Se déconnecter","Log out")} aria-label={tr("Se déconnecter","Log out")} style={{ width:40, height:40, background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text)" }}><Icon name="logout" size={18} /></button>
           </div>
         </nav>
 
-        {/* Onglets */}
-        <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", display:"flex", gap:0 }}>
-          {[["🏠",tr("Accueil","Home"),"home"],["📅",tr("Mes RDV","Appointments"),"agenda"],["👥",tr("Clients","Clients"),"patients"],...(appointments.length >= 5 ? [["📊",tr("Stats","Stats"),"stats"]] : [])].map(([icon,label,tab]) => (
-            <button key={tab} onClick={()=>{ setShowAgenda(tab==="agenda"); setShowPatients(tab==="patients"); setShowStats(tab==="stats"); if(tab==="home"){ setShowAgenda(false); setShowPatients(false); setShowStats(false); } }}
-              style={{ padding:"12px 28px", fontSize:14, fontWeight:600, fontFamily:"Inter,sans-serif", border:"none", cursor:"pointer", background:"transparent", borderBottom:(tab==="home"&&!showAgenda&&!showPatients&&!showStats)||(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)?"3px solid #1e3a5f":"3px solid transparent", color:(tab==="home"&&!showAgenda&&!showPatients&&!showStats)||(tab==="agenda"&&showAgenda)||(tab==="patients"&&showPatients)||(tab==="stats"&&showStats)?"#1e3a5f":"#94a3b8", display:"flex", alignItems:"center", gap:8, transition:"all .2s" }}>
-              {icon} {label}
+        {/* Onglets (ordinateur) */}
+        <div className="app-tabs">
+          {[["home","home",tr("Accueil","Home")],["agenda","calendar",tr("Mes RDV","Appointments")],["patients","users",tr("Clients","Clients")],...(appointments.length >= 5 ? [["stats","chart",tr("Statistiques","Stats")]] : [])].map(([tab,icone,label]) => (
+            <button key={tab} id={`onglet-${tab}`} onClick={()=>allerA(tab)} className={`app-tab ${ongletActif===tab ? "app-tab-on" : ""}`}>
+              <Icon name={icone} size={18} /> {label}
             </button>
           ))}
+          <div style={{ flex:1 }} />
+          <button id="btn-nouveau-pc" className="btn btn-primary btn-sm" onClick={()=>ouvrirFormulaire()} style={{ alignSelf:"center" }}>
+            <Icon name="plus" size={16} stroke={2.6} /> {tr("Nouveau RDV","New appointment")}
+          </button>
         </div>
+
+        {/* Barre d'onglets du bas (téléphone) */}
+        <nav className="bottom-nav" aria-label={tr("Navigation principale","Main navigation")}>
+          <button id="bn-home" className={`bn-item ${ongletActif==="home" ? "bn-on" : ""}`} onClick={()=>allerA("home")}><Icon name="home" size={22} />{tr("Accueil","Home")}</button>
+          <button id="bn-agenda" className={`bn-item ${ongletActif==="agenda" ? "bn-on" : ""}`} onClick={()=>allerA("agenda")}><Icon name="calendar" size={22} />{tr("Mes RDV","Appts")}</button>
+          <div style={{ display:"flex", justifyContent:"center" }}><button id="bn-plus" className="bn-plus" onClick={()=>ouvrirFormulaire()} aria-label={tr("Nouveau rendez-vous","New appointment")}><Icon name="plus" size={26} color="#fff" stroke={2.6} /></button></div>
+          <button id="bn-patients" className={`bn-item ${ongletActif==="patients" ? "bn-on" : ""}`} onClick={()=>allerA("patients")}><Icon name="users" size={22} />{tr("Clients","Clients")}</button>
+          <button id="bn-reglages" className="bn-item" onClick={()=>setShowSettings(true)}><Icon name="settings" size={22} />{tr("Réglages","Settings")}</button>
+        </nav>
 
         <div className={!showAgenda && !showPatients && !showStats ? "app-body app-body-home" : "app-body"} style={{ display:"flex", flex:1, overflow:"hidden" }}>
 
@@ -3289,20 +3487,20 @@ export default function App() {
                     <button key={v} onClick={async()=>{
                       await updateUser({ metier: v });
                       setShowMetierSetup(false);
-                      if (v !== "autre" && canAdd) {
+                      if (v !== "autre" && canAdd && guideVu()) {
                         window.__prefillCategorie = v;
                         setPhase("form");
                       }
                     }} style={{ padding:"16px 12px", background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:12, cursor:"pointer", textAlign:"left", transition:"all .2s" }}>
                       <div style={{ fontWeight:700, fontSize:14, color:"#1e293b", marginBottom:4 }}>{l}</div>
-                      <div style={{ fontSize:11, color:"#94a3b8" }}>{d}</div>
+                      <div style={{ fontSize:11, color:"#64748B" }}>{d}</div>
                     </button>
                   ))}
                 </div>
                 <button onClick={async()=>{
                   await updateUser({ metier: "autre" });
                   setShowMetierSetup(false);
-                }} style={{ marginTop:16, width:"100%", background:"none", border:"none", color:"#94a3b8", fontSize:12, cursor:"pointer", textDecoration:"underline" }}>
+                }} style={{ marginTop:16, width:"100%", background:"none", border:"none", color:"#64748B", fontSize:12, cursor:"pointer", textDecoration:"underline" }}>
                   {tr("Passer pour l'instant","Skip for now")}
                 </button>
               </div>
@@ -3338,6 +3536,7 @@ export default function App() {
           {/* Bouton flottant + nouveau RDV (caché sur l'accueil pour ne pas dupliquer la barre de recherche) */}
           {user && !showMetierSetup && !stripeSuccess && !editingRdv && phase === "idle" && (showAgenda || showPatients || showStats) && (
             <button
+              className="fab-desktop"
               onClick={()=>ouvrirFormulaire()}
               style={{
                 position:"fixed",
@@ -3346,13 +3545,13 @@ export default function App() {
                 width:60,
                 height:60,
                 borderRadius:"50%",
-                background: canAdd ? "#1e3a5f" : "#94a3b8",
+                background: canAdd ? "#2450E6" : "#94a3b8",
                 color:"#fff",
                 border:"none",
                 fontSize:28,
                 fontWeight:700,
                 cursor: canAdd ? "pointer" : "not-allowed",
-                boxShadow:"0 8px 24px rgba(30,58,95,0.4)",
+                boxShadow:"0 8px 24px rgba(36,80,230,0.35)",
                 zIndex:50,
                 display:"flex",
                 alignItems:"center",
@@ -3368,15 +3567,15 @@ export default function App() {
           {editingRdv && (
             <div style={{ position:"fixed", inset:0, background:"#00000050", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:24, overflowY:"auto" }}>
               <div className="card fade-up" style={{ width:"100%", maxWidth:500, padding:32, maxHeight:"90vh", overflowY:"auto" }}>
-                <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("✏️ Modifier le rendez-vous","✏️ Edit appointment")}</div>
+                <div style={{ fontWeight:800, fontSize:18, marginBottom:20 }}>{tr("Modifier le rendez-vous","Edit appointment")}</div>
                 {[
-                  { key:"titre", label:tr("TITRE","TITLE"), type:"text" },
-                  { key:"personne", label:tr("CONTACT / PERSONNE","CONTACT / PERSON"), type:"text" },
-                  { key:"date", label:"DATE", type:"date" },
-                  { key:"heure", label:tr("HEURE","TIME"), type:"time" },
-                  { key:"client_email", label:tr("EMAIL DU CLIENT (RAPPEL)","CLIENT EMAIL (REMINDER)"), type:"email" },
-                  { key:"lieu", label:tr("LIEU","PLACE"), type:"text" },
-                  { key:"adresse", label:tr("ADRESSE","ADDRESS"), type:"text" },
+                  { key:"titre", label:tr("Titre","Title"), type:"text" },
+                  { key:"personne", label:tr("Contact / personne","Contact / person"), type:"text" },
+                  { key:"date", label:tr("Date","Date"), type:"date" },
+                  { key:"heure", label:tr("Heure","Time"), type:"time" },
+                  { key:"client_email", label:tr("Email du client (rappel)","Client email (reminder)"), type:"email" },
+                  { key:"lieu", label:tr("Lieu","Place"), type:"text" },
+                  { key:"adresse", label:tr("Adresse","Address"), type:"text" },
                 ].map(f => (
                   <div key={f.key} style={{ marginBottom:14 }}>
                     <div className="field-label">{f.label}</div>
@@ -3384,7 +3583,7 @@ export default function App() {
                   </div>
                 ))}
                 <div style={{ marginBottom:14 }}>
-                  <div className="field-label">{tr("STATUT","STATUS")}</div>
+                  <div className="field-label">{tr("Statut","Status")}</div>
                   <select id="edit-rdv-statut" defaultValue={editingRdv.statut||"en_attente"} style={{ width:"100%", padding:"10px 14px", borderRadius:8, border:"1px solid #e2e8f0", fontSize:14 }}>
                     <option value="en_attente">{tr("⏳ En attente","⏳ Pending")}</option>
                     <option value="confirme">{tr("✅ Confirmé","✅ Confirmed")}</option>
@@ -3393,7 +3592,7 @@ export default function App() {
                   </select>
                 </div>
                 <div style={{ marginBottom:20 }}>
-                  <div className="field-label">NOTES</div>
+                  <div className="field-label">Notes</div>
                   <textarea rows={3} defaultValue={editingRdv.notes||""} id="edit-rdv-notes" />
                 </div>
                 <div style={{ display:"flex", gap:10 }}>
@@ -3449,113 +3648,85 @@ export default function App() {
           )}
 
           {/* MAIN */}
-          {!showAgenda && !showPatients && !showStats && <div className="app-main" style={{ flex:1, padding:"28px", overflowY:"auto", borderRight:"1px solid #e2e8f0" }}>
+          {!showAgenda && !showPatients && !showStats && <div className="app-main" style={{ flex:1, padding:"28px", overflowY:"auto" }}>
 
             {/* IDLE */}
             {phase==="idle" && (
               <div className="fade-up">
 
-                {/* Welcome screen pour nouveau utilisateur */}
-                {showOnboarding && (
-                  <div style={{ marginBottom:28 }}>
-                    <div style={{ background:"linear-gradient(135deg, #1e3a5f, #2d5a8e)", borderRadius:20, padding:32, color:"#fff", marginBottom:20, position:"relative", overflow:"hidden" }}>
-                      <div style={{ position:"absolute", right:-20, top:-20, fontSize:120, opacity:0.08 }}>📞</div>
-                      <div style={{ fontSize:13, opacity:0.7, marginBottom:8, fontFamily:"DM Mono" }}>{tr("BIENVENUE 👋","WELCOME 👋")}</div>
-                      <div style={{ fontSize:24, fontWeight:800, marginBottom:8 }}>{tr("Bonjour","Hello")} {user.name?.split(" ")[0] || "!"} </div>
-                      <div style={{ fontSize:14, opacity:0.8, lineHeight:1.7 }}>
-                        {tr(<>Votre espace CallRDV est prêt.<br/>Créez votre premier rendez-vous en quelques secondes.</>, <>Your CallRDV space is ready.<br/>Create your first appointment in seconds.</>)}
-                      </div>
-                      <button
-                        onClick={()=>{ if(canAdd) setPhase("form"); setDismissOnboarding(true); }}
-                        style={{ marginTop:20, background:"#fff", color:"#1e3a5f", border:"none", borderRadius:10, padding:"12px 24px", fontWeight:700, fontSize:14, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8 }}>
-                        {tr("➕ Créer mon premier RDV","➕ Create my first appointment")}
-                      </button>
-                    </div>
-
-                    <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:8 }}>
-                      {[
-                        { step:"1️⃣", title:tr("Cherchez votre client","Find your client"), desc:tr("Tapez son nom dans la barre de recherche","Type their name in the search bar") },
-                        { step:"2️⃣", title:tr("Remplissez la fiche","Fill in the form"), desc:tr("Date, heure, lieu et infos spécifiques","Date, time, place and specific details") },
-                        { step:"3️⃣", title:tr("C'est confirmé !","It's confirmed!"), desc:tr("Rappels automatiques envoyés par email","Automatic email reminders") },
-                      ].map(({step,title,desc}) => (
-                        <div key={step} className="card" style={{ padding:16, textAlign:"center" }}>
-                          <div style={{ fontSize:28, marginBottom:8 }}>{step}</div>
-                          <div style={{ fontWeight:700, fontSize:13, marginBottom:6 }}>{title}</div>
-                          <div style={{ fontSize:12, color:"var(--text2)", lineHeight:1.5 }}>{desc}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {saved && (
-                  <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:12, padding:"14px 18px", marginBottom:20, display:"flex", alignItems:"center", gap:12, animation:"slideIn .4s ease" }}>
-                    <span style={{ fontSize:20 }}>✅</span>
+                  <div role="status" style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:16, padding:"14px 16px", marginBottom:18, display:"flex", alignItems:"center", gap:12, animation:"slideIn .4s ease" }}>
+                    <span style={{ width:36, height:36, borderRadius:"50%", background:"#16A34A", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="check" size={18} color="#fff" stroke={2.6} /></span>
                     <div>
-                      <div style={{ fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:2 }}>{tr("RDV enregistré avec succès !","Appointment saved!")}</div>
-                      <div style={{ fontSize:11, color:"#0369a1", fontFamily:"DM Mono" }}>{tr("Retrouvez-le dans votre agenda.","You'll find it in your calendar.")}</div>
+                      <div style={{ fontSize:14, fontWeight:800, color:"#15803D" }}>{tr("RDV enregistré avec succès !","Appointment saved!")}</div>
+                      <div style={{ fontSize:13, color:"#166534" }}>{tr("Retrouvez-le dans Mes RDV.","You'll find it in Appointments.")}</div>
                     </div>
                   </div>
                 )}
 
-                <h1 style={{ fontSize:24, fontWeight:800, letterSpacing:"-0.03em", lineHeight:1.2, marginBottom:8 }}>
-                  {tr("Bonjour","Hello")} {user.name||""} 👋
+                <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.02em", lineHeight:1.2 }}>
+                  {tr("Bonjour","Hello")} {(user.name||"").split(" ")[0]}
                 </h1>
-                <p style={{ color:"#94a3b8", fontSize:13, marginBottom:24, lineHeight:1.6 }}>
-                  {tr("Tapez le nom d'un client ci-dessous pour créer un RDV.","Type a client's name below to create an appointment.")}
+                <p style={{ color:"var(--text2)", fontSize:14, margin:"4px 0 20px" }}>
+                  {(s => s.charAt(0).toUpperCase() + s.slice(1))(new Date().toLocaleDateString(locale(), { weekday:"long", day:"numeric", month:"long" }))}
+                  {(() => { const n = appointments.filter(r => (r.date||"") >= isoLocal(new Date()) && r.statut !== "annule").length; return <span> · {n} {tr("RDV à venir", n>1?"upcoming appointments":"upcoming appointment")}</span>; })()}
                 </p>
 
                 {!canAdd && (
-                  <div style={{ background:"#fff5f5", border:"1px solid #ff6b6b30", borderRadius:14, padding:18, marginBottom:18 }}>
-                    <div style={{ fontWeight:700, color:"#ff6b6b", marginBottom:6 }}>{tr("Quota mensuel atteint","Monthly limit reached")}</div>
-                    <div style={{ fontSize:13, color:"#7a4a4a", marginBottom:12 }}>{tr(`Vous avez utilisé vos ${plan.quota} RDV gratuits ce mois.`, `You have used your ${plan.quota} free appointments this month.`)}</div>
+                  <div style={{ background:"#FFF7ED", border:"1px solid #FED7AA", borderRadius:16, padding:18, marginBottom:18 }}>
+                    <div style={{ fontWeight:800, color:"#9A3412", marginBottom:6 }}>{tr("Quota mensuel atteint","Monthly limit reached")}</div>
+                    <div style={{ fontSize:14, color:"#7C2D12", marginBottom:12 }}>{tr(`Vous avez utilisé vos ${plan.quota} RDV gratuits ce mois.`, `You have used your ${plan.quota} free appointments this month.`)}</div>
                     <button className="btn btn-primary btn-sm" onClick={()=>setPrice(true)}>{tr("Passer en Pro — 20€/mois","Go Pro — €20/month")}</button>
                   </div>
                 )}
 
                 {/* Recherche client */}
-                <div style={{ marginTop:8 }}>
-                  <div className="field-label" style={{ marginBottom:8 }}>{tr("NOUVEAU RDV — RECHERCHER LE CLIENT","NEW APPOINTMENT — FIND THE CLIENT")}</div>
-                  <div style={{ position:"relative" }}>
-                    <input
-                      placeholder={tr("Tapez le nom du client...","Type the client's name...")}
-                      id="search-client"
-                      autoComplete="off"
-                      onChange={e => {
-                        const val = e.target.value;
-                        const box = document.getElementById("search-suggestions");
-                        if (!val.trim()) { box.style.display="none"; return; }
-                        const matches = window.__patients?.filter(p => p.nom.toLowerCase().includes(val.toLowerCase())) || [];
-                        if (matches.length > 0) {
-                          const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-                          box.innerHTML = matches.map(p => `<div onclick="window.__selectPatient('${esc(p.id)}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='#fff'">${esc(p.nom)}${p.telephone ? ` · ${esc(p.telephone)}` : ""}</div>`).join("");
-                          box.style.display = "block";
-                        } else {
-                          box.innerHTML = `<div style="padding:10px 14px;font-size:13px;color:#94a3b8;">${tr("Nouveau client — fiche vierge","New client — blank form")}</div>`;
-                          box.style.display = "block";
-                        }
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && canAdd) {
-                          const val = e.target.value.trim();
-                          if (val) { window.__startWithName(val); }
-                        }
-                      }}
-                      style={{ paddingRight:50, fontSize:15, padding:"15px 50px 15px 16px" }}
-                    />
+                <div id="carte-recherche" className="card" style={{ padding:16 }}>
+                  <label htmlFor="search-client" className="field-label" style={{ display:"block", marginBottom:10 }}>{tr("Nouveau rendez-vous","New appointment")}</label>
+                  <div style={{ position:"relative", display:"flex", gap:8 }}>
+                    <div style={{ position:"relative", flex:1 }}>
+                      <Icon name="search" size={18} color="#64748B" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
+                      <input
+                        placeholder={tr("Nom du client…","Client's name…")}
+                        id="search-client"
+                        autoComplete="off"
+                        onChange={e => {
+                          const val = e.target.value;
+                          const box = document.getElementById("search-suggestions");
+                          if (!val.trim()) { box.style.display="none"; return; }
+                          const matches = window.__patients?.filter(p => p.nom.toLowerCase().includes(val.toLowerCase())) || [];
+                          if (matches.length > 0) {
+                            const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+                            box.innerHTML = matches.slice(0, 8).map(p => `<div onclick="window.__selectPatient('${esc(p.id)}')" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid #F1F5F9;font-size:14px;font-weight:700;color:#0F172A" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='#fff'">${esc(p.nom)}${p.telephone ? `<span style="font-weight:500;color:#475569"> · ${esc(p.telephone)}</span>` : ""}</div>`).join("");
+                            box.style.display = "block";
+                          } else {
+                            box.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#475569;">${tr("Nouveau client — appuyez sur → pour créer sa fiche","New client — press → to create their record")}</div>`;
+                            box.style.display = "block";
+                          }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && canAdd) {
+                            const val = e.target.value.trim();
+                            if (val) { window.__startWithName(val); }
+                          }
+                        }}
+                        style={{ paddingLeft:42, fontSize:16, height:52, background:"#F5F6F8" }}
+                      />
+                      <div id="search-suggestions" style={{ display:"none", position:"absolute", top:"calc(100% + 6px)", left:0, right:0, background:"#fff", border:"1px solid #E2E8F0", borderRadius:14, zIndex:100, boxShadow:"0 12px 30px rgba(15,23,42,.12)", overflow:"hidden" }}></div>
+                    </div>
                     <button
                       onClick={() => {
                         const val = document.getElementById("search-client").value.trim();
-                        if (val && canAdd) window.__startWithName(val);
+                        if (canAdd) { if (val) window.__startWithName(val); else ouvrirFormulaire(); }
                       }}
                       disabled={!canAdd}
-                      style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"#1e3a5f", border:"none", borderRadius:8, padding:"8px 14px", cursor:"pointer", color:"#fff", fontSize:13, fontWeight:600 }}>
-                      ➜
+                      aria-label={tr("Créer le RDV","Create appointment")}
+                      style={{ width:52, height:52, flexShrink:0, background:"var(--accent)", border:"none", borderRadius:14, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", opacity: canAdd ? 1 : .4 }}>
+                      <Icon name="arrow" size={20} color="#fff" stroke={2.4} />
                     </button>
-                    <div id="search-suggestions" style={{ display:"none", position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1px solid #e2e8f0", borderRadius:"0 0 10px 10px", zIndex:100, boxShadow:"0 4px 16px #00000010" }}></div>
                   </div>
-                  <div style={{ fontSize:11, color:"#94a3b8", marginTop:8, fontFamily:"DM Mono" }}>
-                    {tr("Appuyez sur Entrée ou → pour ouvrir la fiche RDV","Press Enter or → to open the appointment form")}
+                  <div style={{ fontSize:13, color:"var(--text2)", marginTop:10 }}>
+                    {tr("Pendant l'appel : tapez le nom, la fiche s'ouvre.","During the call: type the name, the form opens.")}
                   </div>
                 </div>
               </div>
@@ -3570,13 +3741,13 @@ export default function App() {
                     <div style={{ position:"absolute", inset:-12, borderRadius:"50%", border:"2px solid #ff4444", animation:"ring 1.5s ease-out infinite" }}></div>
                     <div style={{ position:"absolute", inset:-24, borderRadius:"50%", border:"2px solid #ff444460", animation:"ring 1.5s ease-out .5s infinite" }}></div>
                   </div>
-                  <div style={{ fontFamily:"DM Mono", fontSize:32, color:"#ff4444", fontWeight:"bold", marginBottom:4 }}>{fmt(recordTime)}</div>
-                  <div style={{ fontSize:14, color:"#94a3b8" }}>{tr("Appel en cours","Call in progress")} <span style={{ animation:"blink 1s infinite", display:"inline-block" }}>●</span></div>
+                  <div style={{ fontFamily:"inherit", fontSize:32, color:"#ff4444", fontWeight:"bold", marginBottom:4 }}>{fmt(recordTime)}</div>
+                  <div style={{ fontSize:14, color:"#64748B" }}>{tr("Appel en cours","Call in progress")} <span style={{ animation:"blink 1s infinite", display:"inline-block" }}>●</span></div>
                 </div>
 
                 <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:16, padding:20, marginBottom:28, textAlign:"left" }}>
-                  <div style={{ fontSize:12, color:"#94a3b8", fontFamily:"DM Mono", lineHeight:1.7 }}>
-                    {tr(<>Passez votre appel normalement.<br/>Quand vous raccrochez, <span style={{ color:"#1e3a5f", fontWeight:700 }}>la fiche RDV s'ouvre</span> pour que vous puissiez saisir les détails immédiatement.</>, <>Make your call as usual.<br/>When you hang up, <span style={{ color:"#1e3a5f", fontWeight:700 }}>the appointment form opens</span> so you can fill in the details right away.</>)}
+                  <div style={{ fontSize:12, color:"#64748B", fontFamily:"inherit", lineHeight:1.7 }}>
+                    {tr(<>Passez votre appel normalement.<br/>Quand vous raccrochez, <span style={{ color:"#2450E6", fontWeight:700 }}>la fiche RDV s'ouvre</span> pour que vous puissiez saisir les détails immédiatement.</>, <>Make your call as usual.<br/>When you hang up, <span style={{ color:"#2450E6", fontWeight:700 }}>the appointment form opens</span> so you can fill in the details right away.</>)}
                   </div>
                 </div>
 
@@ -3599,53 +3770,62 @@ export default function App() {
             )}
           </div>}
 
-          {/* SIDEBAR AGENDA */}
+          {/* PROCHAINS RDV */}
           {showPatients || showAgenda || showStats ? null : (
-          <div className="app-side" style={{ width:290, padding:"24px 18px", overflowY:"auto" }}>
-            <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:18 }}>
-              {tr("MON AGENDA","MY CALENDAR")} ({appointments.length})
-            </div>
-
-            {appointments.length===0 ? (
-              <div style={{ textAlign:"center", padding:"40px 0" }}>
-                <div style={{ fontSize:36, marginBottom:10 }}>📅</div>
-                <div style={{ color:"#cbd5e1", fontSize:12, fontFamily:"DM Mono" }}>{tr("Aucun RDV enregistré","No appointments yet")}</div>
-              </div>
-            ) : appointments.map((rdv,i)=>(
-              <div key={i} style={{ background:"#f0fdf4", border:"1px solid #bae6fd", borderRadius:14, padding:14, marginBottom:10 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                  <div style={{ fontWeight:700, fontSize:13, lineHeight:1.3 }}>{rdv.titre||tr("Rendez-vous","Appointment")}</div>
-                  <button onClick={()=>setCalRdv(rdv)} title={tr("Ajouter au calendrier","Add to calendar")}
-                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, opacity:.7, flexShrink:0 }}>📅</button>
-                </div>
-                <div style={{ fontSize:12, color:"#0284c7", marginBottom:4 }}>{rdv.personne}</div>
-                <div style={{ fontSize:12, color:"#0369a1", marginBottom:4 }}>
-                  {fmtRdv(rdv.date, rdv.heure)}
-                </div>
-                {rdv.lieu && <div style={{ fontSize:11, color:"#0284c7", fontFamily:"DM Mono", marginBottom:2 }}>{rdv.lieu}</div>}
-                {rdv.adresse && <div style={{ fontSize:11, color:"#1a4a1a", fontFamily:"DM Mono" }}>{rdv.adresse}</div>}
-                {rdv.notes && <div style={{ fontSize:11, color:"#3a5a3a", marginTop:6, borderTop:"1px solid #bae6fd", paddingTop:6 }}>{rdv.notes}</div>}
-                <div style={{ fontSize:10, color:"#bae6fd", fontFamily:"DM Mono", marginTop:8 }}>{tr("Ajouté à","Added at")} {rdv.confirmedAt}</div>
-              </div>
-            ))}
-
-            {/* Stats */}
-            <div style={{ marginTop:16, borderTop:"1px solid #e2e8f0", paddingTop:16 }}>
-              <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"DM Mono", letterSpacing:"0.1em", marginBottom:10 }}>{tr("STATISTIQUES","STATISTICS")}</div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
-                {[{ label:tr("RDV au total","Total appointments"), value:appointments.length },{ label:tr("RDV créés ce mois","Created this month"), value:user.usage||0 }].map(({label,value})=>(
-                  <div key={label} style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"12px" }}>
-                    <div style={{ fontWeight:800, fontSize:22, color:"#1e3a5f" }}>{value}</div>
-                    <div style={{ fontSize:10, color:"#94a3b8", fontFamily:"DM Mono", marginTop:2 }}>{label}</div>
+          <div className="app-side" style={{ width:360, padding:"28px 24px", overflowY:"auto" }}>
+            {(() => {
+              const today = isoLocal(new Date());
+              const prochains = appointments
+                .filter(r => (r.date||"") >= today)
+                .sort((a,b) => `${a.date} ${a.heure||""}` > `${b.date} ${b.heure||""}` ? 1 : -1)
+                .slice(0, 5);
+              return (
+                <>
+                  <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:12 }}>
+                    <h2 style={{ fontSize:17, fontWeight:800 }}>{tr("Prochains rendez-vous","Upcoming appointments")}</h2>
+                    {appointments.length > 0 && <button onClick={()=>allerA("agenda")} style={{ background:"none", border:"none", color:"var(--accent)", fontWeight:700, fontSize:14, cursor:"pointer", padding:"8px 0" }}>{tr("Tout voir","See all")}</button>}
                   </div>
-                ))}
-              </div>
-              <div className="privacy-badge">
-                <span style={{ fontSize:14 }}>🔒</span>
-                <div style={{ fontSize:10, color:"#0369a1", fontFamily:"DM Mono", lineHeight:1.5 }}>
-                  {tr("Données hébergées en Europe. Aucun enregistrement vocal.","Data hosted in Europe. No voice recording.")}
+                  {prochains.length === 0 ? (
+                    <div className="card" style={{ textAlign:"center", padding:"28px 18px" }}>
+                      <span style={{ width:48, height:48, borderRadius:14, background:"var(--accent-soft)", display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}><Icon name="calendar" size={22} color="var(--accent)" /></span>
+                      <div style={{ fontWeight:700, fontSize:15, marginBottom:4 }}>{tr("Aucun RDV à venir","No upcoming appointments")}</div>
+                      <div style={{ fontSize:13, color:"var(--text2)" }}>{tr("Tapez le nom d'un client pour en créer un.","Type a client's name to create one.")}</div>
+                    </div>
+                  ) : prochains.map(rdv => {
+                    const d = new Date((rdv.date||"") + "T12:00:00");
+                    const jour = isNaN(d.getTime()) ? "" : d.toLocaleDateString(locale(), { weekday:"short" }).replace(".","");
+                    return (
+                      <button key={rdv.id} onClick={()=>setCalRdv(rdv)} className="card" style={{ width:"100%", textAlign:"left", padding:14, marginBottom:10, display:"flex", gap:14, alignItems:"center", cursor:"pointer", border:"none", font:"inherit", color:"inherit" }}>
+                        <span style={{ width:52, flexShrink:0, textAlign:"center", borderRadius:12, background:"var(--accent-soft)", padding:"8px 0" }}>
+                          <span style={{ display:"block", fontSize:11, fontWeight:700, color:"var(--accent)", textTransform:"uppercase" }}>{jour}</span>
+                          <span style={{ display:"block", fontSize:20, fontWeight:800, color:"var(--accent)", lineHeight:1.1 }}>{isNaN(d.getTime()) ? "?" : d.getDate()}</span>
+                        </span>
+                        <span style={{ flex:1, minWidth:0 }}>
+                          <span style={{ display:"block", fontSize:15, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.personne}</span>
+                          <span style={{ display:"block", fontSize:13, color:"var(--text2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.heure ? `${rdv.heure} · ` : ""}{rdv.titre||tr("Rendez-vous","Appointment")}</span>
+                        </span>
+                        <StatutPill statut={rdv.statut} />
+                      </button>
+                    );
+                  })}
+                </>
+              );
+            })()}
+
+            {/* Chiffres */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, margin:"18px 0 12px" }}>
+              {[{ label:tr("RDV au total","Total appointments"), value:appointments.length },{ label:tr("Créés ce mois","Created this month"), value:user.usage||0 }].map(({label,value})=>(
+                <div key={label} className="card" style={{ padding:14 }}>
+                  <div style={{ fontWeight:800, fontSize:22, color:"var(--accent)" }}>{value}</div>
+                  <div style={{ fontSize:12, color:"var(--text2)", marginTop:2 }}>{label}</div>
                 </div>
-              </div>
+              ))}
+            </div>
+            {appointments.length >= 5 && (
+              <button onClick={()=>allerA("stats")} className="btn btn-outline btn-sm" style={{ width:"100%", marginBottom:12 }}><Icon name="chart" size={16} /> {tr("Voir les statistiques","See statistics")}</button>
+            )}
+            <div style={{ display:"flex", gap:8, alignItems:"center", fontSize:12, color:"var(--text2)", padding:"4px 2px" }}>
+              <Icon name="check" size={14} color="#16A34A" /> {tr("Données hébergées en Europe. Aucun enregistrement vocal.","Data hosted in Europe. No voice recording.")}
             </div>
           </div>
           )}
