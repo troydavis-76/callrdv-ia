@@ -360,7 +360,8 @@ function useAuth() {
         push_enabled: profile.push_enabled || false,
         push_j1: profile.push_j1 !== false,
         push_j3: profile.push_j3 !== false,
-        push_confirm: profile.push_confirm !== false
+        push_confirm: profile.push_confirm !== false,
+        calendar_token: profile.calendar_token || null
       });
     }).catch(() => localStorage.removeItem("callrdv_session"));
     };
@@ -434,7 +435,7 @@ function useAuth() {
     if (!u?.id) return false;
     await delay(600);
     const profile = await sb.getProfile(tk, u.id);
-    setUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || u.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false });
+    setUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || u.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false, calendar_token: profile?.calendar_token || null });
     localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, refresh_token: refresh || null, userId: u.id, email: u.email }));
     if (u.email) localStorage.setItem("callrdv_email", u.email);
     return true;
@@ -796,6 +797,20 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
     const debut = new Date(`${rdv.date || isoLocal(new Date())}T${rdv.heure || "09:00"}:00`);
     const fin = new Date(debut.getTime() + 3600000);
     const z = (d) => d.toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
+    if (type==="apple") {
+      // Fichier .ics d'un seul RDV : l'iPhone et le Mac proposent de l'ajouter au calendrier
+      const e = (v) => String(v||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+      const local = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}00`;
+      const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//CallRDV//callrdv.com//FR","BEGIN:VEVENT",
+        `UID:${rdv.id}@callrdv.com`, `DTSTAMP:${z(new Date())}`, `DTSTART:${local(debut)}`, `DTEND:${local(fin)}`,
+        `SUMMARY:${e(`${rdv.personne||""} · ${rdv.titre||tr("Rendez-vous","Appointment")}`)}`,
+        ...(rdv.lieu||rdv.adresse ? [`LOCATION:${e([rdv.lieu, rdv.adresse].filter(Boolean).join(" — "))}`] : []),
+        `DESCRIPTION:${e(rdv.notes||"")}`, "END:VEVENT","END:VCALENDAR"].join("\r\n");
+      const url = URL.createObjectURL(new Blob([ics], { type:"text/calendar;charset=utf-8" }));
+      const a = document.createElement("a"); a.href = url; a.download = `rdv-${(rdv.personne||"callrdv").replace(/[^\w-]+/g,"-")}.ics`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      return;
+    }
     if (type==="google") window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${loc}&dates=${z(debut)}/${z(fin)}`,"_blank");
     else window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&location=${loc}&startdt=${debut.toISOString()}&enddt=${fin.toISOString()}`,"_blank");
   };
@@ -858,7 +873,8 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
             {tr("Ajouter à mon calendrier","Add to my calendar")}
           </summary>
           <div style={{ display:"flex", gap:8, marginTop:4 }}>
-            <button onClick={()=>exportTo("google")} style={btnAction}>Google Calendar</button>
+            <button onClick={()=>exportTo("apple")} style={btnAction}>Apple</button>
+            <button onClick={()=>exportTo("google")} style={btnAction}>Google</button>
             <button onClick={()=>exportTo("outlook")} style={btnAction}>Outlook</button>
           </div>
         </details>
@@ -1873,6 +1889,40 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide }) {
           <div className="field-label" style={{ marginBottom:0 }}>{tr("Langue","Language")}</div>
           <LangSwitch />
         </div>
+
+        {/* Synchroniser avec mon calendrier (abonnement .ics) */}
+        {user.calendar_token && (() => {
+          const lien = `${CONFIG.SUPABASE_URL}/functions/v1/calendrier/${user.calendar_token}.ics`;
+          const webcal = lien.replace(/^https:/, "webcal:");
+          const bouton = { display:"flex", alignItems:"center", justifyContent:"center", gap:8, minHeight:44, borderRadius:12, border:"1px solid var(--border)", background:"#fff", fontSize:13, fontWeight:700, color:"var(--text)", textDecoration:"none", cursor:"pointer", padding:"0 10px" };
+          return (
+            <div style={{ marginBottom:20, padding:16, borderRadius:14, background:"#F8FAFC", border:"1px solid var(--border)" }}>
+              <div className="field-label" style={{ marginBottom:4 }}>{tr("Synchroniser avec mon calendrier","Sync with my calendar")}</div>
+              <div style={{ fontSize:13, color:"var(--text2)", lineHeight:1.5, marginBottom:12 }}>
+                {tr("Vos RDV CallRDV apparaissent tout seuls dans votre calendrier. À faire une seule fois.","Your CallRDV appointments show up in your calendar automatically. You only do this once.")}
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3, minmax(0,1fr))", gap:8, marginBottom:8 }}>
+                <a href={webcal} style={bouton}>Apple</a>
+                <a href={`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}`} target="_blank" rel="noopener noreferrer" style={bouton}>Google</a>
+                <a href={`https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(lien)}&name=CallRDV`} target="_blank" rel="noopener noreferrer" style={bouton}>Outlook</a>
+              </div>
+              <button type="button" style={{ ...bouton, width:"100%" }} onClick={async () => {
+                try { await navigator.clipboard.writeText(lien); alert(tr("Lien copié. Collez-le dans votre calendrier (« Ajouter un calendrier » → « À partir d'une URL »).","Link copied. Paste it into your calendar (\"Add calendar\" → \"From URL\").")); }
+                catch { window.prompt(tr("Copiez ce lien :","Copy this link:"), lien); }
+              }}><Icon name="file" size={16} /> {tr("Copier mon lien","Copy my link")}</button>
+              <div style={{ fontSize:12, color:"var(--text2)", lineHeight:1.5, marginTop:10 }}>
+                {tr("Mise à jour : quelques minutes sur iPhone, jusqu'à plusieurs heures sur Google (c'est Google qui décide). Ce lien est personnel : ne le partagez pas.","Updates: a few minutes on iPhone, up to several hours on Google (Google decides). This link is personal: don't share it.")}
+              </div>
+              <button type="button" onClick={() => {
+                if (!window.confirm(tr("Créer un nouveau lien ? L'ancien ne marchera plus : il faudra rajouter le calendrier dans votre téléphone.","Create a new link? The old one will stop working: you will need to add the calendar again on your phone."))) return;
+                const nouveau = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : null;
+                if (nouveau) onSave({ calendar_token: nouveau });
+              }} style={{ background:"none", border:"none", color:"#B91C1C", fontSize:12, fontWeight:700, cursor:"pointer", padding:"8px 0 0" }}>
+                {tr("Changer mon lien (si je l'ai partagé par erreur)","Change my link (if I shared it by mistake)")}
+              </button>
+            </div>
+          );
+        })()}
 
         {onRevoirGuide && (
           <button onClick={onRevoirGuide} className="btn btn-outline btn-sm" style={{ width:"100%", marginBottom:20 }}>
