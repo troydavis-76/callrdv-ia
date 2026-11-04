@@ -307,7 +307,7 @@ function LangSwitch({ style }) {
     <div style={{ display:"inline-flex", border:"1px solid #e2e8f0", borderRadius:8, overflow:"hidden", background:"#fff", flexShrink:0, ...style }}>
       {["fr","en"].map(l => (
         <button key={l} onClick={() => setLang(l)} aria-label={l === "fr" ? "Français" : "English"}
-          style={{ padding:"6px 10px", fontSize:12, fontWeight:700, border:"none", cursor:"pointer", background: lang === l ? "#0f2340" : "transparent", color: lang === l ? "#fff" : "#64748b", fontFamily:"DM Mono, monospace" }}>
+          style={{ padding:"6px 10px", fontSize:12, fontWeight:700, border:"none", cursor:"pointer", background: lang === l ? "#2450E6" : "transparent", color: lang === l ? "#fff" : "#64748b", fontFamily:"inherit" }}>
           {l.toUpperCase()}
         </button>
       ))}
@@ -643,9 +643,9 @@ function AuthPage({ authHooks, initialMode }) {
       <LangSwitch style={{ position:"absolute", top:16, right:16 }} />
       <div style={{ width:"100%", maxWidth:420 }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <div style={{ width:56, height:56, background:"#2450E6", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, margin:"0 auto 14px" }}>📞</div>
+          <div style={{ width:56, height:56, background:"#2450E6", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><Icon name="phone" size={26} color="#fff" /></div>
           <div style={{ fontWeight:800, fontSize:28, color:"#1e293b", letterSpacing:"-0.03em" }}>CallRDV</div>
-          <div style={{ fontSize:12, color:"#64748B", fontFamily:"inherit", marginTop:4 }}>{t("PRISE DE RDV AUTOMATIQUE", "APPOINTMENT BOOKING MADE EASY")}</div>
+          <div style={{ fontSize:12, color:"#64748B", fontFamily:"inherit", marginTop:4 }}>{t("Vos RDV par téléphone, simplement", "Phone bookings, made simple")}</div>
         </div>
         <div className="card" style={{ padding:32 }}>
           <div style={{ display:"flex", gap:8, marginBottom:24, background:"#F5F6F8", borderRadius:12, padding:4 }}>
@@ -732,7 +732,7 @@ function AuthPage({ authHooks, initialMode }) {
             {t("Continuer avec LinkedIn","Continue with LinkedIn")}
           </button>
           <div className="privacy-badge" style={{ marginTop:18 }}>
-            <span style={{ fontSize:15 }}>🔒</span>
+            <Icon name="check" size={16} color="#16A34A" stroke={2.6} />
             <div style={{ fontSize:11, color:"#0369a1", fontFamily:"inherit", lineHeight:1.6 }}>
               <span style={{ color:"#0284c7", fontWeight:700 }}>{t("Données protégées. ","Data protected. ")}</span>
               {t("Aucun enregistrement vocal. Données hébergées en Europe.","No voice recording. Data hosted in Europe.")}
@@ -2659,113 +2659,117 @@ function LandingPage({ onLogin, onSignup }) {
   }, []);
 
   const LP_CSS = `
-    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-    .lp-body { font-family: "DM Sans", sans-serif; background: #fafaf8; color: #0f2340; overflow-x: hidden; }
-    .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 60px; background: rgba(250,250,248,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; }
-    .lp-login-mobile { display: none; background: #fff; color: #0f2340; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    @media(max-width:768px){ .lp-login-mobile { display: inline-block; } }
-    .lp-logo { font-family: "Instrument Serif", serif; font-size: 22px; color: #0f2340; display: flex; align-items: center; gap: 10px; }
-    .lp-logo span { background: #0f2340; color: #fff; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-family: "DM Mono", monospace; }
-    .lp-nav-links { display: flex; align-items: center; gap: 28px; }
-    .lp-nav-links a { text-decoration: none; color: #64748b; font-size: 14px; font-weight: 500; transition: color .2s; }
-    .lp-nav-links a:hover { color: #0f2340; }
-    .lp-btn-nav { background: #0f2340 !important; color: #fff !important; padding: 10px 22px; border-radius: 8px; cursor: pointer; border: none; font-size: 14px; font-weight: 600; font-family: "DM Sans", sans-serif; }
-    .lp-hero { min-height: 100vh; display: flex; align-items: center; padding: 120px 60px 80px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f8faff 0%, #eef4fb 50%, #f8faff 100%); }
-    .lp-hero-grid { position: absolute; inset: 0; background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 60px 60px; opacity: 0.4; }
-    .lp-hero-content { position: relative; z-index: 1; max-width: 600px; }
-    .lp-badge { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; padding: 6px 16px; font-size: 12px; font-family: "DM Mono", monospace; color: #1e3a5f; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .lp-badge::before { content: ""; width: 6px; height: 6px; background: #22c55e; border-radius: 50%; display: inline-block; }
-    .lp-h1 { font-family: "Instrument Serif", serif; font-size: clamp(40px,5vw,62px); line-height: 1.1; color: #0f2340; margin-bottom: 24px; }
-    .lp-h1 em { font-style: italic; color: #2d5a8e; }
-    .lp-sub { font-size: 18px; color: #64748b; line-height: 1.7; margin-bottom: 40px; font-weight: 300; }
-    .lp-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-    .lp-btn-primary { background: #0f2340; color: #fff; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; font-family: "DM Sans", sans-serif; box-shadow: 0 4px 16px rgba(30,58,95,0.3); transition: all .2s; }
-    .lp-btn-primary:hover { background: #2d5a8e; transform: translateY(-1px); }
-    .lp-btn-secondary { color: #0f2340; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 500; text-decoration: none; border: 1px solid #e2e8f0; background: #fff; transition: all .2s; }
-    .lp-btn-secondary:hover { background: #f0f4f8; }
-    .lp-mockup { width: 440px; background: #fff; border-radius: 16px; box-shadow: 0 24px 64px rgba(15,35,64,0.15); overflow: hidden; border: 1px solid #e2e8f0; position: absolute; right: 60px; top: 50%; transform: translateY(-50%); z-index: 1; }
-    .lp-mockup-bar { background: #0f2340; padding: 14px 20px; display: flex; align-items: center; gap: 8px; }
-    .lp-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .lp-mockup-title { color: #fff; font-size: 12px; font-family: "DM Mono", monospace; margin-left: 8px; }
-    .lp-mockup-body { padding: 20px; }
-    .lp-search { background: #f0f4f8; border-radius: 8px; padding: 11px 14px; font-size: 12px; color: #94a3b8; margin-bottom: 16px; }
-    .lp-rdv { background: #f8faff; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-    .lp-rdv-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .lp-rdv-title { font-size: 12px; font-weight: 600; color: #0f2340; }
-    .lp-rdv-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
-    .lp-rdv-tag { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: "DM Mono", monospace; }
-    .lp-stats { display: grid; grid-template-columns: repeat(4,1fr); background: #0f2340; }
-    .lp-stat { padding: 32px 20px; text-align: center; border-right: 1px solid rgba(255,255,255,0.1); }
-    .lp-stat:last-child { border-right: none; }
-    .lp-stat-num { font-family: "Instrument Serif", serif; font-size: 40px; color: #fff; }
-    .lp-stat-label { font-size: 11px; color: rgba(255,255,255,0.45); font-family: "DM Mono", monospace; margin-top: 6px; }
-    .lp-section { padding: 90px 60px; max-width: 1200px; margin: 0 auto; }
-    .lp-label { font-family: "DM Mono", monospace; font-size: 11px; color: #4a90d9; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 14px; }
-    .lp-h2 { font-family: "Instrument Serif", serif; font-size: clamp(30px,3vw,44px); color: #0f2340; margin-bottom: 14px; line-height: 1.2; }
-    .lp-section-sub { font-size: 16px; color: #64748b; max-width: 520px; line-height: 1.7; margin-bottom: 56px; font-weight: 300; }
-    .lp-features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-    .lp-feature { padding: 28px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; transition: all .2s; }
-    .lp-feature:hover { border-color: #4a90d9; box-shadow: 0 8px 32px rgba(74,144,217,0.1); transform: translateY(-2px); }
-    .lp-feature-icon { width: 44px; height: 44px; background: #f0f4f8; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
-    .lp-feature-title { font-size: 15px; font-weight: 600; color: #0f2340; margin-bottom: 8px; }
-    .lp-feature-desc { font-size: 13px; color: #64748b; line-height: 1.7; font-weight: 300; }
-    .lp-video-section { padding: 80px 60px; background: #f0f4f8; }
-    .lp-video-inner { max-width: 860px; margin: 0 auto; text-align: center; }
-    .lp-video-box { background: #0f2340; border-radius: 18px; aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; margin-top: 44px; cursor: pointer; position: relative; overflow: hidden; }
-    .lp-play { width: 68px; height: 68px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); transition: all .2s; }
-    .lp-video-box:hover .lp-play { background: rgba(255,255,255,0.25); transform: scale(1.05); }
-    .lp-play::after { content: ""; border-left: 22px solid #fff; border-top: 13px solid transparent; border-bottom: 13px solid transparent; margin-left: 4px; }
-    .lp-video-label { color: rgba(255,255,255,0.5); font-size: 12px; font-family: "DM Mono", monospace; }
-    .lp-pricing-section { padding: 90px 60px; max-width: 1200px; margin: 0 auto; }
-    .lp-pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 44px; }
-    .lp-plan { border: 1px solid #e2e8f0; border-radius: 18px; padding: 36px 28px; background: #fff; position: relative; transition: all .2s; }
-    .lp-plan:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(15,35,64,0.1); }
-    .lp-plan.featured { background: #0f2340; border-color: #0f2340; }
-    .lp-plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: #e8b86d; color: #0f2340; padding: 3px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; font-family: "DM Mono", monospace; white-space: nowrap; }
-    .lp-plan-name { font-size: 12px; font-family: "DM Mono", monospace; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
-    .lp-plan.featured .lp-plan-name { color: rgba(255,255,255,0.45); }
-    .lp-plan-price { font-family: "Instrument Serif", serif; font-size: 48px; color: #0f2340; line-height: 1; margin-bottom: 4px; }
-    .lp-plan.featured .lp-plan-price { color: #fff; }
-    .lp-plan-period { font-size: 12px; color: #64748b; margin-bottom: 24px; }
-    .lp-plan.featured .lp-plan-period { color: rgba(255,255,255,0.45); }
-    .lp-plan-divider { height: 1px; background: #e2e8f0; margin-bottom: 24px; }
-    .lp-plan.featured .lp-plan-divider { background: rgba(255,255,255,0.1); }
-    .lp-plan ul { list-style: none; margin-bottom: 28px; }
-    .lp-plan ul li { font-size: 13px; color: #64748b; padding: 7px 0; display: flex; align-items: center; gap: 8px; }
-    .lp-plan.featured ul li { color: rgba(255,255,255,0.65); }
-    .lp-plan ul li::before { content: "✓"; color: #4a90d9; font-weight: 700; flex-shrink: 0; }
-    .lp-plan.featured ul li::before { color: #e8b86d; }
-    .lp-plan-cta { display: block; text-align: center; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all .2s; cursor: pointer; border: none; font-family: "DM Sans", sans-serif; width: 100%; }
-    .lp-plan-cta-outline { border: 1px solid #e2e8f0; color: #0f2340; background: transparent; }
-    .lp-plan-cta-outline:hover { background: #f0f4f8; }
-    .lp-plan-cta-filled { background: #fff; color: #0f2340; }
-    .lp-plan-cta-filled:hover { background: rgba(255,255,255,0.9); }
-    .lp-promo-note { text-align: center; margin-top: 18px; font-size: 12px; color: #94a3b8; font-family: "DM Mono", monospace; }
-    .lp-promo-note span { color: #e8b86d; font-weight: 600; }
-    .lp-testi-section { padding: 90px 60px; background: #f0f4f8; }
-    .lp-testi-inner { max-width: 1100px; margin: 0 auto; }
-    .lp-testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 44px; }
-    .lp-testi { background: #fff; border-radius: 14px; padding: 28px; border: 1px solid #e2e8f0; }
-    .lp-stars { color: #e8b86d; font-size: 13px; margin-bottom: 14px; }
-    .lp-testi-text { font-size: 15px; color: #0f2340; line-height: 1.7; margin-bottom: 20px; font-style: italic; font-family: "Instrument Serif", serif; }
-    .lp-author { display: flex; align-items: center; gap: 10px; }
-    .lp-avatar { width: 38px; height: 38px; border-radius: 50%; background: #0f2340; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
-    .lp-author-name { font-size: 13px; font-weight: 600; color: #0f2340; }
-    .lp-author-role { font-size: 11px; color: #94a3b8; }
-    .lp-cta-section { padding: 100px 60px; background: #0f2340; text-align: center; position: relative; overflow: hidden; }
-    .lp-cta-section::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; }
-    .lp-cta-content { position: relative; z-index: 1; }
-    .lp-cta-title { font-family: "Instrument Serif", serif; font-size: clamp(32px,4vw,52px); color: #fff; margin-bottom: 18px; line-height: 1.2; }
-    .lp-cta-sub { font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 36px; font-weight: 300; }
-    .lp-footer { padding: 36px 60px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-    .lp-footer-logo { font-family: "Instrument Serif", serif; font-size: 18px; color: #0f2340; }
-    .lp-footer-copy { font-size: 11px; color: #94a3b8; font-family: "DM Mono", monospace; }
-    .lp-footer-links { display: flex; gap: 20px; }
-    .lp-footer-links a { font-size: 12px; color: #94a3b8; text-decoration: none; }
-    .lp-footer-links a:hover { color: #0f2340; }
-    @media(max-width:1024px){.lp-mockup{display:none;}.lp-features-grid,.lp-pricing-grid,.lp-testi-grid{grid-template-columns:1fr 1fr;}.lp-stats{grid-template-columns:repeat(2,1fr);}}
-    @media(max-width:768px){.lp-nav{padding:16px 24px;}.lp-nav-links{display:none;}.lp-hero,.lp-section,.lp-pricing-section,.lp-video-section,.lp-testi-section,.lp-cta-section{padding:70px 24px;}.lp-features-grid,.lp-pricing-grid,.lp-testi-grid{grid-template-columns:1fr;}.lp-stats{grid-template-columns:1fr 1fr;}.lp-footer{flex-direction:column;text-align:center;}}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    .lp-body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #FFFFFF; color: #0F172A; overflow-x: hidden; }
+    .lp-body *, .lp-body *::before, .lp-body *::after { box-sizing: border-box; }
+    .lp-wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+    .lp-nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid #E2E8F0; }
+    .lp-nav-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 68px; }
+    .lp-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: #0F172A; }
+    .lp-logo-ic { width: 36px; height: 36px; border-radius: 10px; background: #2450E6; display: flex; align-items: center; justify-content: center; }
+    .lp-nav-right { display: flex; align-items: center; gap: 10px; }
+    .lp-nav-links { display: flex; align-items: center; gap: 24px; margin-right: 8px; }
+    .lp-nav-links a { text-decoration: none; color: #475569; font-size: 15px; font-weight: 600; }
+    .lp-nav-links a:hover { color: #2450E6; }
+    .lp-btn-nav { background: #fff; color: #0F172A; border: 1px solid #E2E8F0; padding: 10px 18px; border-radius: 12px; font: 700 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; min-height: 44px; }
+    .lp-btn-nav:hover { border-color: #2450E6; color: #2450E6; }
+    .lp-login-mobile { display: none; background: #fff; color: #0F172A; border: 1px solid #E2E8F0; border-radius: 12px; padding: 8px 14px; font: 700 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; min-height: 40px; }
+    .lp-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #2450E6; color: #fff; padding: 15px 26px; border-radius: 14px; font: 800 16px 'Plus Jakarta Sans', sans-serif; border: none; cursor: pointer; box-shadow: 0 8px 22px rgba(36,80,230,0.28); transition: background .2s, transform .2s; min-height: 52px; }
+    .lp-btn-primary:hover { background: #1A3BB0; transform: translateY(-1px); }
+    .lp-hero { background: linear-gradient(180deg, #F5F6F8 0%, #FFFFFF 100%); padding: 72px 0 64px; }
+    .lp-hero-in { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr); gap: 48px; align-items: center; }
+    .lp-badge { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E2E8F0; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 22px; }
+    .lp-badge i { width: 8px; height: 8px; border-radius: 50%; background: #16A34A; display: inline-block; }
+    .lp-h1 { font-size: clamp(38px, 5vw, 58px); line-height: 1.08; font-weight: 800; letter-spacing: -0.035em; margin: 0 0 20px; }
+    .lp-h1 span { color: #2450E6; }
+    .lp-sub { font-size: 18px; color: #475569; line-height: 1.65; margin: 0 0 30px; max-width: 540px; }
+    .lp-note { font-size: 14px; color: #475569; margin-top: 14px; display: flex; align-items: center; gap: 8px; }
+    .lp-phone { width: 300px; margin: 0 auto; background: #0F172A; border-radius: 42px; padding: 12px; box-shadow: 0 30px 70px rgba(15,23,42,0.25); }
+    .lp-screen { background: #F5F6F8; border-radius: 32px; overflow: hidden; padding: 18px 14px 16px; }
+    .lp-scr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .lp-scr-h { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2px; }
+    .lp-scr-s { font-size: 11px; color: #475569; margin-bottom: 12px; }
+    .lp-scr-card { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 14px rgba(15,23,42,0.06); margin-bottom: 12px; }
+    .lp-scr-lab { font-size: 11px; font-weight: 800; margin-bottom: 8px; }
+    .lp-scr-row { display: flex; gap: 6px; }
+    .lp-scr-in { flex: 1; background: #F5F6F8; border: 1px solid #E2E8F0; border-radius: 11px; height: 38px; display: flex; align-items: center; gap: 7px; padding: 0 10px; font-size: 12px; color: #64748B; }
+    .lp-scr-go { width: 38px; height: 38px; border-radius: 11px; background: #2450E6; display: flex; align-items: center; justify-content: center; }
+    .lp-scr-t { font-size: 12px; font-weight: 800; margin: 4px 2px 8px; }
+    .lp-scr-rdv { background: #fff; border-radius: 13px; padding: 9px; display: flex; gap: 9px; align-items: center; margin-bottom: 7px; }
+    .lp-scr-d { width: 38px; text-align: center; border-radius: 9px; background: #EEF2FF; color: #2450E6; padding: 5px 0; flex-shrink: 0; }
+    .lp-scr-d b { display: block; font-size: 15px; line-height: 1.1; }
+    .lp-scr-d small { display: block; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .lp-scr-n { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; }
+    .lp-scr-n small { display: block; font-size: 10px; font-weight: 500; color: #475569; }
+    .lp-pill { font-size: 10px; font-weight: 800; border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+    .lp-ok { color: #15803D; background: #DCFCE7; } .lp-wait { color: #B45309; background: #FEF3C7; }
+    .lp-scr-nav { display: grid; grid-template-columns: repeat(5,1fr); align-items: center; background: #fff; border-radius: 16px; margin-top: 10px; padding: 8px 4px; color: #64748B; }
+    .lp-scr-nav span { display: flex; justify-content: center; }
+    .lp-scr-plus { width: 36px; height: 36px; border-radius: 12px; background: #2450E6; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+    .lp-facts { padding: 8px 0 56px; }
+    .lp-facts-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .lp-fact { background: #F5F6F8; border-radius: 16px; padding: 18px; display: flex; gap: 12px; align-items: center; font-size: 14px; font-weight: 700; }
+    .lp-fact-ic { width: 40px; height: 40px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lp-section { padding: 72px 0; }
+    .lp-gris { background: #F5F6F8; }
+    .lp-label { font-size: 13px; font-weight: 800; color: #2450E6; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+    .lp-h2 { font-size: clamp(28px, 3.2vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 12px; }
+    .lp-section-sub { font-size: 17px; color: #475569; line-height: 1.65; max-width: 560px; margin: 0 0 40px; }
+    .lp-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .lp-step { background: #fff; border-radius: 20px; padding: 26px; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.05); }
+    .lp-step-n { width: 38px; height: 38px; border-radius: 12px; background: #2450E6; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .lp-step h3, .lp-feature h3 { font-size: 17px; font-weight: 800; margin: 0 0 8px; }
+    .lp-step p, .lp-feature p { font-size: 15px; color: #475569; line-height: 1.65; margin: 0; }
+    .lp-features-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .lp-feature { background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 26px; transition: border-color .2s, box-shadow .2s; }
+    .lp-feature:hover { border-color: #2450E6; box-shadow: 0 10px 30px rgba(36,80,230,0.08); }
+    .lp-feature-icon { width: 46px; height: 46px; border-radius: 14px; background: #EEF2FF; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .lp-price { max-width: 440px; margin: 0 auto; background: #fff; border: 2px solid #2450E6; border-radius: 24px; padding: 32px 28px; box-shadow: 0 20px 50px rgba(36,80,230,0.12); }
+    .lp-price-name { font-size: 14px; font-weight: 800; color: #2450E6; text-transform: uppercase; letter-spacing: 0.08em; }
+    .lp-price-amount { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin: 12px 0 4px; }
+    .lp-price-amount small { font-size: 17px; font-weight: 600; color: #475569; letter-spacing: 0; }
+    .lp-price ul { list-style: none; padding: 0; margin: 22px 0 26px; display: flex; flex-direction: column; gap: 12px; }
+    .lp-price li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: #334155; line-height: 1.45; }
+    .lp-cta { background: #2450E6; color: #fff; text-align: center; padding: 72px 0; }
+    .lp-cta h2 { font-size: clamp(28px, 3.6vw, 44px); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 12px; }
+    .lp-cta p { font-size: 17px; color: #DBE4FF; margin: 0 0 28px; }
+    .lp-cta .lp-btn-primary { background: #fff; color: #2450E6; box-shadow: 0 10px 26px rgba(0,0,0,0.18); }
+    .lp-cta .lp-btn-primary:hover { background: #EEF2FF; }
+    .lp-footer-in { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 28px 24px; }
+    .lp-footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .lp-footer-links a { font-size: 14px; color: #475569; text-decoration: none; font-weight: 600; }
+    .lp-footer-links a:hover { color: #2450E6; }
+    .lp-footer-copy { font-size: 13px; color: #475569; }
+    @media(max-width:960px){ .lp-hero-in{grid-template-columns:1fr;} .lp-facts-grid{grid-template-columns:repeat(2,minmax(0,1fr));} .lp-features-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    @media(max-width:768px){ .lp-nav-links{display:none;} .lp-login-mobile{display:inline-block;} .lp-hero{padding:44px 0 40px;} .lp-steps,.lp-features-grid{grid-template-columns:1fr;} .lp-section{padding:56px 0;} .lp-footer-in{flex-direction:column;text-align:center;} .lp-phone{width:280px;} }
   `;
+
+  const features = t([
+    { icon:"search", title:"Recherche client instantanée", desc:"Tapez le nom de votre client : sa fiche apparaît avec son numéro, son email et son historique." },
+    { icon:"file", title:"Fiches adaptées à votre métier", desc:"Garage, médical, beauté, juridique… chaque type de RDV a ses propres champs." },
+    { icon:"mail", title:"Rappels automatiques", desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email. Il confirme ou annule en un clic." },
+    { icon:"whatsapp", title:"WhatsApp et SMS", desc:"Envoyez un RDV à votre client par WhatsApp ou SMS en un geste, avec la date, l'heure et le lieu." },
+    { icon:"chart", title:"Tableau de bord", desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois." },
+    { icon:"calendar", title:"Agenda et export PDF", desc:"Vue liste, semaine ou mois. Planning en PDF, ajout à Google Calendar ou Outlook." },
+  ],[
+    { icon:"search", title:"Instant client search", desc:"Type your client's name: their record appears with their phone number, email and history." },
+    { icon:"file", title:"Forms that fit your business", desc:"Garage, medical, beauty, legal… each type of appointment has its own fields." },
+    { icon:"mail", title:"Automatic reminders", desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email. They confirm or cancel in one click." },
+    { icon:"whatsapp", title:"WhatsApp and text", desc:"Send an appointment to your client by WhatsApp or text in one tap, with date, time and place." },
+    { icon:"chart", title:"Dashboard", desc:"Track your activity: appointments per week, top categories, 6-month trend." },
+    { icon:"calendar", title:"Calendar and PDF export", desc:"List, week or month view. PDF schedule, add to Google Calendar or Outlook." },
+  ]);
+  const etapes = t([
+    { title:"Un client appelle", desc:"Pendant l'appel, tapez son nom. S'il est déjà venu, sa fiche s'ouvre toute seule." },
+    { title:"Touchez le jour et l'heure", desc:"Pas de calendrier à faire défiler : deux gestes et le RDV est enregistré." },
+    { title:"Votre client est prévenu", desc:"Il reçoit une confirmation par email, puis des rappels. Il confirme ou annule en un clic." },
+  ],[
+    { title:"A client calls", desc:"During the call, type their name. If they've been before, their record opens by itself." },
+    { title:"Tap the day and time", desc:"No calendar to scroll through: two taps and the appointment is saved." },
+    { title:"Your client is kept informed", desc:"They get a confirmation email, then reminders. They confirm or cancel in one click." },
+  ]);
+  const faits = t([["mail","Rappels 3 jours et 1 jour avant"],["check","Confirmation en un clic"],["whatsapp","WhatsApp et SMS"],["pin","Données hébergées en Europe"]],[["mail","Reminders 3 days and 1 day before"],["check","One-click confirmation"],["whatsapp","WhatsApp and text"],["pin","Data hosted in Europe"]]);
+  const jour = (n) => { const d = new Date(); d.setDate(d.getDate()+n); return { j: d.toLocaleDateString(t("fr-FR","en-GB"), { weekday:"short" }).replace(".",""), n: d.getDate() }; };
 
   return (
     <div className="lp-body">
@@ -2775,126 +2779,149 @@ function LandingPage({ onLogin, onSignup }) {
 
       {/* NAV */}
       <nav className="lp-nav">
-        <div className="lp-logo">📞 CallRDV</div>
-        <div style={{ display:"flex", alignItems:"center", gap:20 }}>
-          <div className="lp-nav-links">
-            <a href="#lp-features">{t("Fonctionnalités","Features")}</a>
-            <a href="#lp-pricing">{t("Tarifs","Pricing")}</a>
-            <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter →","Log in →")}</button>
+        <div className="lp-wrap lp-nav-in">
+          <div className="lp-logo"><span className="lp-logo-ic"><Icon name="phone" size={18} color="#fff" /></span>CallRDV</div>
+          <div className="lp-nav-right">
+            <div className="lp-nav-links">
+              <a href="#lp-comment">{t("Comment ça marche","How it works")}</a>
+              <a href="#lp-features">{t("Fonctionnalités","Features")}</a>
+              <a href="#lp-pricing">{t("Tarif","Pricing")}</a>
+              <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter","Log in")}</button>
+            </div>
+            <button className="lp-login-mobile" onClick={onLogin}>{t("Connexion","Log in")}</button>
+            <LangSwitch />
           </div>
-          <button className="lp-login-mobile" onClick={onLogin}>{t("Connexion","Log in")}</button>
-          <LangSwitch />
         </div>
       </nav>
 
       {/* HERO */}
       <section className="lp-hero">
-        <div className="lp-hero-grid"></div>
-        <div className="lp-hero-content">
-          <div className="lp-badge">{t("🟢 Disponible maintenant","🟢 Available now")}</div>
-          <h1 className="lp-h1">{t(<>Vos rendez-vous,<br/><em>organisés en secondes</em></>, <>Your appointments,<br/><em>organized in seconds</em></>)}</h1>
-          <p className="lp-sub">{t("CallRDV transforme chaque appel téléphonique en rendez-vous structuré. Recherchez votre client, remplissez la fiche, et c'est fait.","CallRDV turns every phone call into a clear, organized appointment. Find your client, fill in the form, and you're done.")}</p>
-          <div className="lp-actions">
+        <div className="lp-wrap lp-hero-in">
+          <div>
+            <div className="lp-badge"><i></i>{t("Disponible maintenant","Available now")}</div>
+            <h1 className="lp-h1">{t(<>Un appel devient un <span>rendez-vous</span> en quelques secondes</>, <>A phone call becomes an <span>appointment</span> in seconds</>)}</h1>
+            <p className="lp-sub">{t("Pour les garages, coiffeurs, artisans et tous les pros qui prennent leurs RDV par téléphone. Vos clients reçoivent une confirmation et des rappels automatiques.","For garages, hairdressers, tradespeople and every business that books by phone. Your clients get a confirmation and automatic reminders.")}</p>
             <button className="lp-btn-primary" onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <div className="lp-note"><Icon name="check" size={16} color="#16A34A" stroke={2.6} />{t("10 RDV gratuits par mois · sans carte bancaire","10 free appointments a month · no credit card")}</div>
           </div>
-        </div>
-        <div className="lp-mockup">
-          <div className="lp-mockup-bar">
-            <div className="lp-dot" style={{background:"#ff5f57"}}></div>
-            <div className="lp-dot" style={{background:"#febc2e"}}></div>
-            <div className="lp-dot" style={{background:"#28c840"}}></div>
-            <span className="lp-mockup-title">callrdv.com</span>
-          </div>
-          <div className="lp-mockup-body">
-            <div className="lp-search">{t("🔍 Rechercher un client...","🔍 Search a client...")}</div>
-            <div className="lp-rdv">
-              <div className="lp-rdv-dot" style={{background:"#22c55e"}}></div>
-              <div><div className="lp-rdv-title">{t("Mme Dupont — Coupe + couleur","Mrs Smith — Cut + colour")}</div><div className="lp-rdv-sub">{t("Demain à 10h00","Tomorrow at 10:00 AM")}</div></div>
-              <div className="lp-rdv-tag" style={{background:"#22c55e20",color:"#16a34a"}}>{t("confirmé","confirmed")}</div>
-            </div>
-            <div className="lp-rdv">
-              <div className="lp-rdv-dot" style={{background:"#3b82f6"}}></div>
-              <div><div className="lp-rdv-title">{t("M. Martin — Brushing","Mr Brown — Blow-dry")}</div><div className="lp-rdv-sub">{t("Vendredi à 14h30","Friday at 2:30 PM")}</div></div>
-              <div className="lp-rdv-tag" style={{background:"#3b82f620",color:"#3b82f6"}}>{t("à venir","upcoming")}</div>
-            </div>
-            <div className="lp-rdv">
-              <div className="lp-rdv-dot" style={{background:"#f59e0b"}}></div>
-              <div><div className="lp-rdv-title">{t("Mlle Bernard — Coloration","Ms Taylor — Colouring")}</div><div className="lp-rdv-sub">{t("Samedi à 16h00","Saturday at 4:00 PM")}</div></div>
-              <div className="lp-rdv-tag" style={{background:"#f59e0b20",color:"#f59e0b"}}>{t("à venir","upcoming")}</div>
+
+          {/* Aperçu de l'appli */}
+          <div aria-hidden="true">
+            <div className="lp-phone">
+              <div className="lp-screen">
+                <div className="lp-scr-top">
+                  <span style={{ display:"flex", alignItems:"center", gap:7, fontWeight:800, fontSize:14 }}><span className="lp-logo-ic" style={{ width:26, height:26, borderRadius:8 }}><Icon name="phone" size={13} color="#fff" /></span>CallRDV</span>
+                  <span style={{ fontSize:10, fontWeight:700, color:"#475569", background:"#fff", border:"1px solid #E2E8F0", borderRadius:999, padding:"4px 8px" }}>{t("7 RDV restants","7 left")}</span>
+                </div>
+                <div className="lp-scr-h">{t("Bonjour Mehdi","Hello Mike")}</div>
+                <div className="lp-scr-s">{t("3 RDV à venir","3 upcoming appointments")}</div>
+                <div className="lp-scr-card">
+                  <div className="lp-scr-lab">{t("Nouveau rendez-vous","New appointment")}</div>
+                  <div className="lp-scr-row"><div className="lp-scr-in"><Icon name="search" size={14} color="#64748B" />{t("Nom du client…","Client's name…")}</div><div className="lp-scr-go"><Icon name="arrow" size={16} color="#fff" stroke={2.4} /></div></div>
+                </div>
+                <div className="lp-scr-t">{t("Prochains rendez-vous","Upcoming appointments")}</div>
+                {[[0,t("M. Leroy","Tom Baker"),t("09:00 · Pneus hiver","09:00 · Winter tyres"),true],[2,t("Mme Durand","Sarah Miller"),t("14:30 · Révision","14:30 · Car service"),false],[3,t("Karim B.","James Lee"),t("16:30 · Vidange","16:30 · Oil change"),true]].map(([n,nom,detail,okk]) => { const d = jour(n); return (
+                  <div key={nom} className="lp-scr-rdv">
+                    <div className="lp-scr-d"><small>{d.j}</small><b>{d.n}</b></div>
+                    <div className="lp-scr-n">{nom}<small>{detail}</small></div>
+                    <span className={`lp-pill ${okk ? "lp-ok" : "lp-wait"}`}>{okk ? t("Confirmé","Confirmed") : t("En attente","Pending")}</span>
+                  </div>
+                ); })}
+                <div className="lp-scr-nav">
+                  <span style={{ color:"#2450E6" }}><Icon name="home" size={18} /></span><span><Icon name="calendar" size={18} /></span>
+                  <span className="lp-scr-plus"><Icon name="plus" size={18} color="#fff" stroke={2.6} /></span>
+                  <span><Icon name="users" size={18} /></span><span><Icon name="settings" size={18} /></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <div className="lp-stats">
-        {(t([["2min","pour créer un RDV"],["📅","agenda intégré"],["J-3","rappels automatiques"],["🇪🇺","données hébergées en Europe"]],[["2min","to create an appointment"],["📅","built-in calendar"],["3 days","automatic reminders"],["🇪🇺","data hosted in Europe"]])).map(([n,l])=>(
-          <div key={l} className="lp-stat"><div className="lp-stat-num">{n}</div><div className="lp-stat-label">{l}</div></div>
-        ))}
-      </div>
-
-      {/* FEATURES */}
-      <section className="lp-section" id="lp-features">
-        <div className="lp-label">{t("Fonctionnalités","Features")}</div>
-        <h2 className="lp-h2">{t(<>Tout ce qu'il vous faut<br/>pour gérer vos RDV</>, <>Everything you need<br/>to manage your appointments</>)}</h2>
-        <p className="lp-section-sub">{t("Une interface pensée pour aller vite. Pas de formation, pas de complexité — juste l'essentiel.","Built for speed. No training, no complexity — just the essentials.")}</p>
-        <div className="lp-features-grid">
-          {t([
-            {icon:"🔍",title:"Recherche client instantanée",desc:"Tapez le nom de votre client et sa fiche apparaît automatiquement avec tout son historique."},
-            {icon:"📋",title:"Fiches intelligentes par catégorie",desc:"Médecin, restaurant, garage, juridique — chaque type de RDV a ses propres champs adaptés."},
-            {icon:"🔔",title:"Rappels automatiques",desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email. Il confirme ou annule en un clic."},
-            {icon:"💬",title:"Partage WhatsApp et SMS",desc:"Sur téléphone, envoyez un RDV à votre client par WhatsApp ou SMS en un clic, avec la date, l'heure et le lieu."},
-            {icon:"📊",title:"Tableau de bord",desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois."},
-            {icon:"📅",title:"Agenda et export PDF",desc:"Vue semaine, mois ou liste. Planning en PDF, export vers Google Calendar ou Outlook."},
-          ],[
-            {icon:"🔍",title:"Instant client search",desc:"Type your client's name and their profile appears instantly, with their full history."},
-            {icon:"📋",title:"Smart forms by business",desc:"Doctor, restaurant, garage, legal — each type of appointment has its own fields."},
-            {icon:"🔔",title:"Automatic reminders",desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email. They confirm or cancel in one click."},
-            {icon:"💬",title:"WhatsApp & SMS sharing",desc:"On your phone, send an appointment to your client by WhatsApp or text in one tap, with date, time and place."},
-            {icon:"📊",title:"Dashboard",desc:"Track your activity: appointments per week, top categories, 6-month trend."},
-            {icon:"📅",title:"Calendar & PDF export",desc:"Week, month or list view. PDF schedule, export to Google Calendar or Outlook."},
-          ]).map(({icon,title,desc})=>(
-            <div key={title} className="lp-feature">
-              <div className="lp-feature-icon">{icon}</div>
-              <div className="lp-feature-title">{title}</div>
-              <div className="lp-feature-desc">{desc}</div>
-            </div>
+      {/* POINTS CLÉS */}
+      <section className="lp-facts">
+        <div className="lp-wrap lp-facts-grid">
+          {faits.map(([ic, txt]) => (
+            <div key={txt} className="lp-fact"><span className="lp-fact-ic"><Icon name={ic} size={20} color="#2450E6" /></span>{txt}</div>
           ))}
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="lp-pricing-section" id="lp-pricing">
-        <div className="lp-label">{t("Tarifs","Pricing")}</div>
-        <h2 className="lp-h2">{t("Simple et transparent","Simple and transparent")}</h2>
-        <p className="lp-section-sub">{t("Un seul prix, tout inclus. Essayez gratuitement avant de vous abonner.","One price, everything included. Try it for free before subscribing.")}</p>
-        <div className="lp-pricing-grid" style={{ gridTemplateColumns:"1fr", maxWidth:420, marginLeft:"auto", marginRight:"auto" }}>
-          <div className="lp-plan featured">
-            <div className="lp-plan-name">CallRDV Pro</div>
-            <div className="lp-plan-price">20€</div>
-            <div className="lp-plan-period">{t("par mois · sans engagement","per month · cancel anytime")}</div>
-            <div className="lp-plan-divider"></div>
-            <ul>{t(["RDV illimités","Rappels email à vous et à vos clients (J-3 et J-1)","Fiches clients et import de contacts","Agenda semaine / mois / liste","Export PDF et Google Calendar / Outlook"],["Unlimited appointments","Email reminders for you and your clients (3 days and 1 day before)","Client profiles and contact import","Week / month / list calendar","PDF export and Google Calendar / Outlook"]).map(x=><li key={x}>{x}</li>)}</ul>
-            <button className="lp-plan-cta lp-plan-cta-filled" onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
-            <div style={{ fontSize:12, color:"#64748b", textAlign:"center", marginTop:12 }}>{t("10 RDV offerts chaque mois pour essayer, sans carte bancaire.","10 free appointments every month to try it, no credit card.")}</div>
+      {/* COMMENT ÇA MARCHE */}
+      <section className="lp-section lp-gris" id="lp-comment">
+        <div className="lp-wrap">
+          <div className="lp-label">{t("Comment ça marche","How it works")}</div>
+          <h2 className="lp-h2">{t("Trois étapes, pendant l'appel","Three steps, during the call")}</h2>
+          <p className="lp-section-sub">{t("Pas de formation : si vous savez envoyer un SMS, vous savez utiliser CallRDV.","No training needed: if you can send a text, you can use CallRDV.")}</p>
+          <div className="lp-steps">
+            {etapes.map((e, i) => (
+              <div key={e.title} className="lp-step"><div className="lp-step-n">{i+1}</div><h3>{e.title}</h3><p>{e.desc}</p></div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="lp-cta-section">
-        <div className="lp-cta-content">
-          <h2 className="lp-cta-title">{t(<>Prêt à simplifier<br/>votre gestion de RDV ?</>, <>Ready to simplify<br/>your appointments?</>)}</h2>
-          <p className="lp-cta-sub">{t("Rejoignez CallRDV — gratuit pour commencer, sans carte bancaire.","Join CallRDV — free to start, no credit card needed.")}</p>
-          <button className="lp-btn-primary" style={{fontSize:16,padding:"16px 36px"}} onClick={onSignup}>{t("Créer mon compte gratuitement →","Create my free account →")}</button>
+      {/* FONCTIONNALITÉS */}
+      <section className="lp-section" id="lp-features">
+        <div className="lp-wrap">
+          <div className="lp-label">{t("Fonctionnalités","Features")}</div>
+          <h2 className="lp-h2">{t("Tout ce qu'il faut pour gérer vos RDV","Everything you need to manage your appointments")}</h2>
+          <p className="lp-section-sub">{t("Une appli pensée pour aller vite, sur téléphone comme sur ordinateur.","An app built for speed, on your phone and on your computer.")}</p>
+          <div className="lp-features-grid">
+            {features.map(({icon,title,desc})=>(
+              <div key={title} className="lp-feature">
+                <div className="lp-feature-icon"><Icon name={icon} size={22} color="#2450E6" /></div>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="lp-footer">
-        <div className="lp-footer-logo">📞 CallRDV</div>
-        <div className="lp-footer-links"><a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>{t("Confidentialité","Privacy")}</a><a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>{t("CGU","Terms")}</a><a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>Contact</a></div>
-        <div className="lp-footer-copy">{t("© 2026 CallRDV · Données hébergées en Europe","© 2026 CallRDV · Data hosted in Europe")}</div>
+      {/* TARIF */}
+      <section className="lp-section lp-gris" id="lp-pricing">
+        <div className="lp-wrap">
+          <div style={{ textAlign:"center" }}>
+            <div className="lp-label">{t("Tarif","Pricing")}</div>
+            <h2 className="lp-h2">{t("Un seul prix, tout inclus","One price, everything included")}</h2>
+            <p className="lp-section-sub" style={{ margin:"0 auto 36px" }}>{t("Essayez gratuitement avant de vous abonner.","Try it for free before subscribing.")}</p>
+          </div>
+          <div className="lp-price">
+            <div className="lp-price-name">CallRDV Pro</div>
+            <div className="lp-price-amount">20€ <small>{t("/ mois","/ month")}</small></div>
+            <div style={{ fontSize:14, color:"#475569" }}>{t("Sans engagement","Cancel anytime")}</div>
+            <ul>
+              {t(["RDV illimités","Rappels email à vous et à vos clients (3 jours et 1 jour avant)","Confirmation ou annulation en un clic par le client","Fiches clients et import des contacts du téléphone","Agenda liste / semaine / mois, export PDF"],["Unlimited appointments","Email reminders for you and your clients (3 days and 1 day before)","One-click confirmation or cancellation by the client","Client profiles and phone contacts import","List / week / month calendar, PDF export"]).map(x => (
+                <li key={x}><Icon name="check" size={18} color="#16A34A" stroke={2.6} style={{ marginTop:1 }} />{x}</li>
+              ))}
+            </ul>
+            <button className="lp-btn-primary" style={{ width:"100%" }} onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
+            <div style={{ fontSize:14, color:"#475569", textAlign:"center", marginTop:12 }}>{t("10 RDV offerts chaque mois pour essayer, sans carte bancaire.","10 free appointments every month to try it, no credit card.")}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* APPEL À L'ACTION */}
+      <section className="lp-cta">
+        <div className="lp-wrap">
+          <h2>{t("Prêt à ne plus rien oublier ?","Ready to stop forgetting appointments?")}</h2>
+          <p>{t("Créez votre compte en une minute. Gratuit pour commencer.","Create your account in a minute. Free to start.")}</p>
+          <button className="lp-btn-primary" onClick={onSignup}>{t("Créer mon compte gratuitement →","Create my free account →")}</button>
+        </div>
+      </section>
+
+      {/* PIED DE PAGE */}
+      <footer>
+        <div className="lp-wrap lp-footer-in">
+          <div className="lp-logo" style={{ fontSize:17 }}><span className="lp-logo-ic" style={{ width:30, height:30, borderRadius:9 }}><Icon name="phone" size={15} color="#fff" /></span>CallRDV</div>
+          <div className="lp-footer-links">
+            <a href="#privacy" onClick={(e)=>{e.preventDefault();window.__showLegal("privacy");}}>{t("Confidentialité","Privacy")}</a>
+            <a href="#cgu" onClick={(e)=>{e.preventDefault();window.__showLegal("cgu");}}>{t("CGU","Terms")}</a>
+            <a href="#contact" onClick={(e)=>{e.preventDefault();setShowContact(true);}}>{t("Contact","Contact")}</a>
+          </div>
+          <div className="lp-footer-copy">{t("© 2026 CallRDV · Données hébergées en Europe","© 2026 CallRDV · Data hosted in Europe")}</div>
+        </div>
       </footer>
     </div>
   );
