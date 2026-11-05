@@ -1890,6 +1890,7 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide, onRese
   };
 
   const [email, setEmail] = React.useState(user.email || user.email_auth || "");
+  const [metier, setMetier] = React.useState(user.metier || "autre");
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
 
@@ -1899,7 +1900,7 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide, onRese
 
   const handleSave = async () => {
     setSaving(true);
-    const data = { rappels, email, push_enabled: pushEnabled, push_j3: pushJ3, push_j1: pushJ1, push_confirm: pushConfirm };
+    const data = { rappels, email, metier, push_enabled: pushEnabled, push_j3: pushJ3, push_j1: pushJ1, push_confirm: pushConfirm };
     await sb.updateProfile(token, user.id, data);
     onSave(data);
     setSaving(false);
@@ -1931,6 +1932,17 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide, onRese
         <div style={{ marginBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
           <div className="field-label" style={{ marginBottom:0 }}>{tr("Langue","Language")}</div>
           <LangSwitch />
+        </div>
+
+        {/* Métier : sert au titre proposé des RDV et à la liste de départ des prestations en ligne */}
+        <div style={{ marginBottom:20 }}>
+          <label htmlFor="reglages-metier" className="field-label" style={{ display:"block" }}>{tr("Mon métier","My business")}</label>
+          <select id="reglages-metier" value={metier} onChange={e=>setMetier(e.target.value)}>
+            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{tr(c.fr, c.en)}</option>)}
+          </select>
+          {metier !== (user.metier || "autre") && user.booking_enabled && (
+            <div style={{ fontSize:12, color:"var(--text2)", marginTop:6, lineHeight:1.5 }}>{tr("Vos prestations en ligne ne changent pas toutes seules : pour reprendre la liste de ce métier, ouvrez Réservation en ligne → « Liste de départ ».","Your online services don't change by themselves: to use this business's list, open Online booking → “Starter list”.")}</div>
+          )}
         </div>
 
         {/* Réservation en ligne */}
