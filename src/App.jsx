@@ -762,9 +762,16 @@ function AuthPage({ authHooks, initialMode }) {
 
 // ── Pricing Modal ────────────────────────────────────────────
 function PricingModal({ currentPlan, onUpgrade, onClose }) {
+  // Touche Échap pour fermer
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
   return (
-    <div style={{ position:"fixed", inset:0, background:"#f0f4f8ee", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ width:"100%", maxWidth:560, maxHeight:"92vh", overflowY:"auto" }} className="fade-up">
+    <div onClick={onClose} role="dialog" aria-modal="true" aria-label={tr("Abonnement","Plans")} style={{ position:"fixed", inset:0, background:"#f0f4f8ee", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px 16px" }}>
+      <button onClick={onClose} aria-label={tr("Fermer","Close")} title={tr("Fermer","Close")} style={{ position:"fixed", top:"calc(14px + env(safe-area-inset-top))", right:14, width:44, height:44, borderRadius:12, background:"#fff", border:"1px solid var(--border)", boxShadow:"0 2px 8px rgba(15,23,42,.08)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text)", zIndex:1 }}><Icon name="x" size={20} /></button>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"100%", maxWidth:560, maxHeight:"92vh", overflowY:"auto", paddingTop:40 }} className="fade-up">
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontWeight:800, fontSize:26, color:"#1e293b" }}>{tr("Un seul prix, tout inclus","One price, everything included")}</div>
         </div>
