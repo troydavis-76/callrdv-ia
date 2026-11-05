@@ -48,6 +48,8 @@ Deno.serve(async (req) => {
   if (action !== "confirme" && action !== "annule") return json({ error: "action" }, 400);
   if (passe) return json({ error: "passe", rdv: info }, 400);
   if (rdv.statut === "annule") return json({ error: "deja_annule", rdv: info }, 409);
+  // Une demande pas encore acceptée par le pro ne peut qu'être annulée par le client
+  if (rdv.statut === "a_valider" && action === "confirme") return json({ error: "a_valider", rdv: info }, 409);
 
   const u = await fetch(`${SUPABASE_URL}/rest/v1/appointments?id=eq.${id}&reponse_token=eq.${t}`, {
     method: "PATCH",

@@ -10,8 +10,8 @@ const DB = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TXT = {
-  fr: { rdv: "Rendez-vous", annule: "Annulé", statut: { en_attente: "En attente", confirme: "Confirmé", reporte: "Reporté", annule: "Annulé" } as Record<string, string>, tel: "Tél.", notes: "Notes", pied: "Géré avec CallRDV — callrdv.com" },
-  en: { rdv: "Appointment", annule: "Cancelled", statut: { en_attente: "Pending", confirme: "Confirmed", reporte: "Postponed", annule: "Cancelled" } as Record<string, string>, tel: "Phone", notes: "Notes", pied: "Managed with CallRDV — callrdv.com" },
+  fr: { rdv: "Rendez-vous", annule: "Annulé", statut: { en_attente: "En attente", confirme: "Confirmé", reporte: "Reporté", annule: "Annulé", a_valider: "À valider" } as Record<string, string>, tel: "Tél.", notes: "Notes", pied: "Géré avec CallRDV — callrdv.com" },
+  en: { rdv: "Appointment", annule: "Cancelled", statut: { en_attente: "Pending", confirme: "Confirmed", reporte: "Postponed", annule: "Cancelled", a_valider: "To approve" } as Record<string, string>, tel: "Phone", notes: "Notes", pied: "Managed with CallRDV — callrdv.com" },
 };
 
 // Texte iCalendar : \ ; , et retours à la ligne doivent être échappés
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
   // RDV des 3 derniers mois et à venir
   const depuis = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
   const [ra, rp] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/appointments?user_id=eq.${profil.id}&date=gte.${depuis}&select=id,titre,personne,date,heure,lieu,adresse,notes,statut,client_email&order=date.asc`, { headers: DB }),
+    fetch(`${SUPABASE_URL}/rest/v1/appointments?user_id=eq.${profil.id}&date=gte.${depuis}&select=id,titre,personne,date,heure,duree_min,lieu,adresse,notes,statut,client_email&order=date.asc`, { headers: DB }),
     fetch(`${SUPABASE_URL}/rest/v1/patients?user_id=eq.${profil.id}&select=nom,telephone`, { headers: DB }),
   ]);
   const rdvs = await ra.json();
@@ -81,7 +81,8 @@ Deno.serve(async (req) => {
     if (heureOk(r.heure)) {
       // Heure « locale » (sans fuseau) : affichée telle quelle, à l'heure du téléphone du pro
       const [h, m] = r.heure.split(":").map(Number);
-      const fin = new Date(Date.UTC(2000, 0, 1, h, m) + 3600000);
+      const duree = Number(r.duree_min) > 0 ? Number(r.duree_min) : 60;
+      const fin = new Date(Date.UTC(2000, 0, 1, h, m) + duree * 60000);
       const jourFin = fin.getUTCDate() === 2 ? new Date(new Date(r.date + "T12:00:00Z").getTime() + 86400000).toISOString().slice(0, 10) : r.date;
       l.push(`DTSTART:${dateIcs(r.date)}T${deuxChiffres(h)}${deuxChiffres(m)}00`, `DTEND:${dateIcs(jourFin)}T${deuxChiffres(fin.getUTCHours())}${deuxChiffres(fin.getUTCMinutes())}00`);
     } else {
@@ -91,7 +92,7 @@ Deno.serve(async (req) => {
     l.push(`SUMMARY:${esc(annule ? `${L.annule} – ${titre}` : titre)}`);
     const lieu = [r.lieu, r.adresse].filter(Boolean).join(" — ");
     if (lieu) l.push(`LOCATION:${esc(lieu)}`);
-    l.push(`DESCRIPTION:${esc(desc)}`, `STATUS:${annule ? "CANCELLED" : "CONFIRMED"}`, "TRANSP:OPAQUE", "END:VEVENT");
+    l.push(`DESCRIPTION:${esc(desc)}`, `STATUS:${annule ? "CANCELLED" : r.statut === "a_valider" ? "TENTATIVE" : "CONFIRMED"}`, "TRANSP:OPAQUE", "END:VEVENT");
   }
   l.push("END:VCALENDAR");
   const corps = l.map(plier).join("\r\n") + "\r\n";

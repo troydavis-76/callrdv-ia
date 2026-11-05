@@ -91,7 +91,7 @@ Deno.serve(async () => {
   const failed: string[] = [];
 
   for (const rdv of rdvs) {
-    if (rdv.statut === "annule") continue;
+    if (rdv.statut === "annule" || rdv.statut === "a_valider") continue;
     const tag = tagDe[rdv.date];
     const rappels: string[] = rdv.profiles?.rappels || ["j-1", "j-3"];
     if (!tag || !rappels.includes(tag)) continue;

@@ -223,7 +223,7 @@ const telInternational = (raw) => {
 const telClient = (rdv) => {
   const nom = (rdv.personne || "").trim().toLowerCase();
   const f = nom ? (window.__patients || []).find(p => (p.nom || "").trim().toLowerCase() === nom) : null;
-  return (f?.telephone || "").trim();
+  return (f?.telephone || rdv.client_tel || "").trim();
 };
 // Partage d'un RDV (WhatsApp, SMS… via le menu du téléphone ; sinon copie du texte)
 const partagerRdv = async (rdv) => {
@@ -275,6 +275,7 @@ const STATUTS = {
   confirme:   { cls: "pill-ok",   fr: "Confirmé",   en: "Confirmed" },
   reporte:    { cls: "pill-moved",fr: "Reporté",    en: "Postponed" },
   annule:     { cls: "pill-ko",   fr: "Annulé",     en: "Cancelled" },
+  a_valider:  { cls: "pill-todo", fr: "À valider",  en: "To approve" },
 };
 const StatutPill = ({ statut }) => { const s = STATUTS[statut] || STATUTS.en_attente; return <span className={`pill ${s.cls}`}>{tr(s.fr, s.en)}</span>; };
 const catLabel = (v) => { const k = CATEGORIES.find(x => x.value === v) || CATEGORIES[CATEGORIES.length - 1]; return tr(k.fr, k.en); };
@@ -361,7 +362,10 @@ function useAuth() {
         push_j1: profile.push_j1 !== false,
         push_j3: profile.push_j3 !== false,
         push_confirm: profile.push_confirm !== false,
-        calendar_token: profile.calendar_token || null
+        calendar_token: profile.calendar_token || null,
+        booking_enabled: !!profile.booking_enabled,
+        booking_slug: profile.booking_slug || "",
+        booking_settings: profile.booking_settings || {}
       });
     }).catch(() => localStorage.removeItem("callrdv_session"));
     };
@@ -396,7 +400,7 @@ function useAuth() {
     const tk = res.access_token;
     await delay(600);
     const profile = await sb.getProfile(tk, res.user.id);
-    const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false };
+    const userData = { id: res.user.id, email: res.user.email, name: profile?.name || res.user.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false, calendar_token: profile?.calendar_token || null, booking_enabled: !!profile?.booking_enabled, booking_slug: profile?.booking_slug || "", booking_settings: profile?.booking_settings || {} };
     setUser(userData);
     // Persister la session
     localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, refresh_token: res.refresh_token, userId: res.user.id, email: res.user.email }));
@@ -435,7 +439,7 @@ function useAuth() {
     if (!u?.id) return false;
     await delay(600);
     const profile = await sb.getProfile(tk, u.id);
-    setUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || u.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false, calendar_token: profile?.calendar_token || null });
+    setUser({ id: u.id, email: u.email, name: profile?.name || u.user_metadata?.full_name || u.user_metadata?.name || "", plan: profile?.plan || "free", usage: profile?.usage || 0, token: tk, metier: profile?.metier || null, rappels: profile?.rappels || ["j-1","j-3"], push_enabled: profile?.push_enabled || false, push_j1: profile?.push_j1 !== false, push_j3: profile?.push_j3 !== false, push_confirm: profile?.push_confirm !== false, calendar_token: profile?.calendar_token || null, booking_enabled: !!profile?.booking_enabled, booking_slug: profile?.booking_slug || "", booking_settings: profile?.booking_settings || {} });
     localStorage.setItem("callrdv_session", JSON.stringify({ token: tk, refresh_token: refresh || null, userId: u.id, email: u.email }));
     if (u.email) localStorage.setItem("callrdv_email", u.email);
     return true;
@@ -545,6 +549,9 @@ textarea::placeholder{color:#94a3b8;}
 .pill-ko{color:#B91C1C;background:#FEE2E2;}
 .pill-moved{color:#1D4ED8;background:#DBEAFE;}
 .pill-past{color:#475569;background:#F1F5F9;}
+.pill-todo{color:#9A3412;background:#FFEDD5;}
+.pill-online{color:#3730A3;background:#E0E7FF;}
+.badge-num{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#EA580C;color:#fff;font-size:11px;font-weight:800;line-height:1;}
 /* Cases à toucher (jour, heure) */
 .chip{border:1px solid var(--border);background:#fff;border-radius:12px;font-weight:700;color:var(--text);cursor:pointer;transition:all .15s;}
 .chip:hover{border-color:var(--accent);}
@@ -787,7 +794,7 @@ function PricingModal({ currentPlan, onUpgrade, onClose }) {
 }
 
 // ── Calendar Modal ───────────────────────────────────────────
-function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
+function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut, onAccepter, onRefuser }) {
 
   // Ajout au calendrier Google / Outlook, à la date et l'heure du RDV (1 h par défaut)
   const exportTo = (type) => {
@@ -795,7 +802,7 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
     const details = encodeURIComponent(`${tr("Avec","With")}: ${rdv.personne}\n${tr("Lieu","Place")}: ${rdv.lieu||""}\n${rdv.notes||""}`);
     const loc = encodeURIComponent(rdv.adresse||rdv.lieu||"");
     const debut = new Date(`${rdv.date || isoLocal(new Date())}T${rdv.heure || "09:00"}:00`);
-    const fin = new Date(debut.getTime() + 3600000);
+    const fin = new Date(debut.getTime() + (Number(rdv.duree_min) > 0 ? Number(rdv.duree_min) : 60) * 60000);
     const z = (d) => d.toISOString().replace(/[-:]|\.\d+/g,"").slice(0,15)+"Z";
     if (type==="apple") {
       // Fichier .ics d'un seul RDV : l'iPhone et le Mac proposent de l'ajouter au calendrier
@@ -834,6 +841,7 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
             <div style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.01em", marginBottom:6 }}>{rdv.personne}</div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
               <StatutPill statut={rdv.statut} />
+              {rdv.source === "en_ligne" && <span className="pill pill-online">{tr("Réservé en ligne","Booked online")}</span>}
               <span style={{ fontSize:13, color:"var(--text2)" }}>{catLabel(rdv.categorie||"autre")}</span>
             </div>
           </div>
@@ -845,8 +853,16 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
           {ligne("calendar", <span>{dateLongue}{rdv.heure ? ` ${tr("à","at")} ${rdv.heure}` : ""}</span>)}
           {(rdv.lieu || rdv.adresse) && ligne("pin", <span>{[rdv.lieu, rdv.adresse].filter(Boolean).join(" — ")}</span>)}
           {tel && ligne("phone", <a href={`tel:${tel.replace(/[^\d+]/g,"")}`} style={{ color:"var(--accent)", fontWeight:700, textDecoration:"none" }}>{tel}</a>)}
+          {rdv.client_email && ligne("mail", <a href={`mailto:${rdv.client_email}`} style={{ color:"var(--accent)", fontWeight:700, textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis" }}>{rdv.client_email}</a>)}
           {rdv.notes && <div style={{ background:"#F8FAFC", borderRadius:12, padding:"12px 14px", marginTop:12, fontSize:14, color:"var(--text2)", lineHeight:1.6 }}>{rdv.notes}</div>}
         </div>
+
+        {rdv.statut === "a_valider" && onAccepter && (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0,1fr))", gap:8, marginBottom:16 }}>
+            <button onClick={()=>onAccepter(rdv)} style={{ height:48, borderRadius:12, border:"none", background:"#16A34A", color:"#fff", fontWeight:800, fontSize:15, cursor:"pointer" }}>{tr("Accepter","Accept")}</button>
+            <button onClick={()=>onRefuser(rdv)} style={{ height:48, borderRadius:12, border:"1px solid #FECACA", background:"#FEF2F2", color:"#B91C1C", fontWeight:800, fontSize:15, cursor:"pointer" }}>{tr("Refuser","Decline")}</button>
+          </div>
+        )}
 
         {/* Statut */}
         <label htmlFor="detail-statut" className="field-label" style={{ display:"block" }}>{tr("Statut","Status")}</label>
@@ -855,6 +871,7 @@ function CalendarModal({ rdv, onClose, onEdit, onDelete, onUpdateStatut }) {
           <option value="confirme">{tr("Confirmé","Confirmed")}</option>
           <option value="reporte">{tr("Reporté","Postponed")}</option>
           <option value="annule">{tr("Annulé","Cancelled")}</option>
+          {rdv.statut === "a_valider" && <option value="a_valider">{tr("À valider","To approve")}</option>}
         </select>
 
         {/* Envoyer au client */}
@@ -1121,7 +1138,7 @@ function exportPDF(appointments, viewMode) {
 }
 
 // ── Vue Agenda Calendrier ────────────────────────────────────
-function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut }) {
+function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRdv, onUpdateStatut, onAccepter, onRefuser, afficherSource }) {
   // semaine | mois | liste — sur téléphone, la liste est la seule vue lisible
   const [voirRecherche, setVoirRecherche] = React.useState(false);
   const [viewMode, setViewMode] = React.useState(() => (typeof window !== "undefined" && window.innerWidth < 700) ? "liste" : "semaine");
@@ -1201,6 +1218,21 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
             <button onClick={()=>exportPDF(appointments, viewMode === "passes" ? "liste" : viewMode)} aria-label={tr("Exporter en PDF","Export to PDF")} title={tr("Exporter en PDF","Export to PDF")} style={{ width:42, height:42, borderRadius:12, background:"#fff", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text)" }}><Icon name="download" size={18} /></button>
           </div>
         </div>
+        {(() => {
+          const todayIso = isoLocal(new Date());
+          const aValider = appointments.filter(r => r.statut === "a_valider" && (r.date || "") >= todayIso).length;
+          const hier = Date.now() - 86400000;
+          const nouvelles = appointments.filter(r => r.source === "en_ligne" && r.statut !== "a_valider" && r.confirmed_at && new Date(r.confirmed_at + (/[zZ+]/.test(String(r.confirmed_at).slice(10)) ? "" : "Z")).getTime() > hier).length;
+          if (!aValider && !nouvelles) return null;
+          return (
+            <button onClick={()=>setViewMode("liste")} style={{ background: aValider ? "#FFF7ED" : "var(--accent-soft)", border: aValider ? "1px solid #FED7AA" : "none", borderRadius:14, padding:"12px 14px", display:"flex", alignItems:"center", gap:10, fontSize:13, textAlign:"left", cursor:"pointer", font:"inherit", color:"var(--text)", maxWidth:720 }}>
+              <span style={{ width:10, height:10, borderRadius:"50%", background: aValider ? "#EA580C" : "var(--accent)", flexShrink:0 }}></span>
+              <span style={{ flex:1 }}>{aValider
+                ? <><b>{tr(`${aValider} demande${aValider>1?"s":""} à valider`,`${aValider} request${aValider>1?"s":""} to approve`)}</b> · {tr("acceptez ou refusez ci-dessous","accept or decline below")}</>
+                : <><b>{tr(`${nouvelles} nouvelle${nouvelles>1?"s":""} réservation${nouvelles>1?"s":""} en ligne`,`${nouvelles} new online booking${nouvelles>1?"s":""}`)}</b> {tr("depuis hier","since yesterday")}</>}</span>
+            </button>
+          );
+        })()}
         {(voirRecherche || agendaSearch) && (
           <div style={{ position:"relative" }}>
             <Icon name="search" size={18} color="#64748B" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
@@ -1332,13 +1364,17 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
                     {g.rdvs.map(rdv => {
                       const tel = telClient(rdv); const wa = telInternational(tel);
                       return (
-                        <div key={rdv.id} className="card" style={{ marginBottom:10, padding:14, display:"flex", gap:12, alignItems:"center", opacity: passes ? .8 : 1 }}>
+                        <div key={rdv.id} className="card" style={{ marginBottom:10, padding:14, opacity: passes ? .8 : 1, boxShadow: rdv.statut === "a_valider" && !passes ? "inset 0 0 0 2px #FDBA74" : undefined }}>
+                        <div style={{ display:"flex", gap:12, alignItems:"center" }}>
                           <button onClick={()=>onCalRdv(rdv)} style={{ flex:1, minWidth:0, display:"flex", gap:12, alignItems:"flex-start", background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left", font:"inherit", color:"inherit" }}>
                             <span style={{ width:54, flexShrink:0, fontSize:15, fontWeight:800, paddingTop:1 }}>{rdv.heure || "—"}</span>
                             <span style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", gap:5 }}>
                               <span style={{ fontSize:15, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.personne}</span>
                               <span style={{ fontSize:13, color:"var(--text2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{rdv.titre||tr("Rendez-vous","Appointment")}{rdv.lieu ? ` · ${rdv.lieu}` : ""}</span>
-                              <span><StatutPill statut={rdv.statut} /></span>
+                              <span style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                                {afficherSource && (rdv.source === "en_ligne" ? <span className="pill pill-online">{tr("En ligne","Online")}</span> : <span className="pill pill-past">{tr("Téléphone","Phone")}</span>)}
+                                <StatutPill statut={rdv.statut} />
+                              </span>
                             </span>
                           </button>
                           {wa ? (
@@ -1346,6 +1382,13 @@ function CalendarView({ appointments, onNewCall, onCalRdv, onEditRdv, onDeleteRd
                           ) : (
                             <button onClick={()=>partagerRdv(rdv)} aria-label={tr("Partager","Share")} title={tr("Partager (WhatsApp, SMS…)","Share (WhatsApp, SMS…)")} style={{ width:44, height:44, borderRadius:12, border:"1px solid var(--border)", background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", color:"var(--text)" }}><Icon name="share" size={19} /></button>
                           )}
+                        </div>
+                        {rdv.statut === "a_valider" && !passes && onAccepter && (
+                          <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0,1fr))", gap:8, marginTop:12 }}>
+                            <button onClick={()=>onAccepter(rdv)} style={{ height:44, borderRadius:12, border:"none", background:"#16A34A", color:"#fff", fontWeight:800, fontSize:14, cursor:"pointer" }}>{tr("Accepter","Accept")}</button>
+                            <button onClick={()=>onRefuser(rdv)} style={{ height:44, borderRadius:12, border:"1px solid #FECACA", background:"#FEF2F2", color:"#B91C1C", fontWeight:800, fontSize:14, cursor:"pointer" }}>{tr("Refuser","Decline")}</button>
+                          </div>
+                        )}
                         </div>
                       );
                     })}
@@ -1824,7 +1867,7 @@ function PatientsView({ patients, setPatients, user, token, sb, appointments, on
 }
 
 // ── Paramètres Modal ─────────────────────────────────────────
-function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide }) {
+function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide, onReservation }) {
   const [rappels, setRappels] = React.useState(user.rappels || ["j-1","j-3"]);
   const [pushEnabled, setPushEnabled] = React.useState(user.push_enabled || false);
   const [pushJ3, setPushJ3] = React.useState(user.push_j3 !== false);
@@ -1889,6 +1932,18 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide }) {
           <div className="field-label" style={{ marginBottom:0 }}>{tr("Langue","Language")}</div>
           <LangSwitch />
         </div>
+
+        {/* Réservation en ligne */}
+        {onReservation && (
+          <button id="reglages-reservation" type="button" onClick={onReservation} style={{ width:"100%", marginBottom:20, padding:16, borderRadius:14, background: user.booking_enabled ? "var(--accent-soft)" : "#F8FAFC", border:"1px solid var(--border)", display:"flex", alignItems:"center", gap:12, cursor:"pointer", textAlign:"left", font:"inherit", color:"var(--text)" }}>
+            <span style={{ width:40, height:40, borderRadius:12, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="calendar" size={20} color="#fff" /></span>
+            <span style={{ flex:1, minWidth:0 }}>
+              <span style={{ display:"block", fontWeight:800, fontSize:15 }}>{tr("Réservation en ligne","Online booking")}</span>
+              <span style={{ display:"block", fontSize:13, color:"var(--text2)", marginTop:2 }}>{user.booking_enabled ? tr("Activée · ","On · ") + `callrdv.com/?r=${user.booking_slug}` : tr("Vos clients réservent seuls, 24h/24","Clients book on their own, 24/7")}</span>
+            </span>
+            <span style={{ transform:"scaleX(-1)", display:"flex", color:"var(--text2)" }}><Icon name="back" size={18} /></span>
+          </button>
+        )}
 
         {/* Synchroniser avec mon calendrier (abonnement .ics) */}
         {user.calendar_token && (() => {
@@ -3062,6 +3117,434 @@ function GuideBienvenue({ onFin, onCreer }) {
   );
 }
 
+// ── Réservation en ligne ─────────────────────────────────────
+// Listes de départ par métier (le pro les modifie comme il veut)
+const PRESTATIONS_DEPART = {
+  medical:     [["Consultation","Consultation",20],["Première consultation","First consultation",30],["Renouvellement d'ordonnance","Prescription renewal",15]],
+  dentiste:    [["Contrôle","Check-up",30],["Détartrage","Scale and polish",30],["Soin dentaire","Dental treatment",45]],
+  kine:        [["Séance","Session",30],["Bilan","Assessment",45],["Séance d'ostéopathie","Osteopathy session",45]],
+  veterinaire: [["Consultation","Consultation",20],["Vaccination","Vaccination",15],["Contrôle après opération","Post-surgery check",20]],
+  garage:      [["Révision voiture","Car service",60],["Changement pneus","Tyre change",45],["Diagnostic","Diagnostic",30],["Vidange","Oil change",30]],
+  travaux:     [["Devis à domicile","Home quote",60],["Intervention","Job",120],["Dépannage","Repair call-out",60]],
+  juridique:   [["Premier rendez-vous","First meeting",60],["Consultation","Consultation",30],["Signature","Signing",60]],
+  banque:      [["Rendez-vous conseiller","Adviser meeting",45],["Ouverture de compte","Account opening",30],["Bilan assurance","Insurance review",60]],
+  beaute:      [["Coupe femme","Women's haircut",45],["Coupe homme","Men's haircut",30],["Barbe","Beard trim",15],["Couleur","Colour",90],["Brushing","Blow-dry",30]],
+  restaurant:  [["Réservation de table","Table booking",90]],
+  formation:   [["Rendez-vous parents","Parent meeting",20],["Cours particulier","Private lesson",60]],
+  pro:         [["Rendez-vous","Meeting",30],["Réunion","Long meeting",60]],
+  perso:       [["Rendez-vous","Appointment",30]],
+  autre:       [["Rendez-vous","Appointment",30],["Rendez-vous long","Long appointment",60]],
+};
+const prestationsDepart = (metier) => (PRESTATIONS_DEPART[metier] || PRESTATIONS_DEPART.autre)
+  .map(([fr, en, duree], i) => ({ id: `p${i + 1}`, nom: tr(fr, en), duree }));
+// Lundi → vendredi 9h-12h et 14h-18h, samedi matin, fermé le dimanche (0 = dimanche)
+const HORAIRES_DEPART = { "1":[["09:00","12:00"],["14:00","18:00"]], "2":[["09:00","12:00"],["14:00","18:00"]], "3":[["09:00","12:00"],["14:00","18:00"]], "4":[["09:00","12:00"],["14:00","18:00"]], "5":[["09:00","12:00"],["14:00","18:00"]], "6":[["09:00","12:00"]], "0":[] };
+const slugDepuis = (txt) => String(txt || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const SLUG_OK = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
+const lienReservation = (slug) => `https://callrdv.com/?r=${slug}`;
+const dureeTxt = (m) => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? String(m % 60).padStart(2, "0") : ""}`;
+const appelReservation = (corps) => fetch(`${CONFIG.SUPABASE_URL}/functions/v1/reservation`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "apikey": CONFIG.SUPABASE_ANON_KEY },
+  body: JSON.stringify(corps),
+}).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }));
+
+// Réglages de la page de réservation (ouverts depuis Réglages)
+function ReglagesReservation({ user, onSave, onClose }) {
+  const s = user.booking_settings || {};
+  const [actif, setActif] = useState(!!user.booking_enabled);
+  const [slug, setSlug] = useState(user.booking_slug || slugDepuis(user.name) || slugDepuis((user.email || "").split("@")[0]));
+  const [nom, setNom] = useState(s.nom || user.name || "");
+  const [adresse, setAdresse] = useState(s.adresse || "");
+  const [tel, setTel] = useState(s.tel || "");
+  const [prestations, setPrestations] = useState(Array.isArray(s.prestations) && s.prestations.length ? s.prestations : prestationsDepart(user.metier));
+  const [horaires, setHoraires] = useState(s.horaires && typeof s.horaires === "object" ? s.horaires : HORAIRES_DEPART);
+  const [delai, setDelai] = useState(s.delai_h ?? 2);
+  const [joursMax, setJoursMax] = useState(s.jours_max ?? 30);
+  const [validation, setValidation] = useState(!!s.validation);
+  const [erreur, setErreur] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+  const [copie, setCopie] = useState(false);
+
+  const jours = [["1",tr("Lundi","Monday")],["2",tr("Mardi","Tuesday")],["3",tr("Mercredi","Wednesday")],["4",tr("Jeudi","Thursday")],["5",tr("Vendredi","Friday")],["6",tr("Samedi","Saturday")],["0",tr("Dimanche","Sunday")]];
+  const majPlage = (j, i, k, v) => setHoraires(h => ({ ...h, [j]: (h[j] || []).map((p, n) => n === i ? (k === 0 ? [v, p[1]] : [p[0], v]) : p) }));
+  const lien = lienReservation(slug);
+  const dejaEnregistre = user.booking_enabled && user.booking_slug === slug;
+
+  const enregistrer = async () => {
+    setErreur("");
+    if (!SLUG_OK.test(slug)) { setErreur(tr("Le lien doit faire 3 à 40 caractères : lettres sans accent, chiffres et tirets.","The link must be 3 to 40 characters: letters, numbers and hyphens.")); return; }
+    const liste = prestations.map(p => ({ ...p, nom: (p.nom || "").trim() })).filter(p => p.nom);
+    if (actif && liste.length === 0) { setErreur(tr("Ajoutez au moins une prestation.","Add at least one service.")); return; }
+    for (const [j] of jours) for (const p of horaires[j] || []) if (!p[0] || !p[1] || p[0] >= p[1]) { setErreur(tr("Une plage horaire est incomplète ou finit avant de commencer.","A time range is incomplete or ends before it starts.")); return; }
+    if (actif && !jours.some(([j]) => (horaires[j] || []).length)) { setErreur(tr("Ouvrez au moins un jour.","Open at least one day.")); return; }
+    const data = {
+      booking_enabled: actif,
+      booking_slug: slug,
+      booking_settings: { nom: nom.trim(), adresse: adresse.trim(), tel: tel.trim(), prestations: liste, horaires, pas: 30, delai_h: Number(delai), jours_max: Number(joursMax), validation, tz: "Europe/Paris" },
+    };
+    setEnvoi(true);
+    try {
+      const r = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`, {
+        method: "PATCH",
+        headers: { ...sb.headers(user.token), "Prefer": "return=minimal" },
+        body: JSON.stringify(data),
+      });
+      if (r.status === 409) { setErreur(tr("Ce lien est déjà pris par un autre professionnel. Choisissez-en un autre.","This link is already taken. Please choose another one.")); setEnvoi(false); return; }
+      if (!r.ok) throw new Error(String(r.status));
+      onSave(data);
+      onClose();
+    } catch { setErreur(tr("L'enregistrement n'a pas marché. Réessayez.","Saving failed. Please try again.")); }
+    setEnvoi(false);
+  };
+
+  const copier = async () => {
+    try { await navigator.clipboard.writeText(lien); setCopie(true); setTimeout(() => setCopie(false), 2500); }
+    catch { window.prompt(tr("Copiez ce lien :","Copy this link:"), lien); }
+  };
+  const bloc = { marginBottom:18, padding:16, borderRadius:14, background:"#F8FAFC", border:"1px solid var(--border)" };
+  const btnPetit = { display:"flex", alignItems:"center", justifyContent:"center", gap:8, minHeight:44, borderRadius:12, border:"1px solid var(--border)", background:"#fff", fontSize:13, fontWeight:700, color:"var(--text)", textDecoration:"none", cursor:"pointer", padding:"0 10px" };
+  const interrupteur = (valeur, change, label) => (
+    <button type="button" role="switch" aria-checked={valeur} onClick={() => change(!valeur)} style={{ display:"flex", alignItems:"center", gap:12, width:"100%", background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left", font:"inherit", color:"var(--text)" }}>
+      <span style={{ flex:1, fontSize:14, fontWeight:700 }}>{label}</span>
+      <span style={{ width:44, height:26, borderRadius:13, background:valeur ? "var(--accent)" : "#CBD5E1", position:"relative", flexShrink:0, transition:"background .2s" }}>
+        <span style={{ position:"absolute", top:3, left:valeur ? 21 : 3, width:20, height:20, borderRadius:"50%", background:"#fff", transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.2)" }} />
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="sheet-fond" onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(15,23,42,.5)", zIndex:260, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div className="card fade-up sheet" role="dialog" aria-label={tr("Réservation en ligne","Online booking")} onClick={e => e.stopPropagation()} style={{ width:"100%", maxWidth:520, padding:24, maxHeight:"92vh", overflowY:"auto" }}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:6 }}>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.01em" }}>{tr("Réservation en ligne","Online booking")}</div>
+            <div style={{ fontSize:13, color:"var(--text2)", lineHeight:1.5, marginTop:4 }}>{tr("Vos clients réservent seuls, 24h/24, sur votre page. Vous continuez aussi à prendre des RDV par téléphone : tout arrive dans Mes RDV.","Your clients book on their own, 24/7, on your page. You keep taking phone bookings too: everything lands in your appointments.")}</div>
+          </div>
+          <button onClick={onClose} aria-label={tr("Fermer","Close")} style={{ width:40, height:40, borderRadius:12, background:"#F1F5F9", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text)", flexShrink:0 }}><Icon name="x" size={18} /></button>
+        </div>
+
+        <div style={{ ...bloc, marginTop:14, background: actif ? "var(--accent-soft)" : "#F8FAFC" }}>
+          {interrupteur(actif, setActif, tr("Activer ma page de réservation","Turn on my booking page"))}
+        </div>
+
+        <div style={bloc}>
+          <label htmlFor="resa-slug" className="field-label" style={{ display:"block" }}>{tr("Mon lien","My link")}</label>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:13, color:"var(--text2)", whiteSpace:"nowrap" }}>callrdv.com/?r=</span>
+            <input id="resa-slug" value={slug} onChange={e => setSlug(slugDepuis(e.target.value))} placeholder="garage-mehdi" style={{ flex:1, minWidth:0 }} />
+          </div>
+          {dejaEnregistre ? (
+            <>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3, minmax(0,1fr))", gap:8, marginTop:12 }}>
+                <button type="button" onClick={copier} style={btnPetit}>{copie ? tr("Copié ✓","Copied ✓") : tr("Copier","Copy")}</button>
+                <a href={`https://wa.me/?text=${encodeURIComponent(tr("Réservez votre rendez-vous en ligne : ","Book your appointment online: ") + lien)}`} target="_blank" rel="noopener noreferrer" style={{ ...btnPetit, background:"#F0FDF4", borderColor:"#BBF7D0", color:"#14532D" }}>WhatsApp</a>
+                <a href={lien} target="_blank" rel="noopener noreferrer" style={btnPetit}>{tr("Voir","Open")}</a>
+              </div>
+              <details style={{ marginTop:10 }}>
+                <summary style={{ cursor:"pointer", fontSize:13, fontWeight:700, color:"var(--text2)", padding:"6px 0" }}>{tr("QR code à imprimer (vitrine, comptoir)","QR code to print (shop window, counter)")}</summary>
+                <div style={{ textAlign:"center", paddingTop:8 }}>
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(lien)}`} width="200" height="200" alt={tr("QR code de ma page de réservation","QR code for my booking page")} style={{ borderRadius:12, background:"#fff" }} />
+                  <div style={{ fontSize:12, color:"var(--text2)", marginTop:6 }}>{tr("Appui long sur l'image pour l'enregistrer.","Long-press the image to save it.")}</div>
+                </div>
+              </details>
+            </>
+          ) : (
+            <div style={{ fontSize:12, color:"var(--text2)", marginTop:8, lineHeight:1.5 }}>{tr("Enregistrez pour obtenir le lien à partager (WhatsApp, Google, réseaux, QR code).","Save to get the link to share (WhatsApp, Google, social media, QR code).")}</div>
+          )}
+        </div>
+
+        <div style={bloc}>
+          <div className="field-label">{tr("Ce que voient vos clients","What your clients see")}</div>
+          <input value={nom} onChange={e => setNom(e.target.value)} placeholder={tr("Nom de votre activité (ex : Garage Mehdi)","Business name (e.g. Mehdi's Garage)")} aria-label={tr("Nom affiché","Display name")} style={{ marginBottom:8 }} />
+          <input value={adresse} onChange={e => setAdresse(e.target.value)} placeholder={tr("Adresse (facultatif)","Address (optional)")} aria-label={tr("Adresse","Address")} style={{ marginBottom:8 }} />
+          <input type="tel" value={tel} onChange={e => setTel(e.target.value)} placeholder={tr("Téléphone à afficher (facultatif)","Phone to display (optional)")} aria-label={tr("Téléphone","Phone")} />
+        </div>
+
+        <div style={bloc}>
+          <div className="field-label">{tr("Prestations proposées","Services offered")}</div>
+          <div style={{ fontSize:12, color:"var(--text2)", marginBottom:10, lineHeight:1.5 }}>{tr("Liste de départ selon votre métier : modifiez, supprimez ou ajoutez.","Starter list for your business: edit, remove or add.")}</div>
+          {prestations.map((p, i) => (
+            <div key={p.id} style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
+              <input value={p.nom} onChange={e => setPrestations(l => l.map((x, n) => n === i ? { ...x, nom: e.target.value } : x))} aria-label={tr("Nom de la prestation","Service name")} style={{ flex:1, minWidth:0 }} />
+              <select value={p.duree} onChange={e => setPrestations(l => l.map((x, n) => n === i ? { ...x, duree: Number(e.target.value) } : x))} aria-label={tr("Durée","Duration")} style={{ width:112, flexShrink:0, paddingRight:28 }}>
+                {[...new Set([10,15,20,30,45,60,90,120,180,240, p.duree])].sort((a,b)=>a-b).map(m => <option key={m} value={m}>{dureeTxt(m)}</option>)}
+              </select>
+              <button type="button" onClick={() => setPrestations(l => l.filter((_, n) => n !== i))} aria-label={tr("Supprimer","Remove")} style={{ width:40, height:40, borderRadius:10, border:"1px solid #FECACA", background:"#FEF2F2", color:"#B91C1C", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="trash" size={16} /></button>
+            </div>
+          ))}
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            <button type="button" onClick={() => setPrestations(l => [...l, { id: `p${Date.now()}`, nom: "", duree: 30 }])} style={btnPetit}><Icon name="plus" size={16} /> {tr("Ajouter","Add")}</button>
+            <button type="button" onClick={() => { if (window.confirm(tr("Remplacer votre liste par la liste de départ ?","Replace your list with the starter list?"))) setPrestations(prestationsDepart(user.metier)); }} style={{ ...btnPetit, color:"var(--text2)" }}>{tr("Liste de départ","Starter list")}</button>
+          </div>
+        </div>
+
+        <div style={bloc}>
+          <div className="field-label">{tr("Horaires d'ouverture","Opening hours")}</div>
+          {jours.map(([j, label]) => {
+            const plages = horaires[j] || [];
+            return (
+              <div key={j} style={{ padding:"8px 0", borderBottom:"1px solid #EEF2F7" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ flex:1, fontSize:14, fontWeight:700 }}>{label}</span>
+                  <button type="button" onClick={() => setHoraires(h => ({ ...h, [j]: plages.length ? [] : [["09:00","12:00"],["14:00","18:00"]] }))} style={{ fontSize:13, fontWeight:700, border:"none", background:"none", cursor:"pointer", color: plages.length ? "#B91C1C" : "var(--accent)", padding:"6px 0" }}>
+                    {plages.length ? tr("Fermer ce jour","Close this day") : tr("Ouvrir","Open")}
+                  </button>
+                </div>
+                {plages.length === 0 && <div style={{ fontSize:13, color:"var(--text2)" }}>{tr("Fermé","Closed")}</div>}
+                {plages.map((p, i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:6, marginTop:6 }}>
+                    <input type="time" step="900" value={p[0]} onChange={e => majPlage(j, i, 0, e.target.value)} aria-label={tr(`${label}, début`,`${label}, start`)} style={{ flex:1, minWidth:0 }} />
+                    <span style={{ color:"var(--text2)" }}>→</span>
+                    <input type="time" step="900" value={p[1]} onChange={e => majPlage(j, i, 1, e.target.value)} aria-label={tr(`${label}, fin`,`${label}, end`)} style={{ flex:1, minWidth:0 }} />
+                    {plages.length > 1 && <button type="button" onClick={() => setHoraires(h => ({ ...h, [j]: plages.filter((_, n) => n !== i) }))} aria-label={tr("Retirer cette plage","Remove this range")} style={{ width:36, height:36, borderRadius:10, border:"1px solid var(--border)", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"var(--text2)" }}><Icon name="x" size={14} /></button>}
+                  </div>
+                ))}
+                {plages.length === 1 && <button type="button" onClick={() => setHoraires(h => ({ ...h, [j]: [[plages[0][0], "12:00"], ["14:00", plages[0][1] > "14:00" ? plages[0][1] : "18:00"]] }))} style={{ fontSize:12, fontWeight:700, border:"none", background:"none", cursor:"pointer", color:"var(--accent)", padding:"6px 0 0" }}>{tr("+ Pause du midi","+ Lunch break")}</button>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={bloc}>
+          <label htmlFor="resa-delai" className="field-label" style={{ display:"block" }}>{tr("Réserver au plus tard","Latest booking")}</label>
+          <select id="resa-delai" value={delai} onChange={e => setDelai(e.target.value)} style={{ marginBottom:12 }}>
+            {[[0,tr("Jusqu'à la dernière minute","Up to the last minute")],[1,tr("1 h avant","1 h before")],[2,tr("2 h avant","2 h before")],[4,tr("4 h avant","4 h before")],[12,tr("12 h avant","12 h before")],[24,tr("La veille (24 h avant)","The day before (24 h)")],[48,tr("2 jours avant","2 days before")]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <label htmlFor="resa-max" className="field-label" style={{ display:"block" }}>{tr("Réserver jusqu'à","Book up to")}</label>
+          <select id="resa-max" value={joursMax} onChange={e => setJoursMax(e.target.value)} style={{ marginBottom:14 }}>
+            {[7,14,30,60,90].map(v => <option key={v} value={v}>{tr(`${v} jours à l'avance`,`${v} days ahead`)}</option>)}
+          </select>
+          {interrupteur(validation, setValidation, tr("Je valide moi-même chaque réservation","I approve each booking myself"))}
+          <div style={{ fontSize:12, color:"var(--text2)", marginTop:6, lineHeight:1.5 }}>
+            {validation
+              ? tr("Le client reçoit « demande reçue ». Le créneau est bloqué jusqu'à ce que vous acceptiez ou refusiez dans Mes RDV.","The client gets “request received”. The slot is held until you accept or decline in your appointments.")
+              : tr("Le RDV est confirmé tout de suite : le client et vous recevez un email.","The appointment is confirmed straight away: you and the client get an email.")}
+          </div>
+        </div>
+
+        {(user.plan || "free") === "free" && <div style={{ fontSize:12, color:"var(--text2)", marginBottom:14, lineHeight:1.5 }}>{tr("Les réservations en ligne comptent dans vos 10 RDV gratuits du mois. Une fois la limite atteinte, votre page affiche votre numéro de téléphone à la place.","Online bookings count toward your 10 free appointments a month. Once the limit is reached, your page shows your phone number instead.")}</div>}
+        {erreur && <div role="alert" style={{ background:"#FEF2F2", border:"1px solid #FECACA", color:"#B91C1C", borderRadius:12, padding:"10px 14px", fontSize:13, fontWeight:600, marginBottom:12 }}>{erreur}</div>}
+        <div style={{ display:"flex", gap:10 }}>
+          <button className="btn btn-outline" onClick={onClose} style={{ flex:1 }}>{tr("Annuler","Cancel")}</button>
+          <button id="resa-enregistrer" className="btn btn-primary" onClick={enregistrer} disabled={envoi} style={{ flex:2 }}>{envoi ? <span className="spinner"></span> : tr("Enregistrer","Save")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Page publique : callrdv.com/?r=<lien>
+function ReservationPage({ slug }) {
+  const [page, setPage] = useState(null);
+  const [etat, setEtat] = useState("chargement"); // chargement | introuvable | erreur | pret
+  const [etape, setEtape] = useState(1);
+  const [prestation, setPrestation] = useState(null);
+  const [jours, setJours] = useState(null);
+  const [jour, setJour] = useState("");
+  const [heure, setHeure] = useState("");
+  const [form, setForm] = useState({ nom:"", tel:"", email:"", message:"", site:"" });
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const [fini, setFini] = useState(null);
+
+  useEffect(() => {
+    appelReservation({ slug, action: "page" }).then(({ status, data }) => {
+      if (status === 200 && data.prestations) { setPage(data); setEtat("pret"); try { document.title = `${data.nom || "CallRDV"} – ${tr("Réserver","Book")}`; } catch {} }
+      else setEtat(status === 404 ? "introuvable" : "erreur");
+    }).catch(() => setEtat("erreur"));
+  }, [slug]);
+
+  const chargerCreneaux = async (p) => {
+    setJours(null); setHeure("");
+    const { status, data } = await appelReservation({ slug, action: "creneaux", prestation: p.id }).catch(() => ({ status: 0, data: {} }));
+    if (status !== 200 || !Array.isArray(data.jours)) { setErreur(tr("Impossible de charger les créneaux. Réessayez.","Could not load the time slots. Please try again.")); setJours([]); return; }
+    setJours(data.jours);
+    setJour(j => data.jours.find(x => x.date === j && x.heures.length)?.date || data.jours.find(x => x.heures.length)?.date || "");
+  };
+  const choisirPrestation = (p) => { setPrestation(p); setErreur(""); setEtape(2); chargerCreneaux(p); window.scrollTo(0, 0); };
+
+  const reserver = async (e) => {
+    e.preventDefault();
+    setErreur("");
+    if (form.nom.trim().length < 2) { setErreur(tr("Indiquez votre nom.","Please enter your name.")); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setErreur(tr("Votre email ne semble pas correct.","Your email does not look right.")); return; }
+    setEnvoi(true);
+    const { status, data } = await appelReservation({ slug, action: "reserver", prestation: prestation.id, date: jour, heure, ...form }).catch(() => ({ status: 0, data: {} }));
+    setEnvoi(false);
+    if (status === 200 && data.ok) { setFini(data); setEtape(4); window.scrollTo(0, 0); return; }
+    const msg = {
+      pris: tr("Ce créneau vient d'être pris. Choisissez-en un autre.","This slot was just taken. Please choose another one."),
+      trop: tr("Vous avez déjà fait plusieurs réservations aujourd'hui. Pour en faire une autre, appelez directement.","You have already made several bookings today. To make another one, please call directly."),
+      complet: tr("La réservation en ligne est momentanément indisponible. Appelez directement.","Online booking is temporarily unavailable. Please call directly."),
+      ferme: tr("La réservation en ligne est fermée pour le moment.","Online booking is closed for now."),
+      email: tr("Votre email ne semble pas correct.","Your email does not look right."),
+      tel: tr("Votre numéro de téléphone ne semble pas correct.","Your phone number does not look right."),
+      nom: tr("Indiquez votre nom.","Please enter your name."),
+    }[data.error] || tr("La réservation n'a pas pu aboutir. Réessayez.","The booking could not be completed. Please try again.");
+    setErreur(msg);
+    if (data.error === "pris") { setEtape(2); chargerCreneaux(prestation); }
+  };
+
+  const telechargerIcs = () => {
+    const r = fini.rdv;
+    const [h, m] = r.heure.split(":").map(Number);
+    const debut = new Date(`${r.date}T${r.heure}:00`);
+    const finRdv = new Date(debut.getTime() + (r.duree || 30) * 60000);
+    const loc = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}00`;
+    const e = (v) => String(v||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+    const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//CallRDV//callrdv.com//FR","BEGIN:VEVENT", `UID:${r.date}-${h}${m}-${slug}@callrdv.com`, `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d+/g,"")}`,
+      `DTSTART:${loc(debut)}`, `DTEND:${loc(finRdv)}`, `SUMMARY:${e(`${r.prestation} · ${r.nom}`)}`, ...(r.adresse ? [`LOCATION:${e(r.adresse)}`] : []), "END:VEVENT","END:VCALENDAR"].join("\r\n");
+    const url = URL.createObjectURL(new Blob([ics], { type:"text/calendar;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = "rendez-vous.ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const dateLongue = (iso) => { const d = new Date(iso + "T12:00:00"); const t = d.toLocaleDateString(locale(), { weekday:"long", day:"numeric", month:"long" }); return t.charAt(0).toUpperCase() + t.slice(1); };
+  const telLien = page?.tel ? `tel:${page.tel.replace(/[^\d+]/g, "")}` : "";
+  const carte = { background:"#fff", borderRadius:16, padding:16 };
+  const titreEtape = (n, txt) => (<>
+    <div style={{ fontSize:12, fontWeight:800, color:"var(--accent)", textTransform:"uppercase", letterSpacing:"0.06em" }}>{tr(`Étape ${n} sur 3`,`Step ${n} of 3`)}</div>
+    <h2 style={{ margin:"4px 0 12px", fontSize:22, fontWeight:800, letterSpacing:"-0.02em" }}>{txt}</h2>
+  </>);
+  const retour = (vers) => <button onClick={() => { setErreur(""); setEtape(vers); }} aria-label={tr("Retour","Back")} style={{ width:40, height:40, borderRadius:12, border:"1px solid var(--border)", background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text)", flexShrink:0 }}><Icon name="back" size={18} /></button>;
+
+  const enTete = page && (etape === 1 || etape === 4 ? (
+    <header style={{ background:"#fff", padding:"22px 20px 18px", borderBottom:"1px solid var(--border)", display:"flex", gap:14, alignItems:"center" }}>
+      <div style={{ width:52, height:52, borderRadius:16, background:"var(--accent)", color:"#fff", fontSize:22, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{(page.nom || "?").trim().charAt(0).toUpperCase()}</div>
+      <div style={{ minWidth:0 }}>
+        <h1 style={{ margin:0, fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>{page.nom || tr("Prise de rendez-vous","Book an appointment")}</h1>
+        {page.adresse && <div style={{ fontSize:13, color:"var(--text2)" }}>{page.adresse}</div>}
+      </div>
+    </header>
+  ) : (
+    <header style={{ background:"#fff", padding:"16px 20px", borderBottom:"1px solid var(--border)", display:"flex", gap:12, alignItems:"center" }}>
+      {retour(etape - 1)}
+      <div style={{ minWidth:0 }}>
+        <div style={{ fontSize:16, fontWeight:800 }}>{page.nom}</div>
+        <div style={{ fontSize:13, color:"var(--text2)" }}>{prestation?.nom} · {etape === 3 && jour ? `${new Date(jour + "T12:00:00").toLocaleDateString(locale(), { weekday:"short", day:"numeric", month:"short" })} ${tr("à","at")} ${heure}` : dureeTxt(prestation?.duree || 30)}</div>
+      </div>
+    </header>
+  ));
+
+  const jourChoisi = jours?.find(j => j.date === jour);
+  const matin = (jourChoisi?.heures || []).filter(h => h < "12:00");
+  const aprem = (jourChoisi?.heures || []).filter(h => h >= "12:00");
+  const grilleHeures = (liste) => (
+    <div style={{ display:"grid", gridTemplateColumns:"repeat(3, minmax(0,1fr))", gap:8 }}>
+      {liste.map(h => <button key={h} onClick={() => { setHeure(h); setErreur(""); setEtape(3); window.scrollTo(0, 0); }} style={{ height:46, borderRadius:12, border:"1px solid var(--border)", background:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", color:"var(--text)" }}>{h}</button>)}
+    </div>
+  );
+
+  return (
+    <>
+      <style>{CSS}</style>
+      <div style={{ minHeight:"100vh", background:"#F5F6F8", display:"flex", justifyContent:"center" }}>
+        <div style={{ width:"100%", maxWidth:520, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
+          {etat === "chargement" && <div style={{ padding:60, textAlign:"center", color:"var(--text2)" }}>{tr("Chargement…","Loading…")}</div>}
+          {(etat === "introuvable" || etat === "erreur") && (
+            <div style={{ padding:"64px 20px", textAlign:"center" }}>
+              <div style={{ fontWeight:800, fontSize:20, marginBottom:8 }}>{etat === "introuvable" ? tr("Page introuvable","Page not found") : tr("Une erreur est survenue","Something went wrong")}</div>
+              <div style={{ fontSize:14, color:"var(--text2)", lineHeight:1.6 }}>{etat === "introuvable" ? tr("Ce lien de réservation n'existe pas ou n'est plus actif. Contactez directement votre professionnel.","This booking link does not exist or is no longer active. Please contact your professional directly.") : tr("Réessayez dans quelques instants.","Please try again in a moment.")}</div>
+            </div>
+          )}
+          {etat === "pret" && (<>
+            {enTete}
+            <main style={{ flex:1, padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+              {erreur && <div role="alert" style={{ background:"#FEF2F2", border:"1px solid #FECACA", color:"#B91C1C", borderRadius:12, padding:"12px 14px", fontSize:14, fontWeight:600 }}>{erreur}</div>}
+
+              {etape === 1 && (page.complet ? (
+                <div style={{ ...carte, fontSize:15, lineHeight:1.6 }}>
+                  {tr("La réservation en ligne est momentanément indisponible.","Online booking is temporarily unavailable.")}
+                  {page.tel && <> {tr("Appelez-nous :","Please call us:")} <a href={telLien} style={{ fontWeight:800, textDecoration:"none" }}>{page.tel}</a></>}
+                </div>
+              ) : (<>
+                {titreEtape(1, tr("Que souhaitez-vous réserver ?","What would you like to book?"))}
+                {page.prestations.map(p => (
+                  <button key={p.id} onClick={() => choisirPrestation(p)} style={{ ...carte, display:"flex", alignItems:"center", gap:12, border:"1px solid transparent", cursor:"pointer", textAlign:"left", font:"inherit", color:"var(--text)", width:"100%" }}>
+                    <span style={{ flex:1 }}><span style={{ display:"block", fontSize:16, fontWeight:800 }}>{p.nom}</span><span style={{ fontSize:13, color:"var(--text2)" }}>{dureeTxt(p.duree)}</span></span>
+                    <span style={{ transform:"scaleX(-1)", display:"flex", color:"var(--text2)" }}><Icon name="back" size={20} /></span>
+                  </button>
+                ))}
+                {page.validation && <div style={{ fontSize:13, color:"var(--text2)", lineHeight:1.5 }}>{tr("Votre demande sera confirmée par email après validation.","Your request will be confirmed by email once approved.")}</div>}
+                {page.tel && <div style={{ ...carte, marginTop:6, fontSize:14, color:"var(--text2)" }}>{tr("Vous préférez appeler ?","Prefer to call?")} <a href={telLien} style={{ fontWeight:800, textDecoration:"none" }}>{page.tel}</a></div>}
+              </>))}
+
+              {etape === 2 && (<>
+                {titreEtape(2, tr("Choisissez un créneau","Choose a time"))}
+                {jours === null && <div style={{ color:"var(--text2)", padding:"20px 0" }}>{tr("Recherche des créneaux libres…","Looking for free slots…")}</div>}
+                {jours && !jours.some(j => j.heures.length) && (
+                  <div style={{ ...carte, fontSize:14, lineHeight:1.6 }}>{tr("Plus aucun créneau libre pour le moment.","No free slots for now.")}{page.tel && <> {tr("Appelez :","Call:")} <a href={telLien} style={{ fontWeight:800, textDecoration:"none" }}>{page.tel}</a></>}</div>
+                )}
+                {jours && jours.some(j => j.heures.length) && (<>
+                  <div role="listbox" aria-label={tr("Jour","Day")} style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
+                    {jours.filter(j => j.heures.length).map(j => {
+                      const d = new Date(j.date + "T12:00:00"); const on = j.date === jour;
+                      return (
+                        <button key={j.date} role="option" aria-selected={on} onClick={() => setJour(j.date)} style={{ minWidth:62, height:66, borderRadius:12, border: on ? "none" : "1px solid var(--border)", background: on ? "var(--accent)" : "#fff", color: on ? "#fff" : "var(--text2)", fontSize:11, fontWeight:600, cursor:"pointer", flexShrink:0, lineHeight:1.3 }}>
+                          {d.toLocaleDateString(locale(), { weekday:"short" })}<br />
+                          <span style={{ fontSize:18, fontWeight:800, color: on ? "#fff" : "var(--text)" }}>{d.getDate()}</span><br />
+                          {d.toLocaleDateString(locale(), { month:"short" })}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {jourChoisi && <div style={{ fontSize:14, fontWeight:800, marginTop:6 }}>{dateLongue(jour)}</div>}
+                  {matin.length > 0 && (<><div style={{ fontSize:13, fontWeight:700, color:"var(--text2)" }}>{tr("Matin","Morning")}</div>{grilleHeures(matin)}</>)}
+                  {aprem.length > 0 && (<><div style={{ fontSize:13, fontWeight:700, color:"var(--text2)", marginTop:4 }}>{tr("Après-midi","Afternoon")}</div>{grilleHeures(aprem)}</>)}
+                </>)}
+              </>)}
+
+              {etape === 3 && (
+                <form onSubmit={reserver} style={{ display:"flex", flexDirection:"column", gap:12 }} noValidate>
+                  {titreEtape(3, tr("Vos coordonnées","Your details"))}
+                  <div><label htmlFor="r-nom" className="field-label" style={{ display:"block" }}>{tr("Nom et prénom","Full name")}</label>
+                    <input id="r-nom" autoComplete="name" value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} required maxLength={80} /></div>
+                  <div><label htmlFor="r-tel" className="field-label" style={{ display:"block" }}>{tr("Téléphone","Phone")}</label>
+                    <input id="r-tel" type="tel" autoComplete="tel" value={form.tel} onChange={e => setForm(f => ({ ...f, tel: e.target.value }))} maxLength={30} /></div>
+                  <div><label htmlFor="r-email" className="field-label" style={{ display:"block" }}>Email</label>
+                    <input id="r-email" type="email" autoComplete="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required maxLength={120} />
+                    <div style={{ fontSize:12, color:"var(--text2)", marginTop:6 }}>{tr("Pour recevoir la confirmation et les rappels.","To get the confirmation and reminders.")}</div></div>
+                  <div><label htmlFor="r-msg" className="field-label" style={{ display:"block" }}>{tr("Un mot (facultatif)","A note (optional)")}</label>
+                    <input id="r-msg" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} maxLength={300} /></div>
+                  {/* Champ piège invisible pour les robots */}
+                  <div aria-hidden="true" style={{ position:"absolute", left:"-9999px", width:1, height:1, overflow:"hidden" }}>
+                    <label htmlFor="r-site">Site</label><input id="r-site" tabIndex={-1} autoComplete="off" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))} />
+                  </div>
+                  <button id="r-confirmer" type="submit" className="btn btn-primary" disabled={envoi} style={{ height:54, fontSize:16, marginTop:4 }}>{envoi ? <span className="spinner"></span> : page.validation ? tr("Envoyer ma demande","Send my request") : tr("Confirmer ma réservation","Confirm my booking")}</button>
+                  <div style={{ fontSize:12, color:"var(--text2)", textAlign:"center", lineHeight:1.5 }}>{tr(`Vos coordonnées sont transmises uniquement à ${page.nom || "ce professionnel"}.`,`Your details are only shared with ${page.nom || "this professional"}.`)}</div>
+                </form>
+              )}
+
+              {etape === 4 && fini && (
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14, textAlign:"center", paddingTop:20 }}>
+                  <div style={{ width:72, height:72, borderRadius:"50%", background: fini.statut === "a_valider" ? "#F59E0B" : "#16A34A", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name={fini.statut === "a_valider" ? "clock" : "check"} size={34} color="#fff" stroke={2.8} /></div>
+                  <h2 style={{ margin:0, fontSize:26, fontWeight:800, letterSpacing:"-0.02em" }}>{fini.statut === "a_valider" ? tr("Demande envoyée","Request sent") : tr("C'est réservé !","You're booked!")}</h2>
+                  <p style={{ margin:0, fontSize:15, color:"var(--text2)", lineHeight:1.6, maxWidth:340 }}>
+                    {fini.statut === "a_valider"
+                      ? tr(`${page.nom || "Le professionnel"} va valider votre demande. Vous recevrez un email à ${form.email.trim()}.`,`${page.nom || "The professional"} will approve your request. You will get an email at ${form.email.trim()}.`)
+                      : fini.email_envoye ? tr(`Un email de confirmation vient de partir à ${form.email.trim()}.`,`A confirmation email has been sent to ${form.email.trim()}.`) : tr("Votre rendez-vous est enregistré.","Your appointment is booked.")}
+                  </p>
+                  <section style={{ ...carte, width:"100%", textAlign:"left", display:"flex", flexDirection:"column", gap:10 }}>
+                    <div style={{ fontSize:16, fontWeight:800 }}>{fini.rdv.prestation}</div>
+                    <div style={{ display:"flex", gap:10, alignItems:"center", fontSize:14 }}><Icon name="calendar" size={18} color="var(--text2)" />{dateLongue(fini.rdv.date)} {tr("à","at")} {fini.rdv.heure}</div>
+                    {fini.rdv.adresse && <div style={{ display:"flex", gap:10, alignItems:"center", fontSize:14 }}><Icon name="pin" size={18} color="var(--text2)" />{fini.rdv.adresse}</div>}
+                  </section>
+                  <div style={{ width:"100%", display:"grid", gridTemplateColumns:"repeat(2, minmax(0,1fr))", gap:8 }}>
+                    <button onClick={telechargerIcs} className="btn btn-outline" style={{ height:48 }}>{tr("Ajouter au calendrier","Add to calendar")}</button>
+                    <a href={fini.lien} className="btn btn-outline" style={{ height:48, color:"#B91C1C", borderColor:"#FECACA", background:"#FEF2F2", textDecoration:"none", display:"flex", alignItems:"center", justifyContent:"center" }}>{tr("Annuler","Cancel")}</a>
+                  </div>
+                  {fini.statut !== "a_valider" && <p style={{ margin:0, fontSize:13, color:"var(--text2)" }}>{tr("Vous recevrez un rappel par email avant le rendez-vous.","You will get an email reminder before the appointment.")}</p>}
+                </div>
+              )}
+            </main>
+          </>)}
+          <footer style={{ padding:"14px 20px 22px", textAlign:"center", fontSize:12, color:"var(--text2)" }}>{tr("Réservation avec","Booking by")} <a href="https://callrdv.com" style={{ color:"var(--text2)" }}>CallRDV</a></footer>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ReponseRdvPage({ id, t }) {
   const [rdv, setRdv] = useState(null);
   const [etat, setEtat] = useState("chargement"); // chargement | pret | introuvable | erreur | confirme | annule | demande_annulation
@@ -3087,7 +3570,7 @@ function ReponseRdvPage({ id, t }) {
       const { status, data } = await appel(action);
       if (data.rdv) setRdv(data.rdv);
       if (status === 200) setEtat(action);
-      else if (data.error === "deja_annule" || data.error === "passe") setEtat("pret");
+      else if (data.error === "deja_annule" || data.error === "passe" || data.error === "a_valider") setEtat("pret");
       else setEtat("erreur");
     } catch { setEtat("erreur"); }
     setEnvoi(false);
@@ -3139,14 +3622,15 @@ function ReponseRdvPage({ id, t }) {
               ? msg("❌", L("Ce rendez-vous est annulé","This appointment is cancelled"), L("Pour reprendre rendez-vous, contactez directement votre professionnel.","To book again, please contact your professional directly."), "#ef4444")
               : (
                 <div>
-                  {rdv.statut === "confirme" && <div style={{ textAlign:"center", color:"#16a34a", fontWeight:700, fontSize:14, marginBottom:6 }}>{L("✅ Vous avez déjà confirmé ce RDV","✅ You have already confirmed this appointment")}</div>}
-                  {rdv.statut !== "confirme" && <button disabled={envoi} onClick={()=>repondre("confirme")} style={btn("#16a34a","#fff","#16a34a")}>{L("✅ Je confirme ma venue","✅ I'll be there")}</button>}
+                  {rdv.statut === "confirme" && <div style={{ textAlign:"center", color:"#16a34a", fontWeight:700, fontSize:14, marginBottom:6 }}>{L("✅ Votre RDV est confirmé","✅ Your appointment is confirmed")}</div>}
+                  {rdv.statut === "a_valider" && <div style={{ textAlign:"center", color:"#B45309", fontWeight:700, fontSize:14, marginBottom:6, lineHeight:1.5 }}>{L("⏳ Demande en attente de validation. Vous recevrez un email.","⏳ Request waiting for approval. You will get an email.")}</div>}
+                  {rdv.statut !== "confirme" && rdv.statut !== "a_valider" && <button disabled={envoi} onClick={()=>repondre("confirme")} style={btn("#16a34a","#fff","#16a34a")}>{L("✅ Je confirme ma venue","✅ I'll be there")}</button>}
                   <button disabled={envoi} onClick={()=>setEtat("demande_annulation")} style={btn("#fff","#ef4444","#fecaca")}>{L("❌ J'annule mon RDV","❌ Cancel my appointment")}</button>
                 </div>
               ))}
           </>
         )}
-        <div style={{ marginTop:22, fontSize:11, color:"#64748B", textAlign:"center" }}>{L("Rappel envoyé via CallRDV — callrdv.com","Reminder sent via CallRDV — callrdv.com")}</div>
+        <div style={{ marginTop:22, fontSize:11, color:"#64748B", textAlign:"center" }}>CallRDV — callrdv.com</div>
       </div>
     </div>
   );
@@ -3177,6 +3661,12 @@ export default function App() {
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
   const timerRef = useRef(null);
+  // Page publique de réservation : callrdv.com/?r=<lien>
+  const [lienResa] = useState(() => {
+    const r = (new URLSearchParams(window.location.search).get("r") || "").trim().toLowerCase();
+    return SLUG_OK.test(r) ? r : null;
+  });
+  const [showResa, setShowResa] = useState(false);
   // Lien « Confirmer ou annuler mon RDV » reçu par le client dans son email de rappel
   const [reponseLien] = useState(() => {
     const q = new URLSearchParams(window.location.search);
@@ -3285,6 +3775,26 @@ export default function App() {
     setCalRdv(prev => prev && prev.id === id ? { ...prev, statut } : prev);
     if (prevenir) notifierClient(id, "annule");
   };
+
+  // Réservation en ligne en attente : le pro accepte ou refuse
+  const accepterDemande = async (rdv) => {
+    await sb.updateAppointment(token, rdv.id, { statut: "confirme" });
+    setAppts(prev => prev.map(r => r.id === rdv.id ? { ...r, statut: "confirme" } : r));
+    setCalRdv(prev => prev && prev.id === rdv.id ? { ...prev, statut: "confirme" } : prev);
+    notifierClient(rdv.id, "nouveau");
+  };
+  const refuserDemande = async (rdv) => {
+    if (!window.confirm(tr(`Refuser la demande de ${rdv.personne} ? Le client sera prévenu par email et le créneau sera libéré.`, `Decline ${rdv.personne}'s request? The client will be emailed and the slot freed.`))) return;
+    await sb.updateAppointment(token, rdv.id, { statut: "annule" });
+    setAppts(prev => prev.map(r => r.id === rdv.id ? { ...r, statut: "annule" } : r));
+    setCalRdv(prev => prev && prev.id === rdv.id ? { ...prev, statut: "annule" } : prev);
+    notifierClient(rdv.id, "annule");
+    // Une demande refusée ne compte pas dans les RDV gratuits du mois
+    if ((user.plan || "free") === "free" && (user.usage || 0) > 0) {
+      updateUser({ usage: user.usage - 1 });
+    }
+  };
+  const demandesEnAttente = appointments.filter(r => r.statut === "a_valider" && (r.date || "") >= isoLocal(new Date())).length;
 
   // Exposer toggle dark mode
   useEffect(() => {
@@ -3404,6 +3914,18 @@ export default function App() {
     }
   }, [user?.id, token]);
 
+  useEffect(() => {
+    if (!user?.id || !token) return;
+    const recharger = () => {
+      if (document.visibilityState !== "visible") return;
+      sb.getAppointments(token, user.id).then(data => {
+        if (Array.isArray(data)) setAppts(data.map(r => ({ ...r, confirmedAt: r.confirmed_at ? new Date(r.confirmed_at).toLocaleTimeString("fr-FR") : "" })));
+      }).catch(() => {});
+    };
+    document.addEventListener("visibilitychange", recharger);
+    return () => document.removeEventListener("visibilitychange", recharger);
+  }, [user?.id, token]);
+
   const handleSave = async (rdv) => {
     // Email du client : celui saisi, sinon celui de sa fiche
     const fiche = rdv.personne ? patients.find(p => p.nom && p.nom.toLowerCase() === rdv.personne.toLowerCase()) : null;
@@ -3483,6 +4005,7 @@ export default function App() {
     setPrice(false);
   };
 
+  if (lienResa) return <ReservationPage slug={lienResa} />;
   if (reponseLien) return <ReponseRdvPage id={reponseLien.id} t={reponseLien.t} />;
 
   if (!user) {
@@ -3493,10 +4016,11 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} onRevoirGuide={()=>{ setShowSettings(false); allerA("home"); setPhase("idle"); setTimeout(()=>setGuide(true), 250); }} />}
+      {showSettings && <SettingsModal user={user} token={token} sb={sb} onSave={(data)=>updateUser(data)} onClose={()=>setShowSettings(false)} onRevoirGuide={()=>{ setShowSettings(false); allerA("home"); setPhase("idle"); setTimeout(()=>setGuide(true), 250); }} onReservation={()=>{ setShowSettings(false); setShowResa(true); }} />}
+      {showResa && <ReglagesReservation user={user} onSave={(data)=>{ updateUser(data); montrerToast(data.booking_enabled ? tr("✅ Page de réservation enregistrée","✅ Booking page saved") : tr("Page de réservation désactivée","Booking page turned off")); }} onClose={()=>setShowResa(false)} />}
       {showPricing && <PricingModal currentPlan={user.plan} onUpgrade={handleUpgrade} onClose={()=>setPrice(false)} />}
       {guide && <GuideBienvenue onFin={finirGuide} onCreer={()=>{ finirGuide(); ouvrirFormulaire(); }} />}
-      {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} onEdit={setEditingRdv} onDelete={handleDeleteRdv} onUpdateStatut={handleUpdateStatut} />}
+      {calRdv && <CalendarModal rdv={calRdv} onClose={()=>setCalRdv(null)} onEdit={setEditingRdv} onDelete={handleDeleteRdv} onUpdateStatut={handleUpdateStatut} onAccepter={accepterDemande} onRefuser={refuserDemande} />}
 
       <div className="app-root" style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif", color:"var(--text)", display:"flex", flexDirection:"column", transition:"background .3s,color .3s" }}>
 
@@ -3521,6 +4045,7 @@ export default function App() {
           {[["home","home",tr("Accueil","Home")],["agenda","calendar",tr("Mes RDV","Appointments")],["patients","users",tr("Clients","Clients")],...(appointments.length >= 5 ? [["stats","chart",tr("Statistiques","Stats")]] : [])].map(([tab,icone,label]) => (
             <button key={tab} id={`onglet-${tab}`} onClick={()=>allerA(tab)} className={`app-tab ${ongletActif===tab ? "app-tab-on" : ""}`}>
               <Icon name={icone} size={18} /> {label}
+              {tab === "agenda" && demandesEnAttente > 0 && <span className="badge-num" aria-label={tr(`${demandesEnAttente} à valider`,`${demandesEnAttente} to approve`)}>{demandesEnAttente}</span>}
             </button>
           ))}
           <div style={{ flex:1 }} />
@@ -3532,7 +4057,7 @@ export default function App() {
         {/* Barre d'onglets du bas (téléphone) */}
         <nav className="bottom-nav" aria-label={tr("Navigation principale","Main navigation")}>
           <button id="bn-home" className={`bn-item ${ongletActif==="home" ? "bn-on" : ""}`} onClick={()=>allerA("home")}><Icon name="home" size={22} />{tr("Accueil","Home")}</button>
-          <button id="bn-agenda" className={`bn-item ${ongletActif==="agenda" ? "bn-on" : ""}`} onClick={()=>allerA("agenda")}><Icon name="calendar" size={22} />{tr("Mes RDV","Appts")}</button>
+          <button id="bn-agenda" className={`bn-item ${ongletActif==="agenda" ? "bn-on" : ""}`} onClick={()=>allerA("agenda")} style={{ position:"relative" }}><Icon name="calendar" size={22} />{tr("Mes RDV","Appts")}{demandesEnAttente > 0 && <span className="badge-num" style={{ position:"absolute", top:2, left:"56%" }} aria-label={tr(`${demandesEnAttente} à valider`,`${demandesEnAttente} to approve`)}>{demandesEnAttente}</span>}</button>
           <div style={{ display:"flex", justifyContent:"center" }}><button id="bn-plus" className="bn-plus" onClick={()=>ouvrirFormulaire()} aria-label={tr("Nouveau rendez-vous","New appointment")}><Icon name="plus" size={26} color="#fff" stroke={2.6} /></button></div>
           <button id="bn-patients" className={`bn-item ${ongletActif==="patients" ? "bn-on" : ""}`} onClick={()=>allerA("patients")}><Icon name="users" size={22} />{tr("Clients","Clients")}</button>
           <button id="bn-reglages" className="bn-item" onClick={()=>setShowSettings(true)}><Icon name="settings" size={22} />{tr("Réglages","Settings")}</button>
@@ -3721,6 +4246,9 @@ export default function App() {
               onEditRdv={setEditingRdv}
               onDeleteRdv={handleDeleteRdv}
               onUpdateStatut={handleUpdateStatut}
+              onAccepter={accepterDemande}
+              onRefuser={refuserDemande}
+              afficherSource={!!user.booking_enabled || appointments.some(r => r.source === "en_ligne")}
             />
           )}
 
