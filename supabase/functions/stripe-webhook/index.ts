@@ -7,8 +7,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // La clé whsec_… vient UNIQUEMENT du secret Supabase STRIPE_WEBHOOK_SECRET (jamais écrite dans le code).
 const WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://vcnguzlwyacnlysnsogv.supabase.co";
-const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const DB = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" };
+// Clé serveur : nouvelle clé secrète (sb_secret_…, « default ») si elle existe, sinon l'ancienne service_role.
+// Les nouvelles clés passent seulement dans l'en-tête apikey (pas dans Authorization : ce ne sont pas des JWT).
+function cleServeur(): string {
+  try { const k = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")?.default; if (typeof k === "string" && k) return k; } catch { /* ignoré */ }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+}
+const SUPABASE_KEY = cleServeur();
+const AUTH_DB: Record<string, string> = SUPABASE_KEY.startsWith("sb_") ? { "apikey": SUPABASE_KEY } : { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
+const DB = { ...AUTH_DB, "Content-Type": "application/json", "Prefer": "return=representation" };
 
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
 

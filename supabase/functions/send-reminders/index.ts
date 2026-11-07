@@ -7,8 +7,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // Les clés viennent des secrets Supabase, jamais écrites dans le code.
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://vcnguzlwyacnlysnsogv.supabase.co";
-const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const DB = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
+// Clé serveur : nouvelle clé secrète (sb_secret_…, « default ») si elle existe, sinon l'ancienne service_role.
+// Les nouvelles clés passent seulement dans l'en-tête apikey (pas dans Authorization : ce ne sont pas des JWT).
+function cleServeur(): string {
+  try { const k = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")?.default; if (typeof k === "string" && k) return k; } catch { /* ignoré */ }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+}
+const SUPABASE_KEY = cleServeur();
+const AUTH_DB: Record<string, string> = SUPABASE_KEY.startsWith("sb_") ? { "apikey": SUPABASE_KEY } : { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
+const DB = { ...AUTH_DB };
 
 const esc = (v: unknown) =>
   String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -61,7 +68,21 @@ async function envoyer(payload: Record<string, unknown>) {
   return r.ok ? null : `${r.status}`;
 }
 
-Deno.serve(async () => {
+// Seule la tâche automatique de 8 h (ou le serveur) peut lancer les rappels :
+// clé secrète dans l'en-tête apikey, ou ancienne clé service_role (transition).
+function autorise(req: Request): boolean {
+  const egal = (a: string, b: string) => a.length === b.length && a.length > 20 && [...a].every((c, i) => c === b[i]);
+  const apikey = req.headers.get("apikey") ?? "";
+  if (SUPABASE_KEY.startsWith("sb_") && egal(apikey, SUPABASE_KEY)) return true;
+  const ancienne = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  return !!ancienne && (egal(bearer, ancienne) || egal(apikey, ancienne));
+}
+
+Deno.serve(async (req) => {
+  if (!autorise(req)) return new Response(JSON.stringify({ error: "non autorisé" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  // Contrôle sans envoi : ?verifier=1 répond seulement si la clé est acceptée
+  if (new URL(req.url).searchParams.get("verifier") === "1") return new Response(JSON.stringify({ autorise: true, cle: SUPABASE_KEY.startsWith("sb_") ? "nouvelle" : "ancienne" }), { headers: { "Content-Type": "application/json" } });
   const today = new Date();
   const j1 = new Date(today); j1.setDate(today.getDate() + 1);
   const j3 = new Date(today); j3.setDate(today.getDate() + 3);

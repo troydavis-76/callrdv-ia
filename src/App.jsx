@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 
 const CONFIG = {
   SUPABASE_URL: "https://vcnguzlwyacnlysnsogv.supabase.co",
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbmd1emx3eWFjbmx5c25zb2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NDg0MTcsImV4cCI6MjA4ODIyNDQxN30.rI1WkGgUjFlw7dbl4wDtXcItDqsEc5PaqpPpF35cSuU",
+  // Clé publique (publishable) : faite pour être dans le site, la sécurité repose sur les règles RLS
+  SUPABASE_ANON_KEY: "sb_publishable__YJ8PUzvcn5G5wYqdoelfg_oLQu56WD",
   STRIPE_LINK: "https://buy.stripe.com/8x2aEX5th2V02lIdJccMM02", // abonnement unique 20€/mois
 };
 
@@ -13,7 +14,8 @@ const sb = {
   headers: (token) => ({
     "Content-Type": "application/json",
     "apikey": CONFIG.SUPABASE_ANON_KEY,
-    "Authorization": `Bearer ${token || CONFIG.SUPABASE_ANON_KEY}`,
+    // Clé publique seulement dans apikey ; Authorization ne porte que le jeton de l'utilisateur connecté
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
   }),
   async signUp(email, password, name) {
     const r = await fetch(`${this.url}/auth/v1/signup`, {
@@ -2434,8 +2436,7 @@ function ContactModal({ onClose }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": CONFIG.SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${CONFIG.SUPABASE_ANON_KEY}`
+          "apikey": CONFIG.SUPABASE_ANON_KEY
         },
         body: JSON.stringify({ nom, email, message })
       });
