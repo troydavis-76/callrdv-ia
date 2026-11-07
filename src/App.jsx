@@ -1960,7 +1960,7 @@ function SettingsModal({ user, onSave, onClose, sb, token, onRevoirGuide, onRese
             <span style={{ width:40, height:40, borderRadius:12, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="calendar" size={20} color="#fff" /></span>
             <span style={{ flex:1, minWidth:0 }}>
               <span style={{ display:"block", fontWeight:800, fontSize:15 }}>{tr("Réservation en ligne","Online booking")}</span>
-              <span style={{ display:"block", fontSize:13, color:"var(--text2)", marginTop:2 }}>{user.booking_enabled ? tr("Activée · ","On · ") + `callrdv.com/?r=${user.booking_slug}` : tr("Vos clients réservent seuls, 24h/24","Clients book on their own, 24/7")}</span>
+              <span style={{ display:"block", fontSize:13, color:"var(--text2)", marginTop:2 }}>{user.booking_enabled ? tr("Activée · ","On · ") + `callrdv.com/${user.booking_slug}` : tr("Vos clients réservent seuls, 24h/24","Clients book on their own, 24/7")}</span>
             </span>
             <span style={{ transform:"scaleX(-1)", display:"flex", color:"var(--text2)" }}><Icon name="back" size={18} /></span>
           </button>
@@ -3233,7 +3233,9 @@ const prestationsDepart = (metier) => (PRESTATIONS_DEPART[metier] || PRESTATIONS
 const HORAIRES_DEPART = { "1":[["09:00","12:00"],["14:00","18:00"]], "2":[["09:00","12:00"],["14:00","18:00"]], "3":[["09:00","12:00"],["14:00","18:00"]], "4":[["09:00","12:00"],["14:00","18:00"]], "5":[["09:00","12:00"],["14:00","18:00"]], "6":[["09:00","12:00"]], "0":[] };
 const slugDepuis = (txt) => String(txt || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 const SLUG_OK = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
-const lienReservation = (slug) => `https://callrdv.com/?r=${slug}`;
+const lienReservation = (slug) => `https://callrdv.com/${slug}`;
+// Mots réservés : ne peuvent pas servir de lien (pages ou fichiers du site, futurs usages)
+const SLUGS_RESERVES = ["api","app","admin","login","connexion","inscription","signup","reglages","settings","aide","help","contact","tarifs","pricing","cgu","cgv","mentions-legales","confidentialite","privacy","static","build","public","index","manifest","service-worker","callrdv","r","rdv"];
 const dureeTxt = (m) => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? String(m % 60).padStart(2, "0") : ""}`;
 const appelReservation = (corps) => fetch(`${CONFIG.SUPABASE_URL}/functions/v1/reservation`, {
   method: "POST",
@@ -3265,6 +3267,7 @@ function ReglagesReservation({ user, onSave, onClose }) {
 
   const enregistrer = async () => {
     setErreur("");
+    if (SLUGS_RESERVES.includes(slug)) { setErreur(tr("Ce lien est réservé par CallRDV. Choisissez-en un autre (par exemple votre nom ou celui de votre activité).","This link is reserved by CallRDV. Please choose another one (for example your name or your business name).")); return; }
     if (!SLUG_OK.test(slug)) { setErreur(tr("Le lien doit faire 3 à 40 caractères : lettres sans accent, chiffres et tirets.","The link must be 3 to 40 characters: letters, numbers and hyphens.")); return; }
     const liste = prestations.map(p => ({ ...p, nom: (p.nom || "").trim() })).filter(p => p.nom);
     if (actif && liste.length === 0) { setErreur(tr("Ajoutez au moins une prestation.","Add at least one service.")); return; }
@@ -3323,7 +3326,7 @@ function ReglagesReservation({ user, onSave, onClose }) {
         <div style={bloc}>
           <label htmlFor="resa-slug" className="field-label" style={{ display:"block" }}>{tr("Mon lien","My link")}</label>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ fontSize:13, color:"var(--text2)", whiteSpace:"nowrap" }}>callrdv.com/?r=</span>
+            <span style={{ fontSize:13, color:"var(--text2)", whiteSpace:"nowrap" }}>callrdv.com/</span>
             <input id="resa-slug" value={slug} onChange={e => setSlug(slugDepuis(e.target.value))} placeholder="garage-mehdi" style={{ flex:1, minWidth:0 }} />
           </div>
           {dejaEnregistre ? (
@@ -3426,7 +3429,7 @@ function ReglagesReservation({ user, onSave, onClose }) {
   );
 }
 
-// Page publique : callrdv.com/?r=<lien>
+// Page publique : callrdv.com/<lien> (ancien format callrdv.com/?r=<lien> toujours accepté)
 function ReservationPage({ slug }) {
   const [page, setPage] = useState(null);
   const [etat, setEtat] = useState("chargement"); // chargement | introuvable | erreur | pret
@@ -3753,10 +3756,12 @@ export default function App() {
   const [saved, setSaved]         = useState(false);
   const [recordTime, setRecTime]  = useState(0);
   const timerRef = useRef(null);
-  // Page publique de réservation : callrdv.com/?r=<lien>
+  // Page publique de réservation : callrdv.com/<lien>, ou l'ancien format callrdv.com/?r=<lien>
   const [lienResa] = useState(() => {
     const r = (new URLSearchParams(window.location.search).get("r") || "").trim().toLowerCase();
-    return SLUG_OK.test(r) ? r : null;
+    if (SLUG_OK.test(r)) return r;
+    const chemin = decodeURIComponent(window.location.pathname.replace(/^\/+|\/+$/g, "")).toLowerCase();
+    return SLUG_OK.test(chemin) && !SLUGS_RESERVES.includes(chemin) ? chemin : null;
   });
   const [showResa, setShowResa] = useState(false);
   // Lien « Confirmer ou annuler mon RDV » reçu par le client dans son email de rappel
