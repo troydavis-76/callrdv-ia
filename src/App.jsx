@@ -155,7 +155,7 @@ const sb = {
 
 const PLANS = {
   free:     { name: "Gratuit", nameEn: "Free", price: 0,  quota: 10,       color: "#94a3b8", features: ["10 RDV par mois", "Toutes les fonctionnalités", "Sans carte bancaire"], featuresEn: ["10 appointments per month", "All features", "No credit card"] },
-  pro:      { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#2450E6", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
+  pro:      { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#2450E6", features: ["RDV illimités, par téléphone et en ligne", "Page de réservation en ligne", "Rappels email à vous et à vos clients", "Agenda synchronisé, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments, by phone and online", "Online booking page", "Email reminders for you and your clients", "Synced calendar, client profiles, PDF export", "Cancel anytime"] },
   business: { name: "Pro",     nameEn: "Pro",  price: 20, quota: Infinity, color: "#2450E6", features: ["RDV illimités", "Rappels email à vous et à vos clients", "Agenda, fiches clients, export PDF", "Sans engagement"], featuresEn: ["Unlimited appointments", "Email reminders for you and your clients", "Calendar, client profiles, PDF export", "Cancel anytime"] },
 };
 
@@ -2854,6 +2854,22 @@ function LandingPage({ onLogin, onSignup }) {
     .lp-price-amount small { font-size: 17px; font-weight: 600; color: #475569; letter-spacing: 0; }
     .lp-price ul { list-style: none; padding: 0; margin: 22px 0 26px; display: flex; flex-direction: column; gap: 12px; }
     .lp-price li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: #334155; line-height: 1.45; }
+    .lp-resa-in { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,0.85fr); gap: 48px; align-items: center; }
+    .lp-resa-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 14px; }
+    .lp-resa-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; color: #334155; line-height: 1.55; }
+    .lp-resa-list b { color: #0F172A; }
+    .lp-resa-ic { width: 32px; height: 32px; border-radius: 10px; background: #EEF2FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lp-pub-head { background: #fff; border-radius: 16px; padding: 12px; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .lp-pub-av { width: 36px; height: 36px; border-radius: 11px; background: #2450E6; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .lp-pub-days { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 5px; margin-bottom: 10px; }
+    .lp-pub-day { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; text-align: center; font-size: 9px; font-weight: 600; color: #475569; padding: 5px 0; line-height: 1.3; }
+    .lp-pub-day b { display: block; font-size: 14px; color: #0F172A; }
+    .lp-pub-day.on { background: #2450E6; border-color: #2450E6; color: #fff; } .lp-pub-day.on b { color: #fff; }
+    .lp-pub-hours { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+    .lp-pub-h { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 700; padding: 9px 0; }
+    .lp-pub-h.on { background: #2450E6; border-color: #2450E6; color: #fff; }
+    .lp-pub-h.off { background: transparent; border-style: dashed; color: #94A3B8; text-decoration: line-through; font-weight: 600; }
+    @media(max-width:960px){ .lp-resa-in{grid-template-columns:1fr;} }
     .lp-cta { background: #2450E6; color: #fff; text-align: center; padding: 72px 0; }
     .lp-cta h2 { font-size: clamp(28px, 3.6vw, 44px); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 12px; }
     .lp-cta p { font-size: 17px; color: #DBE4FF; margin: 0 0 28px; }
@@ -2874,14 +2890,14 @@ function LandingPage({ onLogin, onSignup }) {
     { icon:"mail", title:"Rappels automatiques", desc:"Un email de rappel 3 jours et 1 jour avant chaque RDV, pour vous et pour votre client si vous avez son email. Il confirme ou annule en un clic." },
     { icon:"whatsapp", title:"WhatsApp et SMS", desc:"Envoyez un RDV à votre client par WhatsApp ou SMS en un geste, avec la date, l'heure et le lieu." },
     { icon:"chart", title:"Tableau de bord", desc:"Suivez votre activité : RDV par semaine, catégories les plus fréquentes, évolution sur 6 mois." },
-    { icon:"calendar", title:"Agenda et export PDF", desc:"Vue liste, semaine ou mois. Planning en PDF, ajout à Google Calendar ou Outlook." },
+    { icon:"calendar", title:"Synchronisé avec votre agenda", desc:"Vos RDV apparaissent tout seuls dans Google Agenda, Apple Calendrier ou Outlook. Vue liste, semaine ou mois, et planning en PDF." },
   ],[
     { icon:"search", title:"Instant client search", desc:"Type your client's name: their record appears with their phone number, email and history." },
     { icon:"file", title:"Forms that fit your business", desc:"Garage, medical, beauty, legal… each type of appointment has its own fields." },
     { icon:"mail", title:"Automatic reminders", desc:"An email reminder 3 days and 1 day before every appointment, for you and for your client if you have their email. They confirm or cancel in one click." },
     { icon:"whatsapp", title:"WhatsApp and text", desc:"Send an appointment to your client by WhatsApp or text in one tap, with date, time and place." },
     { icon:"chart", title:"Dashboard", desc:"Track your activity: appointments per week, top categories, 6-month trend." },
-    { icon:"calendar", title:"Calendar and PDF export", desc:"List, week or month view. PDF schedule, add to Google Calendar or Outlook." },
+    { icon:"calendar", title:"Synced with your calendar", desc:"Your appointments show up by themselves in Google Calendar, Apple Calendar or Outlook. List, week or month view, and PDF schedule." },
   ]);
   const etapes = t([
     { title:"Un client appelle", desc:"Pendant l'appel, tapez son nom. S'il est déjà venu, sa fiche s'ouvre toute seule." },
@@ -2892,7 +2908,7 @@ function LandingPage({ onLogin, onSignup }) {
     { title:"Tap the day and time", desc:"No calendar to scroll through: two taps and the appointment is saved." },
     { title:"Your client is kept informed", desc:"They get a confirmation email, then reminders. They confirm or cancel in one click." },
   ]);
-  const faits = t([["mail","Rappels 3 jours et 1 jour avant"],["check","Confirmation en un clic"],["whatsapp","WhatsApp et SMS"],["pin","Données hébergées en Europe"]],[["mail","Reminders 3 days and 1 day before"],["check","One-click confirmation"],["whatsapp","WhatsApp and text"],["pin","Data hosted in Europe"]]);
+  const faits = t([["clock","Réservation en ligne 24h/24"],["mail","Rappels automatiques par email"],["calendar","Synchronisé avec votre agenda"],["pin","Données hébergées en Europe"]],[["clock","Online booking 24/7"],["mail","Automatic email reminders"],["calendar","Synced with your calendar"],["pin","Data hosted in Europe"]]);
   const jour = (n) => { const d = new Date(); d.setDate(d.getDate()+n); return { j: d.toLocaleDateString(t("fr-FR","en-GB"), { weekday:"short" }).replace(".",""), n: d.getDate() }; };
 
   return (
@@ -2908,6 +2924,7 @@ function LandingPage({ onLogin, onSignup }) {
           <div className="lp-nav-right">
             <div className="lp-nav-links">
               <a href="#lp-comment">{t("Comment ça marche","How it works")}</a>
+              <a href="#lp-resa">{t("Réservation en ligne","Online booking")}</a>
               <a href="#lp-features">{t("Fonctionnalités","Features")}</a>
               <a href="#lp-pricing">{t("Tarif","Pricing")}</a>
               <button className="lp-btn-nav" onClick={onLogin}>{t("Se connecter","Log in")}</button>
@@ -2922,9 +2939,9 @@ function LandingPage({ onLogin, onSignup }) {
       <section className="lp-hero">
         <div className="lp-wrap lp-hero-in">
           <div>
-            <div className="lp-badge"><i></i>{t("Disponible maintenant","Available now")}</div>
+            <div className="lp-badge"><i></i>{t("Nouveau : réservation en ligne","New: online booking")}</div>
             <h1 className="lp-h1">{t(<>Un appel devient un <span>rendez-vous</span> en quelques secondes</>, <>A phone call becomes an <span>appointment</span> in seconds</>)}</h1>
-            <p className="lp-sub">{t("Pour les garages, coiffeurs, artisans et tous les pros qui prennent leurs RDV par téléphone. Vos clients reçoivent une confirmation et des rappels automatiques.","For garages, hairdressers, tradespeople and every business that books by phone. Your clients get a confirmation and automatic reminders.")}</p>
+            <p className="lp-sub">{t("Pour les garages, coiffeurs, artisans et tous les pros qui prennent leurs RDV par téléphone. Avec votre page de réservation, vos clients peuvent aussi réserver seuls, 24h/24. Tout arrive au même endroit, avec confirmation et rappels automatiques.","For garages, hairdressers, tradespeople and every business that books by phone. With your booking page, clients can also book on their own, 24/7. Everything lands in one place, with automatic confirmation and reminders.")}</p>
             <button className="lp-btn-primary" onClick={onSignup}>{t("Commencer gratuitement →","Start for free →")}</button>
             <div className="lp-note"><Icon name="check" size={16} color="#16A34A" stroke={2.6} />{t("10 RDV gratuits par mois · sans carte bancaire","10 free appointments a month · no credit card")}</div>
           </div>
@@ -2985,6 +3002,61 @@ function LandingPage({ onLogin, onSignup }) {
         </div>
       </section>
 
+      {/* RÉSERVATION EN LIGNE */}
+      <section className="lp-section" id="lp-resa">
+        <div className="lp-wrap lp-resa-in">
+          <div>
+            <div className="lp-label">{t("Réservation en ligne","Online booking")}</div>
+            <h2 className="lp-h2">{t("Vos clients réservent seuls, même quand vous ne décrochez pas","Clients book on their own, even when you can't pick up")}</h2>
+            <p className="lp-section-sub" style={{ marginBottom:26 }}>{t("Vous avez votre page de réservation. Le client choisit sa prestation et un créneau libre, il reçoit sa confirmation par email. Le RDV arrive directement dans votre agenda, à côté de ceux pris par téléphone.","You get your own booking page. The client picks a service and a free slot, and gets a confirmation email. The appointment lands straight in your calendar, next to the ones taken by phone.")}</p>
+            <ul className="lp-resa-list">
+              {t([
+                ["share", <><b>Votre lien à partager</b> : WhatsApp, Google, Instagram, ou un QR code en vitrine.</>],
+                ["clock", <><b>Vos prestations et vos horaires</b> : vous fixez la durée, les jours, la pause du midi.</>],
+                ["check", <><b>Jamais deux clients sur le même créneau</b>, même s'ils réservent en même temps.</>],
+                ["users", <><b>Confirmation automatique</b>, ou vous validez vous-même chaque demande.</>],
+              ],[
+                ["share", <><b>Your link to share</b>: WhatsApp, Google, Instagram, or a QR code in your window.</>],
+                ["clock", <><b>Your services and opening hours</b>: you set the length, the days, the lunch break.</>],
+                ["check", <><b>Never two clients on the same slot</b>, even if they book at the same time.</>],
+                ["users", <><b>Automatic confirmation</b>, or you approve each request yourself.</>],
+              ]).map(([ic, txt], i) => (
+                <li key={i}><span className="lp-resa-ic"><Icon name={ic} size={17} color="#2450E6" /></span><span>{txt}</span></li>
+              ))}
+            </ul>
+            <button className="lp-btn-primary" onClick={onSignup}>{t("Créer ma page gratuitement →","Create my page for free →")}</button>
+          </div>
+          {/* Aperçu de la page que voit le client */}
+          <div aria-hidden="true">
+            <div className="lp-phone">
+              <div className="lp-screen">
+                <div className="lp-pub-head">
+                  <span className="lp-pub-av">G</span>
+                  <span style={{ minWidth:0 }}><span style={{ display:"block", fontWeight:800, fontSize:14 }}>{t("Garage Mehdi","Mike's Garage")}</span><span style={{ fontSize:10, color:"#475569" }}>{t("Révision voiture · 1 h","Car service · 1 h")}</span></span>
+                </div>
+                <div style={{ fontSize:10, fontWeight:800, color:"#2450E6", textTransform:"uppercase", letterSpacing:"0.06em", margin:"4px 2px 4px" }}>{t("Étape 2 sur 3","Step 2 of 3")}</div>
+                <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.02em", margin:"0 2px 10px" }}>{t("Choisissez un créneau","Choose a time")}</div>
+                <div className="lp-pub-days">
+                  {[1,2,3,4,5,6].filter(n => { const d = new Date(); d.setDate(d.getDate()+n); return d.getDay() !== 0; }).slice(0,4).map((n, i) => { const d = jour(n); return <div key={n} className={`lp-pub-day ${i===1?"on":""}`}>{d.j}<b>{d.n}</b></div>; })}
+                </div>
+                <div style={{ fontSize:11, fontWeight:700, color:"#475569", margin:"0 2px 6px" }}>{t("Matin","Morning")}</div>
+                <div className="lp-pub-hours" style={{ marginBottom:10 }}>
+                  <div className="lp-pub-h">09:00</div><div className="lp-pub-h off">10:00</div><div className="lp-pub-h">11:00</div>
+                </div>
+                <div style={{ fontSize:11, fontWeight:700, color:"#475569", margin:"0 2px 6px" }}>{t("Après-midi","Afternoon")}</div>
+                <div className="lp-pub-hours">
+                  <div className="lp-pub-h on">14:00</div><div className="lp-pub-h">15:00</div><div className="lp-pub-h off">16:00</div>
+                  <div className="lp-pub-h">17:00</div>
+                </div>
+                <div style={{ background:"#fff", borderRadius:13, padding:"10px 12px", marginTop:14, display:"flex", alignItems:"center", gap:8, fontSize:11, color:"#475569" }}>
+                  <span style={{ width:22, height:22, borderRadius:"50%", background:"#16A34A", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="check" size={13} color="#fff" stroke={3} /></span>
+                  {t("Confirmation envoyée par email","Confirmation sent by email")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* FONCTIONNALITÉS */}
       <section className="lp-section" id="lp-features">
         <div className="lp-wrap">
@@ -3016,7 +3088,7 @@ function LandingPage({ onLogin, onSignup }) {
             <div className="lp-price-amount">20€ <small>{t("/ mois","/ month")}</small></div>
             <div style={{ fontSize:14, color:"#475569" }}>{t("Sans engagement","Cancel anytime")}</div>
             <ul>
-              {t(["RDV illimités","Rappels email à vous et à vos clients (3 jours et 1 jour avant)","Confirmation ou annulation en un clic par le client","Fiches clients et import des contacts du téléphone","Agenda liste / semaine / mois, export PDF"],["Unlimited appointments","Email reminders for you and your clients (3 days and 1 day before)","One-click confirmation or cancellation by the client","Client profiles and phone contacts import","List / week / month calendar, PDF export"]).map(x => (
+              {t(["RDV illimités, par téléphone et en ligne","Page de réservation en ligne avec votre lien et QR code","Rappels email à vous et à vos clients","Confirmation ou annulation en un clic par le client","Fiches clients et import des contacts du téléphone","Synchronisation Google Agenda, Apple Calendrier, Outlook"],["Unlimited appointments, by phone and online","Online booking page with your own link and QR code","Email reminders for you and your clients","One-click confirmation or cancellation by the client","Client profiles and phone contacts import","Sync with Google Calendar, Apple Calendar, Outlook"]).map(x => (
                 <li key={x}><Icon name="check" size={18} color="#16A34A" stroke={2.6} style={{ marginTop:1 }} />{x}</li>
               ))}
             </ul>
